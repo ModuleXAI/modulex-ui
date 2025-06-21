@@ -1,4 +1,4 @@
-import { getCurrentUserId } from '@/lib/auth/get-current-user'
+import { getCurrentUserId, getCurrentUserToken } from '@/lib/auth/get-current-user'
 import { NextRequest, NextResponse } from 'next/server'
 
 export async function GET(request: NextRequest) {
@@ -33,11 +33,20 @@ export async function GET(request: NextRequest) {
       )
     }
 
+    // Get Supabase access token
+    const supabaseToken = await getCurrentUserToken()
+    if (!supabaseToken) {
+      return NextResponse.json(
+        { error: 'Unable to retrieve user token' },
+        { status: 401 }
+      )
+    }
+
     // MCP server'dan auth URL'ini al
     const response = await fetch(`${mcpServerUrl}/auth/url/${toolName}?user_id=${userId}`, {
       method: 'GET',
       headers: {
-        'Authorization': `Bearer ${mcpApiKey}`,
+        'Authorization': `Bearer ${supabaseToken}`,
         'Content-Type': 'application/json'
       }
     })

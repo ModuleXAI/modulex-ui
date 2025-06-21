@@ -24,6 +24,26 @@ export async function getCurrentUser() {
 }
 
 export async function getCurrentUserId() {
-  const user = await getCurrentUser()
-  return user?.id ?? 'anonymous'
+  //"const user = await getCurrentUser()
+  //supabase user
+  const supabase = await createClient()
+  const { data } = await supabase.auth.getUser()
+  console.log(data)
+  return data.user?.id ?? 'anonymous'
+  //return 'f888c9ab-92a6-43ab-97ec-c686b969e7ba'
+
+
+}
+
+export async function getCurrentUserToken() {
+  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
+  const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
+
+  if (!supabaseUrl || !supabaseAnonKey) {
+    return null // Supabase is not configured
+  }
+
+  const supabase = await createClient()
+  const { data } = await supabase.auth.getSession()
+  return data.session?.access_token ?? null
 }

@@ -203,14 +203,6 @@ If you want to use ModuleX-UI as a search engine in your browser, follow these s
 
 This will allow you to use ModuleX-UI as your default search engine in the browser.
 
-## 💙 Sponsors
-
-This project is proudly supported by:
-
-<a href="https://vercel.com/oss">
-  <img alt="Vercel OSS Program" src="https://vercel.com/oss/program-badge.svg" />
-</a>
-
 ## 👥 Contributing
 
 We welcome contributions to ModuleX-UI! Whether it's bug reports, feature requests, or pull requests, all contributions are appreciated.

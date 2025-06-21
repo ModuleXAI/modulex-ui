@@ -1,5 +1,6 @@
 import { CoreMessage, smoothStream, streamText, tool } from 'ai'
 import { z } from 'zod'
+import { getCurrentUserToken } from '../auth/get-current-user'
 import { createQuestionTool } from '../tools/question'
 import { retrieveTool } from '../tools/retrieve'
 import { createSearchTool } from '../tools/search'
@@ -35,10 +36,17 @@ async function fetchMCPTools(userId: string): Promise<MCPTool[]> {
       return []
     }
 
+    // Get Supabase access token
+    const supabaseToken = await getCurrentUserToken()
+    if (!supabaseToken) {
+      console.log('Unable to retrieve Supabase token')
+      return []
+    }
+
     const response = await fetch(`${mcpServerUrl}/tools/openai/users/${userId}/openai-tools`, {
       method: 'GET',
       headers: {
-        'Authorization': `Bearer ${mcpApiKey}`,
+        'Authorization': `Bearer ${supabaseToken}`,
         'Content-Type': 'application/json'
       }
     })
@@ -66,10 +74,16 @@ async function executeMCPTool(toolKey: string, action: string, parameters: any, 
       throw new Error('MCP server not configured or no user ID')
     }
 
+    // Get Supabase access token
+    const supabaseToken = await getCurrentUserToken()
+    if (!supabaseToken) {
+      throw new Error('Unable to retrieve Supabase token')
+    }
+
     const response = await fetch(`${mcpServerUrl}/tools/${toolKey}/execute?user_id=${userId}`, {
       method: 'POST',
       headers: {
-        'Authorization': `Bearer ${mcpApiKey}`,
+        'Authorization': `Bearer ${supabaseToken}`,
         'Content-Type': 'application/json'
       },
       body: JSON.stringify({

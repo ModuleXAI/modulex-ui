@@ -1,4 +1,4 @@
-import { getCurrentUserId } from '@/lib/auth/get-current-user'
+import { getCurrentUserId, getCurrentUserToken } from '@/lib/auth/get-current-user'
 import { NextRequest, NextResponse } from 'next/server'
 
 // PUT /api/tools/toggle-tool
@@ -28,6 +28,15 @@ export async function PUT(
       )
     }
 
+    // Get Supabase access token
+    const supabaseToken = await getCurrentUserToken()
+    if (!supabaseToken) {
+      return NextResponse.json(
+        { error: 'Unable to retrieve user token' },
+        { status: 401 }
+      )
+    }
+
     if (action === 'toggle-tool') {
       const { toolName, isActive } = await request.json()
       
@@ -36,7 +45,7 @@ export async function PUT(
         {
           method: 'PUT',
           headers: {
-            'Authorization': `Bearer ${mcpApiKey}`,
+            'Authorization': `Bearer ${supabaseToken}`,
             'Content-Type': 'application/json',
           },
           body: JSON.stringify({
@@ -65,7 +74,7 @@ export async function PUT(
         {
           method: 'PUT',
           headers: {
-            'Authorization': `Bearer ${mcpApiKey}`,
+            'Authorization': `Bearer ${supabaseToken}`,
             'Content-Type': 'application/json',
           },
           body: JSON.stringify({
@@ -94,7 +103,7 @@ export async function PUT(
         {
           method: 'GET',
           headers: {
-            'Authorization': `Bearer ${mcpApiKey}`,
+            'Authorization': `Bearer ${supabaseToken}`,
           },
         }
       )
