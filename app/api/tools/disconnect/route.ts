@@ -41,10 +41,10 @@ export async function DELETE(request: NextRequest) {
     }
 
     // MCP server'a disconnect isteği gönder
-    const response = await fetch(`${mcpServerUrl}/auth/users/${userId}/tools/${toolName}`, {
+    const response = await fetch(`${mcpServerUrl}/auth/tools/${toolName}?user_id=${userId}`, {
       method: 'DELETE',
       headers: {
-        'Authorization': `Bearer ${supabaseToken}`,
+        'X-API-KEY': `${mcpApiKey}`,
         'Content-Type': 'application/json'
       }
     })

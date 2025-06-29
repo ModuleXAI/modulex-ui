@@ -43,10 +43,10 @@ async function fetchMCPTools(userId: string): Promise<MCPTool[]> {
       return []
     }
 
-    const response = await fetch(`${mcpServerUrl}/tools/openai/users/${userId}/openai-tools`, {
+    const response = await fetch(`${mcpServerUrl}/tools/openai-tools?user_id=${userId}`, {
       method: 'GET',
       headers: {
-        'Authorization': `Bearer ${supabaseToken}`,
+        'X-API-KEY': `${mcpApiKey}`,
         'Content-Type': 'application/json'
       }
     })
@@ -83,7 +83,7 @@ async function executeMCPTool(toolKey: string, action: string, parameters: any, 
     const response = await fetch(`${mcpServerUrl}/tools/${toolKey}/execute?user_id=${userId}`, {
       method: 'POST',
       headers: {
-        'Authorization': `Bearer ${supabaseToken}`,
+        'X-API-KEY': `${mcpApiKey}`,
         'Content-Type': 'application/json'
       },
       body: JSON.stringify({

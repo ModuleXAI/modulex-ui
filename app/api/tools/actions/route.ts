@@ -41,11 +41,11 @@ export async function PUT(
       const { toolName, isActive } = await request.json()
       
       const response = await fetch(
-        `${mcpServerUrl}/auth/users/${userId}/tools/${toolName}/status`,
+        `${mcpServerUrl}/auth/tools/${toolName}/status?user_id=${userId}`,
         {
           method: 'PUT',
           headers: {
-            'Authorization': `Bearer ${supabaseToken}`,
+            'X-API-KEY': `${mcpApiKey}`,
             'Content-Type': 'application/json',
           },
           body: JSON.stringify({
@@ -70,11 +70,11 @@ export async function PUT(
       const { toolName, actionName, isActive } = await request.json()
       
       const response = await fetch(
-        `${mcpServerUrl}/auth/users/${userId}/tools/${toolName}/actions/${actionName}/status`,
+        `${mcpServerUrl}/auth/tools/${toolName}/actions/${actionName}/status?user_id=${userId}`,
         {
           method: 'PUT',
           headers: {
-            'Authorization': `Bearer ${supabaseToken}`,
+            'X-API-KEY': `${mcpApiKey}`,
             'Content-Type': 'application/json',
           },
           body: JSON.stringify({
@@ -103,7 +103,7 @@ export async function PUT(
         {
           method: 'GET',
           headers: {
-            'Authorization': `Bearer ${supabaseToken}`,
+            'X-API-KEY': `${mcpApiKey}`,
           },
         }
       )

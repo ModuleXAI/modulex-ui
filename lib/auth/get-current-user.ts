@@ -24,7 +24,8 @@ export async function getCurrentUser() {
 }
 
 export async function getCurrentUserId() {
-  //"const user = await getCurrentUser()
+  const user = await getCurrentUser()
+  return user?.id ?? 'anonymous'
   //supabase user
   const supabase = await createClient()
   const { data } = await supabase.auth.getUser()

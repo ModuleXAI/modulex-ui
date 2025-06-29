@@ -37,7 +37,7 @@ export async function GET(request: NextRequest) {
       {
         method: 'GET',
         headers: {
-          'Authorization': `Bearer ${supabaseToken}`,
+          'X-API-KEY': `${mcpApiKey}`,
           'Content-Type': 'application/json',
         },
       }
@@ -100,7 +100,7 @@ export async function POST(request: NextRequest) {
       {
         method: 'POST',
         headers: {
-          'Authorization': `Bearer ${supabaseToken}`,
+          'X-API-KEY': `${mcpApiKey}`,
           'Content-Type': 'application/json',
         },
         body: JSON.stringify(body)

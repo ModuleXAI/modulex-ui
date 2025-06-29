@@ -46,7 +46,7 @@ export async function GET(request: NextRequest) {
     const response = await fetch(`${mcpServerUrl}/auth/url/${toolName}?user_id=${userId}`, {
       method: 'GET',
       headers: {
-        'Authorization': `Bearer ${supabaseToken}`,
+        'X-API-KEY': `${mcpApiKey}`,
         'Content-Type': 'application/json'
       }
     })

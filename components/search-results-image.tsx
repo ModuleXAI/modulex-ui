@@ -120,7 +120,7 @@ export const SearchResultsImageSection: React.FC<
           <Dialog key={actualIndex}>
             <DialogTrigger asChild>
               <div
-                className="aspect-video cursor-pointer relative max-h-5 sm:max-h-5"
+                className="aspect-video cursor-pointer relative max-h-24 sm:max-h-24"
                 onClick={() => setSelectedIndex(actualIndex)}
               >
                 <div className="flex-1 h-full">
@@ -150,7 +150,7 @@ export const SearchResultsImageSection: React.FC<
                   )}
               </div>
             </DialogTrigger>
-            <DialogContent className="max-w-2xl max-h-[70vh] overflow-auto w-[95vw] sm:w-auto">
+            <DialogContent className="max-w-4xl max-h-[85vh] overflow-auto w-[95vw] sm:w-auto">
               <DialogHeader>
                 <DialogTitle>Search Images</DialogTitle>
                 <DialogDescription className="text-sm">
@@ -164,7 +164,7 @@ export const SearchResultsImageSection: React.FC<
                     startIndex: selectedIndex,
                     loop: convertedImages.length > 1
                   }}
-                  className="w-full bg-muted max-h-[40vh]"
+                  className="w-full bg-muted max-h-[60vh]"
                 >
                   <CarouselContent>
                     {convertedImages.map((img, idx) => (
@@ -173,7 +173,7 @@ export const SearchResultsImageSection: React.FC<
                           <img
                             src={img.url}
                             alt={`Image ${idx + 1}`}
-                            className="h-auto w-full object-contain max-h-[40vh] max-w-full"
+                            className="h-auto w-full object-contain max-h-[60vh] max-w-full"
                             onError={e =>
                               (e.currentTarget.src =
                                 '/images/placeholder-image.png')
