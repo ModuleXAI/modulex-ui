@@ -626,6 +626,7 @@ export function ToolsToggle() {
                                 <Switch
                                   checked={tool.is_active}
                                   onCheckedChange={() => handleToolToggle(tool.name)}
+                                  variant="green"
                                   size="xs"
                                   disabled={operationInProgress?.type === 'tool' && operationInProgress?.id === tool.name}
                                 />
@@ -755,6 +756,7 @@ export function ToolsToggle() {
                         <Switch
                           checked={action.is_active}
                           onCheckedChange={() => handleActionToggle(selectedTool, action.name)}
+                          variant="green"
                           size="xs"
                           disabled={operationInProgress?.type === 'action' && operationInProgress?.id === `${selectedTool}-${action.name}`}
                         />
