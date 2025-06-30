@@ -562,6 +562,7 @@ export function ToolsToggle() {
       tool.name.toLowerCase().includes(searchValue.toLowerCase()) ||
       tool.actions.some(action => 
         action.name.toLowerCase().includes(searchValue.toLowerCase()) ||
+        formatActionName(action.name).toLowerCase().includes(searchValue.toLowerCase()) ||
         action.description.toLowerCase().includes(searchValue.toLowerCase())
       )
     )
@@ -574,6 +575,14 @@ export function ToolsToggle() {
   // Get tool icon path
   const getToolIcon = (toolName: string) => {
     return `/icons/tools/${toolName}.svg`
+  }
+
+  // Format action name for display (snake_case -> Title Case)
+  const formatActionName = (actionName: string) => {
+    return actionName
+      .split('_')
+      .map(word => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase())
+      .join(' ')
   }
 
   return (
@@ -703,17 +712,17 @@ export function ToolsToggle() {
                                 </div>
                                 {tool.actions.map((action) => (
                                   <div key={action.name} className="flex items-center justify-between py-0.5 px-1.5 rounded-md hover:bg-muted/50">
-                                    <div className="flex-1">
-                                      <div className="flex items-center space-x-1">
-                                        <div className="text-xs font-medium">{action.name}</div>
-                                        {action.is_active && (
-                                          <Check className="h-3 w-3 text-green-500" />
-                                        )}
-                                      </div>
-                                      <div className="text-xs text-muted-foreground">
-                                        {action.description}
-                                      </div>
-                                    </div>
+                                                                         <div className="flex-1">
+                                       <div className="flex items-center space-x-1">
+                                         <div className="text-xs font-medium">{formatActionName(action.name)}</div>
+                                         {action.is_active && (
+                                           <Check className="h-3 w-3 text-green-500" />
+                                         )}
+                                       </div>
+                                       <div className="text-xs text-muted-foreground">
+                                         {action.description}
+                                       </div>
+                                     </div>
                                     <Switch
                                       checked={action.is_active}
                                       onCheckedChange={() => handleActionToggle(tool.name, action.name)}
