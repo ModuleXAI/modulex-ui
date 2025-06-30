@@ -521,10 +521,11 @@ export function ToolsToggle() {
 
   const activeToolsCount = toolsData.tools.filter(tool => tool.is_active).length
 
-  // Group tools by authentication status
+  // Group tools by status - active first, then inactive, then not connected
   const groupedTools = {
-    'Authenticated': toolsData.tools.filter(tool => tool.is_authenticated),
-    'Not Authenticated': toolsData.tools.filter(tool => !tool.is_authenticated)
+    'Active': toolsData.tools.filter(tool => tool.is_authenticated && tool.is_active),
+    'Inactive': toolsData.tools.filter(tool => tool.is_authenticated && !tool.is_active),
+    'Not Connected': toolsData.tools.filter(tool => !tool.is_authenticated)
   }
 
   // Filter tools based on search
@@ -691,12 +692,6 @@ export function ToolsToggle() {
                               target.src = '/icons/tools/default.svg'
                             }}
                           />
-                          {selectedToolData.is_authenticated && (
-                            <div className={cn(
-                              "absolute -top-0.5 -right-0.5 w-1.5 h-1.5 rounded-full",
-                              selectedToolData.is_active ? "bg-green-500" : "bg-red-500"
-                            )} />
-                          )}
                         </div>
                         <div>
                           <div className="font-medium text-sm">
@@ -725,14 +720,6 @@ export function ToolsToggle() {
                           title="Disconnect tool"
                         >
                           <Unplug className="h-3 w-3" />
-                        </Button>
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          className="h-5 w-5"
-                          onClick={() => setSelectedTool(null)}
-                        >
-                          <ChevronRight className="h-3 w-3 rotate-180" />
                         </Button>
                       </div>
                     </div>
