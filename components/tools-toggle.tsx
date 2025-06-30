@@ -697,13 +697,12 @@ export function ToolsToggle() {
                           <div className="font-medium text-sm">
                             {selectedToolData.display_name}
                           </div>
-                          <div className="text-xs text-muted-foreground">Actions</div>
+                          <div className="text-xs text-muted-foreground">
+                            Actions • {selectedToolData.actions.filter(action => action.is_active).length}/{selectedToolData.actions.length}
+                          </div>
                         </div>
                       </div>
                       <div className="flex items-center space-x-2">
-                        <Badge variant="outline" className="text-xs h-5 px-2">
-                          {selectedToolData.actions.filter(action => action.is_active).length}/{selectedToolData.actions.length}
-                        </Badge>
                         <Switch
                           checked={selectedToolData.is_active}
                           onCheckedChange={() => handleToolToggle(selectedTool)}
