@@ -403,18 +403,99 @@ export function ToolsToggle() {
       const authData = await getAuthUrl(toolName)
       
       if (authData && authData.auth_url) {
-        // Auth URL'ini yeni pencerede aç
-        window.open(authData.auth_url, '_blank', 'width=600,height=700')
+        // Auth URL'ini popup'ta aç
+        const popup = window.open(
+          authData.auth_url, 
+          'auth_popup', 
+          'width=600,height=700,scrollbars=yes,resizable=yes,status=yes,location=yes,toolbar=no,menubar=no'
+        )
         
         console.log(`Authentication started for ${toolName}`)
         console.log(`Auth URL: ${authData.auth_url}`)
         console.log(`State: ${authData.state}`)
         
-        // Auth tamamlandıktan sonra tools verisini yeniden yükle
-        // Bu gerçek uygulamada callback veya polling ile yapılabilir
-        setTimeout(async () => {
-          await loadToolsData()
-        }, 5000) // 5 saniye sonra kontrol et
+        // PostMessage listener ekle - auth başarılı olduğunda popup'tan mesaj bekle
+        const handleMessage = async (event: MessageEvent) => {
+          // Güvenlik için origin kontrolü yapabilirsiniz
+          if (event.data.type === 'AUTH_SUCCESS') {
+            console.log('Auth başarılı! Popup kapatılıyor ve tools yeniden yükleniyor...')
+            
+            // Popup'ı kapat
+            if (popup && !popup.closed) {
+              popup.close()
+            }
+            
+            // Tools verisini hemen yeniden yükle
+            await loadToolsData()
+            
+            // Event listener'ı temizle
+            window.removeEventListener('message', handleMessage)
+          } else if (event.data.type === 'AUTH_ERROR') {
+            console.log('Auth başarısız!')
+            
+            // Popup'ı kapat
+            if (popup && !popup.closed) {
+              popup.close()
+            }
+            
+            // Event listener'ı temizle
+            window.removeEventListener('message', handleMessage)
+          }
+        }
+        
+                 // Message listener'ını ekle
+         window.addEventListener('message', handleMessage)
+         
+         // Auth durumunu 3 saniyede bir kontrol et (COOP nedeniyle popup.closed kullanamıyoruz)
+         const checkAuth = setInterval(async () => {
+           try {
+             console.log(`Checking auth status for ${toolName}...`)
+             const response = await fetch(`/api/tools`, {
+               method: 'GET',
+               headers: {
+                 'Content-Type': 'application/json',
+               }
+             })
+             
+             if (response.ok) {
+               const data = await response.json()
+               console.log(`Tools data received:`, data)
+               const tool = data.tools?.find((t: any) => t.name === toolName)
+               console.log(`Found tool ${toolName}:`, tool)
+               
+               if (tool && tool.is_authenticated) {
+                 console.log('🎉 Auth başarılı (polling ile tespit edildi)! Popup kapatılıyor...')
+                 
+                 // Popup'ı kapatmaya çalış (COOP nedeniyle çalışmayabilir)
+                 try {
+                   popup?.close()
+                 } catch (e) {
+                   console.log('Popup kapatılamadı (COOP policy), kullanıcı manuel kapatmalı')
+                 }
+                 
+                 // Tools verisini yeniden yükle
+                 await loadToolsData()
+                 
+                 // Temizle
+                 clearInterval(checkAuth)
+                 window.removeEventListener('message', handleMessage)
+               } else {
+                 console.log(`Tool ${toolName} not yet authenticated:`, tool?.is_authenticated)
+               }
+             } else {
+               console.log('Failed to fetch tools data:', response.status)
+             }
+           } catch (error) {
+             // Polling error, devam et
+             console.log('Auth polling error:', error)
+           }
+         }, 3000)
+        
+                 // 5 dakika sonra interval ve listener'ı temizle (güvenlik)
+         setTimeout(() => {
+           clearInterval(checkAuth)
+           window.removeEventListener('message', handleMessage)
+         }, 300000)
       } else {
         console.error('Failed to get auth URL')
       }
