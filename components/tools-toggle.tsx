@@ -609,8 +609,8 @@ export function ToolsToggle() {
               Object.entries(filteredGroupedTools).map(([group, tools]) => (
                 <CommandGroup key={group} heading={group}>
                   {tools.map((tool) => (
-                    <div key={tool.name} className="px-2 py-1">
-                      <CommandItem className="flex flex-col items-start p-2 space-y-2">
+                    <div key={tool.name} className="px-1 py-0.5">
+                      <CommandItem className="flex flex-col items-start p-1.5 space-y-1.5">
                         <div className="flex items-center justify-between w-full">
                           <div className="flex items-center space-x-2 flex-1">
                             <div className="flex items-center space-x-2">
@@ -626,11 +626,11 @@ export function ToolsToggle() {
                                      target.src = '/icons/tools/default.svg'
                                    }}
                                  />
-                                {/* Small health status indicator */}
-                                <div className={cn(
-                                  "absolute -top-0.5 -right-0.5 w-2 h-2 rounded-full border border-white",
-                                  tool.health_status ? "bg-green-500" : "bg-red-500"
-                                )} />
+                                                                 {/* Small health status indicator */}
+                                 <div className={cn(
+                                   "absolute -top-0.5 -right-0.5 w-1.5 h-1.5 rounded-full border border-white",
+                                   tool.health_status ? "bg-green-500" : "bg-red-500"
+                                 )} />
                               </div>
                               <div>
                                 <div className="font-medium text-sm">{tool.display_name}</div>
@@ -647,7 +647,7 @@ export function ToolsToggle() {
                                 <Switch
                                   checked={tool.is_active}
                                   onCheckedChange={() => handleToolToggle(tool.name)}
-                                  size="sm"
+                                  size="xs"
                                   disabled={operationInProgress?.type === 'tool' && operationInProgress?.id === tool.name}
                                 />
                                 <Button
@@ -694,7 +694,7 @@ export function ToolsToggle() {
                         {tool.is_authenticated && tool.is_active && expandedTools.has(tool.name) && (
                           <Collapsible open={expandedTools.has(tool.name)} className="w-full">
                             <CollapsibleContent className="w-full">
-                              <div className="border-t pt-2 space-y-1">
+                              <div className="border-t pt-1.5 space-y-0.5">
                                 <div className="text-xs font-medium text-muted-foreground mb-1 flex items-center space-x-1">
                                   <span>Actions</span>
                                   <Badge variant="outline" className="text-xs h-3 px-1">
@@ -702,7 +702,7 @@ export function ToolsToggle() {
                                   </Badge>
                                 </div>
                                 {tool.actions.map((action) => (
-                                  <div key={action.name} className="flex items-center justify-between py-1 px-2 rounded-md hover:bg-muted/50">
+                                  <div key={action.name} className="flex items-center justify-between py-0.5 px-1.5 rounded-md hover:bg-muted/50">
                                     <div className="flex-1">
                                       <div className="flex items-center space-x-1">
                                         <div className="text-xs font-medium">{action.name}</div>
@@ -717,7 +717,7 @@ export function ToolsToggle() {
                                     <Switch
                                       checked={action.is_active}
                                       onCheckedChange={() => handleActionToggle(tool.name, action.name)}
-                                      size="sm"
+                                      size="xs"
                                       disabled={operationInProgress?.type === 'action' && operationInProgress?.id === `${tool.name}-${action.name}`}
                                     />
                                   </div>
