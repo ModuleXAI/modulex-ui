@@ -485,9 +485,9 @@ export function ToolsToggle() {
           )}
         </Button>
       </PopoverTrigger>
-      <PopoverContent className="w-80 p-0" align="start">
-        <div className="p-4">
-          <div className="flex items-center justify-between mb-3">
+      <PopoverContent className="w-80 p-0 max-h-96" align="start">
+        <div className="p-4 flex flex-col max-h-96">
+          <div className="flex items-center justify-between mb-3 flex-shrink-0">
             <h3 className="font-semibold text-sm">Available Tools</h3>
             <Button
               variant="ghost"
@@ -499,7 +499,7 @@ export function ToolsToggle() {
             </Button>
           </div>
           
-          <div className="space-y-2">
+          <div className="space-y-2 overflow-y-auto flex-1 pr-1">
             {isLoading ? (
               <div className="text-center py-6 text-muted-foreground text-sm">
                 Loading tools...
