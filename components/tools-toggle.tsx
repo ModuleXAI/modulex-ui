@@ -318,8 +318,7 @@ export function ToolsToggle() {
       if (success) {
         // Server'dan başarı gelirse local cache'i de güncelle
         setCookie('toolsState', JSON.stringify(newToolsData))
-        // Tools verisini yeniden yükle
-        await loadToolsData()
+        // Optimistic update zaten yapıldı, yeniden yüklemeye gerek yok
       } else {
         // API başarısızsa geri al
         const revertedToolsData = { ...toolsData }
@@ -364,8 +363,7 @@ export function ToolsToggle() {
       if (success) {
         // Server'dan başarı gelirse local cache'i de güncelle
         setCookie('toolsState', JSON.stringify(newToolsData))
-        // Tools verisini yeniden yükle
-        await loadToolsData()
+        // Optimistic update zaten yapıldı, yeniden yüklemeye gerek yok
       } else {
         // API başarısızsa geri al
         const revertedToolsData = { ...toolsData }
@@ -674,6 +672,13 @@ export function ToolsToggle() {
             const selectedToolData = toolsData.tools.find(t => t.name === selectedTool)
             if (!selectedToolData) return null
             
+            // Filter actions based on search
+            const filteredActions = selectedToolData.actions.filter(action =>
+              action.name.toLowerCase().includes(searchValue.toLowerCase()) ||
+              formatActionName(action.name).toLowerCase().includes(searchValue.toLowerCase()) ||
+              action.description.toLowerCase().includes(searchValue.toLowerCase())
+            )
+            
             return (
               <div className="absolute left-full top-0 ml-2 z-50">
                 <div className="w-72 bg-background border rounded-md shadow-lg">
@@ -723,27 +728,46 @@ export function ToolsToggle() {
                       </div>
                     </div>
                   </div>
-                  <div className="p-2 space-y-1 max-h-80 overflow-y-auto">
-                    {selectedToolData.actions.map((action) => (
-                      <div 
-                        key={action.name} 
-                        className="flex items-center justify-between py-2 px-3 rounded-md hover:bg-muted/50 border cursor-pointer transition-colors"
-                        onClick={() => handleActionToggle(selectedTool, action.name)}
-                      >
-                        <div className="flex-1 min-w-0">
-                          <div className="flex items-center space-x-2">
-                            <div className="text-sm font-medium">{formatActionName(action.name)}</div>
-                            {action.is_active && (
-                              <div className="w-1.5 h-1.5 bg-green-500 rounded-full" />
-                            )}
-                          </div>
-                          <div className="text-xs text-muted-foreground mt-0.5 truncate">
-                            {action.description}
-                          </div>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
+                  
+                  {/* Modern Command Structure for Actions */}
+                  <Command>
+                    <CommandList>
+                      {filteredActions.length === 0 ? (
+                        <CommandEmpty>
+                          {searchValue ? 'No actions match your search.' : 'No actions available.'}
+                        </CommandEmpty>
+                      ) : (
+                        <CommandGroup>
+                          {filteredActions.map((action) => (
+                            <div key={action.name} className="px-1 py-0.5">
+                              <CommandItem 
+                                className="flex items-center justify-between p-1.5 cursor-pointer"
+                                onSelect={() => handleActionToggle(selectedTool, action.name)}
+                              >
+                                <div className="flex-1 min-w-0">
+                                  <div className="flex items-center space-x-2">
+                                    <div className="font-medium text-xs">{formatActionName(action.name)}</div>
+                                    {action.is_active && (
+                                      <div className="w-1.5 h-1.5 bg-green-500 rounded-full" />
+                                    )}
+                                  </div>
+                                  <div className="text-xs text-muted-foreground mt-0.5 truncate">
+                                    {action.description}
+                                  </div>
+                                </div>
+                                
+                                {/* Loading indicator for this specific action */}
+                                {operationInProgress?.type === 'action' && 
+                                 operationInProgress?.id === `${selectedTool}-${action.name}` && (
+                                  <div className="w-3 h-3 border border-gray-300 border-t-transparent rounded-full animate-spin" />
+                                )}
+                              </CommandItem>
+                            </div>
+                          ))}
+                        </CommandGroup>
+                      )}
+                    </CommandList>
+                  </Command>
                 </div>
               </div>
             )
