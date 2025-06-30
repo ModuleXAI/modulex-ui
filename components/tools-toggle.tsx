@@ -3,20 +3,29 @@
 import { cn } from '@/lib/utils'
 import { getCookie, setCookie } from '@/lib/utils/cookies'
 import {
+  Check,
   ChevronRight,
   ExternalLink,
   Settings,
   ShieldCheck,
   ShieldX,
-  Unplug,
-  X
+  Unplug
 } from 'lucide-react'
 import { useEffect, useState } from 'react'
+import { Badge } from './ui/badge'
 import { Button } from './ui/button'
 import {
   Collapsible,
   CollapsibleContent
 } from './ui/collapsible'
+import {
+  Command,
+  CommandEmpty,
+  CommandGroup,
+  CommandInput,
+  CommandItem,
+  CommandList
+} from './ui/command'
 import {
   Popover,
   PopoverContent,
@@ -246,6 +255,7 @@ export function ToolsToggle() {
   const [expandedTools, setExpandedTools] = useState<Set<string>>(new Set())
   const [isLoading, setIsLoading] = useState(false)
   const [operationInProgress, setOperationInProgress] = useState<{ type: string, id: string } | null>(null)
+  const [searchValue, setSearchValue] = useState('')
 
   useEffect(() => {
     loadToolsData()
@@ -548,143 +558,175 @@ export function ToolsToggle() {
 
   const activeToolsCount = toolsData.tools.filter(tool => tool.is_active).length
 
+  // Group tools by authentication status
+  const groupedTools = {
+    'Authenticated': toolsData.tools.filter(tool => tool.is_authenticated),
+    'Not Authenticated': toolsData.tools.filter(tool => !tool.is_authenticated)
+  }
+
+  // Filter tools based on search
+  const filteredGroupedTools = Object.entries(groupedTools).reduce((acc, [group, tools]) => {
+    const filtered = tools.filter(tool => 
+      tool.display_name.toLowerCase().includes(searchValue.toLowerCase()) ||
+      tool.name.toLowerCase().includes(searchValue.toLowerCase()) ||
+      tool.actions.some(action => 
+        action.name.toLowerCase().includes(searchValue.toLowerCase()) ||
+        action.description.toLowerCase().includes(searchValue.toLowerCase())
+      )
+    )
+    if (filtered.length > 0) {
+      acc[group] = filtered
+    }
+    return acc
+  }, {} as Record<string, Tool[]>)
+
   return (
     <Popover open={open} onOpenChange={setOpen}>
       <PopoverTrigger asChild>
         <Button
           variant="outline"
-          role="button"
+          role="combobox"
           aria-expanded={open}
-          className="text-sm rounded-full shadow-none focus:ring-0 gap-1"
+          className="text-sm rounded-full shadow-none focus:ring-0"
         >
-          <Settings className="h-4 w-4" />
-          <span className="text-xs">Tools</span>
-          {activeToolsCount > 0 && (
-            <span className="bg-accent-blue text-accent-blue-foreground text-xs rounded-full px-1.5 py-0.5 min-w-5 h-5 flex items-center justify-center">
-              {activeToolsCount}
-            </span>
-          )}
+          <div className="flex items-center space-x-1">
+            <Settings className="h-4 w-4" />
+            <span className="text-xs font-medium">Tools</span>
+            {activeToolsCount > 0 && (
+              <Badge variant="secondary" className="bg-accent-blue text-accent-blue-foreground text-xs h-5 px-1.5">
+                {activeToolsCount}
+              </Badge>
+            )}
+          </div>
         </Button>
       </PopoverTrigger>
-      <PopoverContent className="w-80 p-0 max-h-96" align="start">
-        <div className="p-4 flex flex-col max-h-96">
-          <div className="flex items-center justify-between mb-3 flex-shrink-0">
-            <h3 className="font-semibold text-sm">Available Tools</h3>
-            <Button
-              variant="ghost"
-              size="icon"
-              className="h-6 w-6"
-              onClick={() => setOpen(false)}
-            >
-              <X className="h-4 w-4" />
-            </Button>
-          </div>
-          
-          <div className="space-y-2 overflow-y-auto flex-1 pr-1">
+      <PopoverContent className="w-96 p-0" align="start">
+        <Command>
+          <CommandInput placeholder="Search tools and actions..." />
+          <CommandList>
+            <CommandEmpty>No tools found.</CommandEmpty>
             {isLoading ? (
-              <div className="text-center py-6 text-muted-foreground text-sm">
+              <div className="p-4 text-center text-muted-foreground text-sm">
                 Loading tools...
               </div>
             ) : (
-              toolsData.tools.map((tool) => (
-                <div key={tool.name} className="border rounded-lg p-3">
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-2 flex-1">
-                      {getHealthIcon(tool.health_status)}
-                      <div className="flex-1">
-                        <div className="font-medium text-sm">{tool.display_name}</div>
-                        <div className="text-xs text-muted-foreground">
-                          {tool.is_authenticated ? 'Authenticated' : 'Not authenticated'}
-                        </div>
-                      </div>
-                    </div>
-                  
-                  <div className="flex items-center gap-2">
-                    {tool.is_authenticated ? (
-                      <>
-                        <Switch
-                          checked={tool.is_active}
-                          onCheckedChange={() => handleToolToggle(tool.name)}
-                          size="sm"
-                          disabled={operationInProgress?.type === 'tool' && operationInProgress?.id === tool.name}
-                        />
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          className="h-6 w-6 text-red-500 hover:text-red-700 hover:bg-red-50"
-                          onClick={() => handleDisconnect(tool.name)}
-                          disabled={operationInProgress?.type === 'disconnect' && operationInProgress?.id === tool.name}
-                          title="Disconnect tool"
-                        >
-                          <Unplug className="h-3 w-3" />
-                        </Button>
-                        {tool.is_active && tool.actions.length > 0 && (
-                          <Button
-                            variant="ghost"
-                            size="icon"
-                            className="h-6 w-6"
-                            onClick={() => toggleToolExpanded(tool.name)}
-                          >
-                            <ChevronRight 
-                              className={cn(
-                                "h-4 w-4 transition-transform",
-                                expandedTools.has(tool.name) && "rotate-90"
-                              )}
-                            />
-                          </Button>
-                        )}
-                      </>
-                    ) : (
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={() => handleAuthenticate(tool.name)}
-                        className="text-xs h-7"
-                      >
-                        <ExternalLink className="h-3 w-3 mr-1" />
-                        Auth
-                      </Button>
-                    )}
-                  </div>
-                </div>
-
-                {/* Actions - show only if tool is authenticated, active, and expanded */}
-                {tool.is_authenticated && tool.is_active && expandedTools.has(tool.name) && (
-                  <Collapsible open={expandedTools.has(tool.name)}>
-                    <CollapsibleContent className="mt-3 pt-3 border-t">
-                      <div className="space-y-2">
-                        <div className="text-xs font-medium text-muted-foreground mb-2">Actions</div>
-                        {tool.actions.map((action) => (
-                          <div key={action.name} className="flex items-center justify-between py-1">
-                            <div className="flex-1">
-                              <div className="text-sm font-medium">{action.name}</div>
-                              <div className="text-xs text-muted-foreground">
-                                {action.description}
+              Object.entries(filteredGroupedTools).map(([group, tools]) => (
+                <CommandGroup key={group} heading={group}>
+                  {tools.map((tool) => (
+                    <div key={tool.name} className="p-2">
+                      <CommandItem className="flex flex-col items-start p-3 space-y-3">
+                        <div className="flex items-center justify-between w-full">
+                          <div className="flex items-center space-x-3 flex-1">
+                            <div className="flex items-center space-x-2">
+                              {getHealthIcon(tool.health_status)}
+                              <div>
+                                <div className="font-medium text-sm">{tool.display_name}</div>
+                                <div className="text-xs text-muted-foreground">
+                                  {tool.is_authenticated ? 'Connected' : 'Not connected'}
+                                </div>
                               </div>
                             </div>
-                            <Switch
-                              checked={action.is_active}
-                              onCheckedChange={() => handleActionToggle(tool.name, action.name)}
-                              size="sm"
-                              disabled={operationInProgress?.type === 'action' && operationInProgress?.id === `${tool.name}-${action.name}`}
-                            />
                           </div>
-                        ))}
-                      </div>
-                    </CollapsibleContent>
-                  </Collapsible>
-                )}
-                </div>
+                          
+                          <div className="flex items-center space-x-2">
+                            {tool.is_authenticated ? (
+                              <>
+                                <Switch
+                                  checked={tool.is_active}
+                                  onCheckedChange={() => handleToolToggle(tool.name)}
+                                  size="sm"
+                                  disabled={operationInProgress?.type === 'tool' && operationInProgress?.id === tool.name}
+                                />
+                                <Button
+                                  variant="ghost"
+                                  size="icon"
+                                  className="h-6 w-6 text-muted-foreground hover:text-red-500"
+                                  onClick={() => handleDisconnect(tool.name)}
+                                  disabled={operationInProgress?.type === 'disconnect' && operationInProgress?.id === tool.name}
+                                  title="Disconnect tool"
+                                >
+                                  <Unplug className="h-3 w-3" />
+                                </Button>
+                                {tool.is_active && tool.actions.length > 0 && (
+                                  <Button
+                                    variant="ghost"
+                                    size="icon"
+                                    className="h-6 w-6"
+                                    onClick={() => toggleToolExpanded(tool.name)}
+                                  >
+                                    <ChevronRight 
+                                      className={cn(
+                                        "h-4 w-4 transition-transform",
+                                        expandedTools.has(tool.name) && "rotate-90"
+                                      )}
+                                    />
+                                  </Button>
+                                )}
+                              </>
+                            ) : (
+                              <Button
+                                variant="outline"
+                                size="sm"
+                                onClick={() => handleAuthenticate(tool.name)}
+                                className="text-xs h-7"
+                              >
+                                <ExternalLink className="h-3 w-3 mr-1" />
+                                Connect
+                              </Button>
+                            )}
+                          </div>
+                        </div>
+
+                        {/* Actions - show only if tool is authenticated, active, and expanded */}
+                        {tool.is_authenticated && tool.is_active && expandedTools.has(tool.name) && (
+                          <Collapsible open={expandedTools.has(tool.name)} className="w-full">
+                            <CollapsibleContent className="w-full">
+                              <div className="border-t pt-3 space-y-2">
+                                <div className="text-xs font-medium text-muted-foreground mb-2 flex items-center space-x-1">
+                                  <span>Actions</span>
+                                  <Badge variant="outline" className="text-xs h-4 px-1">
+                                    {tool.actions.filter(action => action.is_active).length}/{tool.actions.length}
+                                  </Badge>
+                                </div>
+                                {tool.actions.map((action) => (
+                                  <div key={action.name} className="flex items-center justify-between py-2 px-3 rounded-md hover:bg-muted/50">
+                                    <div className="flex-1">
+                                      <div className="flex items-center space-x-2">
+                                        <div className="text-sm font-medium">{action.name}</div>
+                                        {action.is_active && (
+                                          <Check className="h-3 w-3 text-green-500" />
+                                        )}
+                                      </div>
+                                      <div className="text-xs text-muted-foreground mt-1">
+                                        {action.description}
+                                      </div>
+                                    </div>
+                                    <Switch
+                                      checked={action.is_active}
+                                      onCheckedChange={() => handleActionToggle(tool.name, action.name)}
+                                      size="sm"
+                                      disabled={operationInProgress?.type === 'action' && operationInProgress?.id === `${tool.name}-${action.name}`}
+                                    />
+                                  </div>
+                                ))}
+                              </div>
+                            </CollapsibleContent>
+                          </Collapsible>
+                        )}
+                      </CommandItem>
+                    </div>
+                  ))}
+                </CommandGroup>
               ))
             )}
-          </div>
-          
-          {!isLoading && toolsData.tools.length === 0 && (
-            <div className="text-center py-6 text-muted-foreground text-sm">
-              No tools available
-            </div>
-          )}
-        </div>
+            
+            {!isLoading && Object.keys(filteredGroupedTools).length === 0 && (
+              <div className="p-4 text-center text-muted-foreground text-sm">
+                No tools available
+              </div>
+            )}
+          </CommandList>
+        </Command>
       </PopoverContent>
     </Popover>
   )
