@@ -9,23 +9,10 @@ import {
   Unplug
 } from 'lucide-react'
 import Image from 'next/image'
-import { useEffect, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { Badge } from './ui/badge'
 import { Button } from './ui/button'
 
-import {
-  Command,
-  CommandEmpty,
-  CommandGroup,
-  CommandInput,
-  CommandItem,
-  CommandList
-} from './ui/command'
-import {
-  Popover,
-  PopoverContent,
-  PopoverTrigger
-} from './ui/popover'
 import { Switch } from './ui/switch'
 
 interface ToolAction {
@@ -517,33 +504,7 @@ export function ToolsToggle() {
     setSelectedTool(selectedTool === toolName ? null : toolName)
   }
 
-  const activeToolsCount = toolsData.tools.filter(tool => tool.is_active).length
-
-  // Group tools by status - active first, then inactive, then not connected
-  const groupedTools = {
-    'Active': toolsData.tools.filter(tool => tool.is_authenticated && tool.is_active),
-    'Inactive': toolsData.tools.filter(tool => tool.is_authenticated && !tool.is_active),
-    'Not Connected': toolsData.tools.filter(tool => !tool.is_authenticated)
-  }
-
-  // Filter tools based on search
-  const filteredGroupedTools = Object.entries(groupedTools).reduce((acc, [group, tools]) => {
-    const filtered = tools.filter(tool => 
-      tool.display_name.toLowerCase().includes(searchValue.toLowerCase()) ||
-      tool.name.toLowerCase().includes(searchValue.toLowerCase()) ||
-      tool.actions.some(action => 
-        action.name.toLowerCase().includes(searchValue.toLowerCase()) ||
-        formatActionName(action.name).toLowerCase().includes(searchValue.toLowerCase()) ||
-        action.description.toLowerCase().includes(searchValue.toLowerCase())
-      )
-    )
-    if (filtered.length > 0) {
-      acc[group] = filtered
-    }
-    return acc
-  }, {} as Record<string, Tool[]>)
-
-  // Get tool icon path
+  // Helper functions - define before use
   const getToolIcon = (toolName: string) => {
     return `/icons/tools/${toolName}.svg`
   }
@@ -556,42 +517,100 @@ export function ToolsToggle() {
       .join(' ')
   }
 
+  const activeToolsCount = toolsData.tools.filter(tool => tool.is_active).length
+
+  // Group tools by status - active first, then inactive, then not connected
+  const groupedTools = useMemo(() => ({
+    'Active': toolsData.tools.filter(tool => tool.is_authenticated && tool.is_active),
+    'Inactive': toolsData.tools.filter(tool => tool.is_authenticated && !tool.is_active),
+    'Not Connected': toolsData.tools.filter(tool => !tool.is_authenticated)
+  }), [toolsData.tools])
+
+  // Filter tools based on search - optimized with useMemo
+  const filteredGroupedTools = useMemo(() => {
+    return Object.entries(groupedTools).reduce((acc, [group, tools]) => {
+      const filtered = tools.filter(tool => 
+        tool.display_name.toLowerCase().includes(searchValue.toLowerCase()) ||
+        tool.name.toLowerCase().includes(searchValue.toLowerCase()) ||
+        tool.actions.some(action => 
+          action.name.toLowerCase().includes(searchValue.toLowerCase()) ||
+          formatActionName(action.name).toLowerCase().includes(searchValue.toLowerCase()) ||
+          action.description.toLowerCase().includes(searchValue.toLowerCase())
+        )
+      )
+      if (filtered.length > 0) {
+        acc[group] = filtered
+      }
+      return acc
+    }, {} as Record<string, Tool[]>)
+  }, [searchValue, groupedTools])
+
   return (
     <div className="relative">
-      <Popover open={open} onOpenChange={setOpen}>
-        <PopoverTrigger asChild>
-          <Button
-            variant="outline"
-            role="combobox"
-            aria-expanded={open}
-            className="text-sm rounded-full shadow-none focus:ring-0"
-          >
-            <div className="flex items-center space-x-1">
-              <Settings className="h-4 w-4" />
-              <span className="text-xs font-medium">Tools</span>
-              {activeToolsCount > 0 && (
-                <Badge variant="secondary" className="bg-accent-blue text-accent-blue-foreground text-xs h-4 px-1.5">
-                  {activeToolsCount}
-                </Badge>
-              )}
+      {/* Tools Button */}
+      <Button
+        variant="outline"
+        role="combobox"
+        aria-expanded={open}
+        className="text-sm rounded-full shadow-none focus:ring-0"
+        onClick={() => setOpen(!open)}
+      >
+        <div className="flex items-center space-x-1">
+          <Settings className="h-4 w-4" />
+          <span className="text-xs font-medium">Tools</span>
+          {activeToolsCount > 0 && (
+            <Badge variant="secondary" className="bg-accent-blue text-accent-blue-foreground text-xs h-4 px-1.5">
+              {activeToolsCount}
+            </Badge>
+          )}
+        </div>
+      </Button>
+
+      {/* Custom Fixed Position Dialog */}
+      {open && (
+        <>
+          {/* Backdrop - click to close */}
+          <div 
+            className="fixed inset-0 z-40"
+            onClick={() => {
+              setOpen(false)
+              setSelectedTool(null)
+              setSearchValue('')
+            }}
+          />
+          
+          {/* Main Tools Dialog - Fixed Position */}
+          <div className="absolute top-full left-0 mt-1 w-80 z-50 bg-background border rounded-md shadow-lg">
+            {/* Custom Search Input */}
+            <div className="flex items-center border-b px-3">
+              <input
+                type="text"
+                placeholder="Search tools and actions..."
+                value={searchValue}
+                onChange={(e) => setSearchValue(e.target.value)}
+                className="flex h-11 w-full rounded-md bg-transparent py-3 text-sm outline-none placeholder:text-muted-foreground disabled:cursor-not-allowed disabled:opacity-50"
+              />
             </div>
-          </Button>
-        </PopoverTrigger>
-        <PopoverContent className="w-80 p-0" align="start">
-          <Command>
-            <CommandInput placeholder="Search tools and actions..." />
-            <CommandList>
-              <CommandEmpty>No tools found.</CommandEmpty>
+            
+            {/* Tools List - Fixed height to prevent positioning issues */}
+            <div className="h-80 overflow-y-auto">
               {isLoading ? (
                 <div className="p-3 text-center text-muted-foreground text-sm">
                   Loading tools...
                 </div>
+              ) : Object.keys(filteredGroupedTools).length === 0 ? (
+                <div className="p-3 text-center text-muted-foreground text-sm">
+                  {searchValue ? 'No tools found.' : 'No tools available'}
+                </div>
               ) : (
                 Object.entries(filteredGroupedTools).map(([group, tools]) => (
-                  <CommandGroup key={group} heading={group}>
-                    {tools.map((tool) => (
-                      <div key={tool.name} className="px-1 py-0.5">
-                        <CommandItem className="flex items-center justify-between p-1.5">
+                  <div key={group} className="p-2">
+                    <div className="px-2 py-1.5 text-xs font-semibold text-muted-foreground">
+                      {group}
+                    </div>
+                    <div className="space-y-1">
+                      {tools.map((tool) => (
+                        <div key={tool.name} className="flex items-center justify-between p-2 rounded-md hover:bg-muted/50 transition-colors">
                           <div className="flex items-center space-x-2 flex-1">
                             <div className="relative">
                               <Image
@@ -652,36 +671,30 @@ export function ToolsToggle() {
                               </Button>
                             )}
                           </div>
-                        </CommandItem>
-                      </div>
-                    ))}
-                  </CommandGroup>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
                 ))
               )}
+            </div>
+          </div>
+
+          {/* Actions Side Panel - Fixed Position */}
+          {selectedTool && (
+            (() => {
+              const selectedToolData = toolsData.tools.find(t => t.name === selectedTool)
+              if (!selectedToolData) return null
               
-              {!isLoading && Object.keys(filteredGroupedTools).length === 0 && (
-                <div className="p-3 text-center text-muted-foreground text-sm">
-                  No tools available
-                </div>
-              )}
-            </CommandList>
-          </Command>
-          
-          {/* Actions Side Panel - Inside PopoverContent for proper alignment */}
-          {selectedTool && (() => {
-            const selectedToolData = toolsData.tools.find(t => t.name === selectedTool)
-            if (!selectedToolData) return null
-            
-            // Filter actions based on search
-            const filteredActions = selectedToolData.actions.filter(action =>
-              action.name.toLowerCase().includes(searchValue.toLowerCase()) ||
-              formatActionName(action.name).toLowerCase().includes(searchValue.toLowerCase()) ||
-              action.description.toLowerCase().includes(searchValue.toLowerCase())
-            )
-            
-            return (
-              <div className="absolute left-full top-0 ml-2 z-50">
-                <div className="w-72 bg-background border rounded-md shadow-lg">
+              // Filter actions based on search
+              const filteredActions = selectedToolData.actions.filter(action =>
+                action.name.toLowerCase().includes(searchValue.toLowerCase()) ||
+                formatActionName(action.name).toLowerCase().includes(searchValue.toLowerCase()) ||
+                action.description.toLowerCase().includes(searchValue.toLowerCase())
+              )
+              
+              return (
+                <div className="absolute top-full left-80 ml-3 mt-1 w-72 z-50 bg-background border rounded-md shadow-lg">
                   <div className="border-b p-3">
                     <div className="flex items-center justify-between">
                       <div className="flex items-center space-x-2">
@@ -729,51 +742,46 @@ export function ToolsToggle() {
                     </div>
                   </div>
                   
-                  {/* Modern Command Structure for Actions */}
-                  <Command>
-                    <CommandList>
-                      {filteredActions.length === 0 ? (
-                        <CommandEmpty>
-                          {searchValue ? 'No actions match your search.' : 'No actions available.'}
-                        </CommandEmpty>
-                      ) : (
-                        <CommandGroup>
-                          {filteredActions.map((action) => (
-                            <div key={action.name} className="px-1 py-0.5">
-                              <CommandItem 
-                                className="flex items-center justify-between p-1.5 cursor-pointer"
-                                onSelect={() => handleActionToggle(selectedTool, action.name)}
-                              >
-                                <div className="flex-1 min-w-0">
-                                  <div className="flex items-center space-x-2">
-                                    <div className="font-medium text-xs">{formatActionName(action.name)}</div>
-                                    {action.is_active && (
-                                      <div className="w-1.5 h-1.5 bg-green-500 rounded-full" />
-                                    )}
-                                  </div>
-                                  <div className="text-xs text-muted-foreground mt-0.5 truncate">
-                                    {action.description}
-                                  </div>
-                                </div>
-                                
-                                {/* Loading indicator for this specific action */}
-                                {operationInProgress?.type === 'action' && 
-                                 operationInProgress?.id === `${selectedTool}-${action.name}` && (
-                                  <div className="w-3 h-3 border border-gray-300 border-t-transparent rounded-full animate-spin" />
-                                )}
-                              </CommandItem>
+                  {/* Actions List - No Command needed, just styled divs */}
+                  <div className="p-2 space-y-1 h-80 overflow-y-auto">
+                    {filteredActions.length === 0 ? (
+                      <div className="p-3 text-center text-muted-foreground text-sm">
+                        {searchValue ? 'No actions match your search.' : 'No actions available.'}
+                      </div>
+                    ) : (
+                      filteredActions.map((action) => (
+                        <div 
+                          key={action.name} 
+                          className="flex items-center justify-between py-2 px-3 rounded-md hover:bg-muted/50 cursor-pointer transition-colors"
+                          onClick={() => handleActionToggle(selectedTool, action.name)}
+                        >
+                          <div className="flex-1 min-w-0">
+                            <div className="flex items-center space-x-2">
+                              <div className="font-medium text-xs">{formatActionName(action.name)}</div>
+                              {action.is_active && (
+                                <div className="w-1.5 h-1.5 bg-green-500 rounded-full" />
+                              )}
                             </div>
-                          ))}
-                        </CommandGroup>
-                      )}
-                    </CommandList>
-                  </Command>
+                            <div className="text-xs text-muted-foreground mt-0.5 truncate">
+                              {action.description}
+                            </div>
+                          </div>
+                          
+                          {/* Loading indicator for this specific action */}
+                          {operationInProgress?.type === 'action' && 
+                           operationInProgress?.id === `${selectedTool}-${action.name}` && (
+                            <div className="w-3 h-3 border border-gray-300 border-t-transparent rounded-full animate-spin" />
+                          )}
+                        </div>
+                      ))
+                    )}
+                  </div>
                 </div>
-              </div>
-            )
-          })()}
-        </PopoverContent>
-      </Popover>
+              )
+            })()
+          )}
+        </>
+      )}
     </div>
   )
-} 
+}
