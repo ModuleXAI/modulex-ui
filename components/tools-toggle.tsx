@@ -618,8 +618,8 @@ export function ToolsToggle() {
                                  <Image
                                    src={getToolIcon(tool.name)}
                                    alt={tool.display_name}
-                                   width={16}
-                                   height={16}
+                                   width={24}
+                                   height={24}
                                    className="rounded"
                                    onError={(e) => {
                                      const target = e.target as HTMLImageElement
@@ -632,12 +632,12 @@ export function ToolsToggle() {
                                    tool.health_status ? "bg-green-500" : "bg-red-500"
                                  )} />
                               </div>
-                              <div>
-                                <div className="font-medium text-sm">{tool.display_name}</div>
-                                <div className="text-xs text-muted-foreground">
-                                  {tool.is_authenticated ? 'Connected' : 'Not connected'}
-                                </div>
-                              </div>
+                                                             <div>
+                                 <div className="font-medium text-xs">{tool.display_name}</div>
+                                 <div className="text-xs text-muted-foreground">
+                                   {tool.is_authenticated ? 'Connected' : 'Not connected'}
+                                 </div>
+                               </div>
                             </div>
                           </div>
                           
