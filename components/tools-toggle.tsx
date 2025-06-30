@@ -643,7 +643,7 @@ export function ToolsToggle() {
                           <div className="flex items-center space-x-1">
                             {tool.is_authenticated ? (
                               <>
-                                {tool.is_active && tool.actions.length > 0 && (
+                                {tool.is_authenticated && tool.actions.length > 0 && (
                                   <Button
                                     variant="ghost"
                                     size="icon"
@@ -749,31 +749,41 @@ export function ToolsToggle() {
                         {searchValue ? 'No actions match your search.' : 'No actions available.'}
                       </div>
                     ) : (
-                      filteredActions.map((action) => (
-                        <div 
-                          key={action.name} 
-                          className="flex items-center justify-between py-2 px-3 rounded-md hover:bg-muted/50 cursor-pointer transition-colors"
-                          onClick={() => handleActionToggle(selectedTool, action.name)}
-                        >
-                          <div className="flex-1 min-w-0">
-                            <div className="flex items-center space-x-2">
-                              <div className="font-medium text-xs">{formatActionName(action.name)}</div>
-                              {action.is_active && (
-                                <div className="w-1.5 h-1.5 bg-green-500 rounded-full" />
-                              )}
+                      filteredActions.map((action) => {
+                        const isToolActive = selectedToolData.is_active
+                        const isActionDisabled = !isToolActive
+                        
+                        return (
+                          <div 
+                            key={action.name} 
+                            className={cn(
+                              "flex items-center justify-between py-2 px-3 rounded-md transition-colors",
+                              isActionDisabled 
+                                ? "opacity-50 cursor-not-allowed" 
+                                : "hover:bg-muted/50 cursor-pointer"
+                            )}
+                            onClick={isActionDisabled ? undefined : () => handleActionToggle(selectedTool, action.name)}
+                          >
+                            <div className="flex-1 min-w-0">
+                              <div className="flex items-center space-x-2">
+                                <div className="font-medium text-xs">{formatActionName(action.name)}</div>
+                                {action.is_active && (
+                                  <div className="w-1.5 h-1.5 bg-green-500 rounded-full" />
+                                )}
+                              </div>
+                              <div className="text-xs text-muted-foreground mt-0.5 truncate">
+                                {action.description}
+                              </div>
                             </div>
-                            <div className="text-xs text-muted-foreground mt-0.5 truncate">
-                              {action.description}
-                            </div>
+                            
+                            {/* Loading indicator for this specific action */}
+                            {operationInProgress?.type === 'action' && 
+                             operationInProgress?.id === `${selectedTool}-${action.name}` && (
+                              <div className="w-3 h-3 border border-gray-300 border-t-transparent rounded-full animate-spin" />
+                            )}
                           </div>
-                          
-                          {/* Loading indicator for this specific action */}
-                          {operationInProgress?.type === 'action' && 
-                           operationInProgress?.id === `${selectedTool}-${action.name}` && (
-                            <div className="w-3 h-3 border border-gray-300 border-t-transparent rounded-full animate-spin" />
-                          )}
-                        </div>
-                      ))
+                        )
+                      })
                     )}
                   </div>
                 </div>
