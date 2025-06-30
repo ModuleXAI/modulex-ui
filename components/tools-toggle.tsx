@@ -7,10 +7,9 @@ import {
   ChevronRight,
   ExternalLink,
   Settings,
-  ShieldCheck,
-  ShieldX,
   Unplug
 } from 'lucide-react'
+import Image from 'next/image'
 import { useEffect, useState } from 'react'
 import { Badge } from './ui/badge'
 import { Button } from './ui/button'
@@ -548,14 +547,6 @@ export function ToolsToggle() {
     saveExpandedState(newExpanded)
   }
 
-  const getHealthIcon = (healthStatus: boolean) => {
-    return healthStatus ? (
-      <ShieldCheck className="h-4 w-4 text-green-500" />
-    ) : (
-      <ShieldX className="h-4 w-4 text-red-500" />
-    )
-  }
-
   const activeToolsCount = toolsData.tools.filter(tool => tool.is_active).length
 
   // Group tools by authentication status
@@ -580,6 +571,11 @@ export function ToolsToggle() {
     return acc
   }, {} as Record<string, Tool[]>)
 
+  // Get tool icon path
+  const getToolIcon = (toolName: string) => {
+    return `/icons/tools/${toolName}.svg`
+  }
+
   return (
     <Popover open={open} onOpenChange={setOpen}>
       <PopoverTrigger asChild>
@@ -593,32 +589,49 @@ export function ToolsToggle() {
             <Settings className="h-4 w-4" />
             <span className="text-xs font-medium">Tools</span>
             {activeToolsCount > 0 && (
-              <Badge variant="secondary" className="bg-accent-blue text-accent-blue-foreground text-xs h-5 px-1.5">
+              <Badge variant="secondary" className="bg-accent-blue text-accent-blue-foreground text-xs h-4 px-1.5">
                 {activeToolsCount}
               </Badge>
             )}
           </div>
         </Button>
       </PopoverTrigger>
-      <PopoverContent className="w-96 p-0" align="start">
+      <PopoverContent className="w-80 p-0" align="start">
         <Command>
           <CommandInput placeholder="Search tools and actions..." />
           <CommandList>
             <CommandEmpty>No tools found.</CommandEmpty>
             {isLoading ? (
-              <div className="p-4 text-center text-muted-foreground text-sm">
+              <div className="p-3 text-center text-muted-foreground text-sm">
                 Loading tools...
               </div>
             ) : (
               Object.entries(filteredGroupedTools).map(([group, tools]) => (
                 <CommandGroup key={group} heading={group}>
                   {tools.map((tool) => (
-                    <div key={tool.name} className="p-2">
-                      <CommandItem className="flex flex-col items-start p-3 space-y-3">
+                    <div key={tool.name} className="px-2 py-1">
+                      <CommandItem className="flex flex-col items-start p-2 space-y-2">
                         <div className="flex items-center justify-between w-full">
-                          <div className="flex items-center space-x-3 flex-1">
+                          <div className="flex items-center space-x-2 flex-1">
                             <div className="flex items-center space-x-2">
-                              {getHealthIcon(tool.health_status)}
+                                                             <div className="relative">
+                                 <Image
+                                   src={getToolIcon(tool.name)}
+                                   alt={tool.display_name}
+                                   width={16}
+                                   height={16}
+                                   className="rounded"
+                                   onError={(e) => {
+                                     const target = e.target as HTMLImageElement
+                                     target.src = '/icons/tools/default.svg'
+                                   }}
+                                 />
+                                {/* Small health status indicator */}
+                                <div className={cn(
+                                  "absolute -top-0.5 -right-0.5 w-2 h-2 rounded-full border border-white",
+                                  tool.health_status ? "bg-green-500" : "bg-red-500"
+                                )} />
+                              </div>
                               <div>
                                 <div className="font-medium text-sm">{tool.display_name}</div>
                                 <div className="text-xs text-muted-foreground">
@@ -628,7 +641,7 @@ export function ToolsToggle() {
                             </div>
                           </div>
                           
-                          <div className="flex items-center space-x-2">
+                          <div className="flex items-center space-x-1">
                             {tool.is_authenticated ? (
                               <>
                                 <Switch
@@ -640,7 +653,7 @@ export function ToolsToggle() {
                                 <Button
                                   variant="ghost"
                                   size="icon"
-                                  className="h-6 w-6 text-muted-foreground hover:text-red-500"
+                                  className="h-5 w-5 text-muted-foreground hover:text-red-500"
                                   onClick={() => handleDisconnect(tool.name)}
                                   disabled={operationInProgress?.type === 'disconnect' && operationInProgress?.id === tool.name}
                                   title="Disconnect tool"
@@ -651,12 +664,12 @@ export function ToolsToggle() {
                                   <Button
                                     variant="ghost"
                                     size="icon"
-                                    className="h-6 w-6"
+                                    className="h-5 w-5"
                                     onClick={() => toggleToolExpanded(tool.name)}
                                   >
                                     <ChevronRight 
                                       className={cn(
-                                        "h-4 w-4 transition-transform",
+                                        "h-3 w-3 transition-transform",
                                         expandedTools.has(tool.name) && "rotate-90"
                                       )}
                                     />
@@ -668,7 +681,7 @@ export function ToolsToggle() {
                                 variant="outline"
                                 size="sm"
                                 onClick={() => handleAuthenticate(tool.name)}
-                                className="text-xs h-7"
+                                className="text-xs h-6 px-2"
                               >
                                 <ExternalLink className="h-3 w-3 mr-1" />
                                 Connect
@@ -681,23 +694,23 @@ export function ToolsToggle() {
                         {tool.is_authenticated && tool.is_active && expandedTools.has(tool.name) && (
                           <Collapsible open={expandedTools.has(tool.name)} className="w-full">
                             <CollapsibleContent className="w-full">
-                              <div className="border-t pt-3 space-y-2">
-                                <div className="text-xs font-medium text-muted-foreground mb-2 flex items-center space-x-1">
+                              <div className="border-t pt-2 space-y-1">
+                                <div className="text-xs font-medium text-muted-foreground mb-1 flex items-center space-x-1">
                                   <span>Actions</span>
-                                  <Badge variant="outline" className="text-xs h-4 px-1">
+                                  <Badge variant="outline" className="text-xs h-3 px-1">
                                     {tool.actions.filter(action => action.is_active).length}/{tool.actions.length}
                                   </Badge>
                                 </div>
                                 {tool.actions.map((action) => (
-                                  <div key={action.name} className="flex items-center justify-between py-2 px-3 rounded-md hover:bg-muted/50">
+                                  <div key={action.name} className="flex items-center justify-between py-1 px-2 rounded-md hover:bg-muted/50">
                                     <div className="flex-1">
-                                      <div className="flex items-center space-x-2">
-                                        <div className="text-sm font-medium">{action.name}</div>
+                                      <div className="flex items-center space-x-1">
+                                        <div className="text-xs font-medium">{action.name}</div>
                                         {action.is_active && (
                                           <Check className="h-3 w-3 text-green-500" />
                                         )}
                                       </div>
-                                      <div className="text-xs text-muted-foreground mt-1">
+                                      <div className="text-xs text-muted-foreground">
                                         {action.description}
                                       </div>
                                     </div>
@@ -721,7 +734,7 @@ export function ToolsToggle() {
             )}
             
             {!isLoading && Object.keys(filteredGroupedTools).length === 0 && (
-              <div className="p-4 text-center text-muted-foreground text-sm">
+              <div className="p-3 text-center text-muted-foreground text-sm">
                 No tools available
               </div>
             )}
