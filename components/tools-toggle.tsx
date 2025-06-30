@@ -3,7 +3,6 @@
 import { cn } from '@/lib/utils'
 import { getCookie, setCookie } from '@/lib/utils/cookies'
 import {
-  Check,
   ChevronRight,
   ExternalLink,
   Settings,
@@ -13,10 +12,7 @@ import Image from 'next/image'
 import { useEffect, useState } from 'react'
 import { Badge } from './ui/badge'
 import { Button } from './ui/button'
-import {
-  Collapsible,
-  CollapsibleContent
-} from './ui/collapsible'
+
 import {
   Command,
   CommandEmpty,
@@ -251,14 +247,13 @@ const fallbackToolsData: ToolsData = {
 export function ToolsToggle() {
   const [open, setOpen] = useState(false)
   const [toolsData, setToolsData] = useState<ToolsData>(fallbackToolsData)
-  const [expandedTools, setExpandedTools] = useState<Set<string>>(new Set())
+  const [selectedTool, setSelectedTool] = useState<string | null>(null)
   const [isLoading, setIsLoading] = useState(false)
   const [operationInProgress, setOperationInProgress] = useState<{ type: string, id: string } | null>(null)
   const [searchValue, setSearchValue] = useState('')
 
   useEffect(() => {
     loadToolsData()
-    loadExpandedState()
   }, [])
 
   const loadToolsData = async () => {
@@ -294,27 +289,10 @@ export function ToolsToggle() {
     }
   }
 
-  const loadExpandedState = () => {
-    const savedExpandedTools = getCookie('expandedTools')
-    if (savedExpandedTools) {
-      try {
-        const parsedExpanded = JSON.parse(savedExpandedTools) as string[]
-        setExpandedTools(new Set(parsedExpanded))
-      } catch (e) {
-        console.error('Failed to parse expanded tools:', e)
-      }
-    }
-  }
-
   // Sadece fallback durumları için kullanılacak
   const saveToolsStateLocally = (newToolsData: ToolsData) => {
     setToolsData(newToolsData)
     setCookie('toolsState', JSON.stringify(newToolsData))
-  }
-
-  const saveExpandedState = (newExpanded: Set<string>) => {
-    setExpandedTools(newExpanded)
-    setCookie('expandedTools', JSON.stringify(Array.from(newExpanded)))
   }
 
   const handleToolToggle = async (toolName: string) => {
@@ -537,14 +515,8 @@ export function ToolsToggle() {
     }
   }
 
-  const toggleToolExpanded = (toolName: string) => {
-    const newExpanded = new Set(expandedTools)
-    if (newExpanded.has(toolName)) {
-      newExpanded.delete(toolName)
-    } else {
-      newExpanded.add(toolName)
-    }
-    saveExpandedState(newExpanded)
+  const openActionsDialog = (toolName: string) => {
+    setSelectedTool(selectedTool === toolName ? null : toolName)
   }
 
   const activeToolsCount = toolsData.tools.filter(tool => tool.is_active).length
@@ -586,67 +558,65 @@ export function ToolsToggle() {
   }
 
   return (
-    <Popover open={open} onOpenChange={setOpen}>
-      <PopoverTrigger asChild>
-        <Button
-          variant="outline"
-          role="combobox"
-          aria-expanded={open}
-          className="text-sm rounded-full shadow-none focus:ring-0"
-        >
-          <div className="flex items-center space-x-1">
-            <Settings className="h-4 w-4" />
-            <span className="text-xs font-medium">Tools</span>
-            {activeToolsCount > 0 && (
-              <Badge variant="secondary" className="bg-accent-blue text-accent-blue-foreground text-xs h-4 px-1.5">
-                {activeToolsCount}
-              </Badge>
-            )}
-          </div>
-        </Button>
-      </PopoverTrigger>
-      <PopoverContent className="w-80 p-0" align="start">
-        <Command>
-          <CommandInput placeholder="Search tools and actions..." />
-          <CommandList>
-            <CommandEmpty>No tools found.</CommandEmpty>
-            {isLoading ? (
-              <div className="p-3 text-center text-muted-foreground text-sm">
-                Loading tools...
-              </div>
-            ) : (
-              Object.entries(filteredGroupedTools).map(([group, tools]) => (
-                <CommandGroup key={group} heading={group}>
-                  {tools.map((tool) => (
-                    <div key={tool.name} className="px-1 py-0.5">
-                      <CommandItem className="flex flex-col items-start p-1.5 space-y-1.5">
-                        <div className="flex items-center justify-between w-full">
+    <div className="relative">
+      <Popover open={open} onOpenChange={setOpen}>
+        <PopoverTrigger asChild>
+          <Button
+            variant="outline"
+            role="combobox"
+            aria-expanded={open}
+            className="text-sm rounded-full shadow-none focus:ring-0"
+          >
+            <div className="flex items-center space-x-1">
+              <Settings className="h-4 w-4" />
+              <span className="text-xs font-medium">Tools</span>
+              {activeToolsCount > 0 && (
+                <Badge variant="secondary" className="bg-accent-blue text-accent-blue-foreground text-xs h-4 px-1.5">
+                  {activeToolsCount}
+                </Badge>
+              )}
+            </div>
+          </Button>
+        </PopoverTrigger>
+        <PopoverContent className="w-80 p-0" align="start">
+          <Command>
+            <CommandInput placeholder="Search tools and actions..." />
+            <CommandList>
+              <CommandEmpty>No tools found.</CommandEmpty>
+              {isLoading ? (
+                <div className="p-3 text-center text-muted-foreground text-sm">
+                  Loading tools...
+                </div>
+              ) : (
+                Object.entries(filteredGroupedTools).map(([group, tools]) => (
+                  <CommandGroup key={group} heading={group}>
+                    {tools.map((tool) => (
+                      <div key={tool.name} className="px-1 py-0.5">
+                        <CommandItem className="flex items-center justify-between p-1.5">
                           <div className="flex items-center space-x-2 flex-1">
-                            <div className="flex items-center space-x-2">
-                                                             <div className="relative">
-                                 <Image
-                                   src={getToolIcon(tool.name)}
-                                   alt={tool.display_name}
-                                   width={24}
-                                   height={24}
-                                   className="rounded"
-                                   onError={(e) => {
-                                     const target = e.target as HTMLImageElement
-                                     target.src = '/icons/tools/default.svg'
-                                   }}
-                                 />
-                                                                 {/* Small health status indicator */}
-                                 <div className={cn(
-                                   "absolute -top-0.5 -right-0.5 w-1.5 h-1.5 rounded-full border border-white",
-                                   tool.health_status ? "bg-green-500" : "bg-red-500"
-                                 )} />
+                            <div className="relative">
+                              <Image
+                                src={getToolIcon(tool.name)}
+                                alt={tool.display_name}
+                                width={24}
+                                height={24}
+                                className="rounded"
+                                onError={(e) => {
+                                  const target = e.target as HTMLImageElement
+                                  target.src = '/icons/tools/default.svg'
+                                }}
+                              />
+                              {/* Small health status indicator */}
+                              <div className={cn(
+                                "absolute -top-0.5 -right-0.5 w-1.5 h-1.5 rounded-full border border-white",
+                                tool.health_status ? "bg-green-500" : "bg-red-500"
+                              )} />
+                            </div>
+                            <div>
+                              <div className="font-medium text-xs">{tool.display_name}</div>
+                              <div className="text-xs text-muted-foreground">
+                                {tool.is_authenticated ? 'Connected' : 'Not connected'}
                               </div>
-                                                             <div>
-                                 <div className="font-medium text-xs">{tool.display_name}</div>
-                                 <div className="text-xs text-muted-foreground">
-                                   {tool.is_authenticated ? 'Connected' : 'Not connected'}
-                                 </div>
-                               </div>
                             </div>
                           </div>
                           
@@ -674,12 +644,12 @@ export function ToolsToggle() {
                                     variant="ghost"
                                     size="icon"
                                     className="h-5 w-5"
-                                    onClick={() => toggleToolExpanded(tool.name)}
+                                    onClick={() => openActionsDialog(tool.name)}
                                   >
                                     <ChevronRight 
                                       className={cn(
                                         "h-3 w-3 transition-transform",
-                                        expandedTools.has(tool.name) && "rotate-90"
+                                        selectedTool === tool.name && "rotate-90"
                                       )}
                                     />
                                   </Button>
@@ -697,59 +667,106 @@ export function ToolsToggle() {
                               </Button>
                             )}
                           </div>
-                        </div>
-
-                        {/* Actions - show only if tool is authenticated, active, and expanded */}
-                        {tool.is_authenticated && tool.is_active && expandedTools.has(tool.name) && (
-                          <Collapsible open={expandedTools.has(tool.name)} className="w-full">
-                            <CollapsibleContent className="w-full">
-                              <div className="border-t pt-1.5 space-y-0.5">
-                                <div className="text-xs font-medium text-muted-foreground mb-1 flex items-center space-x-1">
-                                  <span>Actions</span>
-                                  <Badge variant="outline" className="text-xs h-3 px-1">
-                                    {tool.actions.filter(action => action.is_active).length}/{tool.actions.length}
-                                  </Badge>
-                                </div>
-                                {tool.actions.map((action) => (
-                                  <div key={action.name} className="flex items-center justify-between py-0.5 px-1.5 rounded-md hover:bg-muted/50">
-                                                                         <div className="flex-1">
-                                       <div className="flex items-center space-x-1">
-                                         <div className="text-xs font-medium">{formatActionName(action.name)}</div>
-                                         {action.is_active && (
-                                           <Check className="h-3 w-3 text-green-500" />
-                                         )}
-                                       </div>
-                                       <div className="text-xs text-muted-foreground">
-                                         {action.description}
-                                       </div>
-                                     </div>
-                                    <Switch
-                                      checked={action.is_active}
-                                      onCheckedChange={() => handleActionToggle(tool.name, action.name)}
-                                      size="xs"
-                                      disabled={operationInProgress?.type === 'action' && operationInProgress?.id === `${tool.name}-${action.name}`}
-                                    />
-                                  </div>
-                                ))}
-                              </div>
-                            </CollapsibleContent>
-                          </Collapsible>
-                        )}
-                      </CommandItem>
+                        </CommandItem>
+                      </div>
+                    ))}
+                  </CommandGroup>
+                ))
+              )}
+              
+              {!isLoading && Object.keys(filteredGroupedTools).length === 0 && (
+                <div className="p-3 text-center text-muted-foreground text-sm">
+                  No tools available
+                </div>
+              )}
+            </CommandList>
+          </Command>
+        </PopoverContent>
+      </Popover>
+      
+      {/* Actions Side Panel - Opens to the right when a tool is selected */}
+      {selectedTool && open && (
+        <div className="absolute top-0 left-80 ml-2 z-50">
+          <div className="w-72 bg-background border rounded-md shadow-lg">
+            <div className="border-b p-3">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center space-x-2">
+                  <div className="relative">
+                    <Image
+                      src={getToolIcon(selectedTool)}
+                      alt={toolsData.tools.find(t => t.name === selectedTool)?.display_name || selectedTool}
+                      width={20}
+                      height={20}
+                      className="rounded"
+                      onError={(e) => {
+                        const target = e.target as HTMLImageElement
+                        target.src = '/icons/tools/default.svg'
+                      }}
+                    />
+                    {(() => {
+                      const tool = toolsData.tools.find(t => t.name === selectedTool)
+                      return tool && (
+                        <div className={cn(
+                          "absolute -top-0.5 -right-0.5 w-1.5 h-1.5 rounded-full border border-white",
+                          tool.health_status ? "bg-green-500" : "bg-red-500"
+                        )} />
+                      )
+                    })()}
+                  </div>
+                  <div>
+                    <div className="font-medium text-sm">
+                      {toolsData.tools.find(t => t.name === selectedTool)?.display_name || selectedTool}
                     </div>
-                  ))}
-                </CommandGroup>
-              ))
-            )}
-            
-            {!isLoading && Object.keys(filteredGroupedTools).length === 0 && (
-              <div className="p-3 text-center text-muted-foreground text-sm">
-                No tools available
+                    <div className="text-xs text-muted-foreground">Actions</div>
+                  </div>
+                </div>
+                <div className="flex items-center space-x-2">
+                  <Badge variant="outline" className="text-xs h-5 px-2">
+                    {(() => {
+                      const tool = toolsData.tools.find(t => t.name === selectedTool)
+                      return tool ? `${tool.actions.filter(action => action.is_active).length}/${tool.actions.length}` : '0/0'
+                    })()}
+                  </Badge>
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="h-5 w-5"
+                    onClick={() => setSelectedTool(null)}
+                  >
+                    <ChevronRight className="h-3 w-3 rotate-180" />
+                  </Button>
+                </div>
               </div>
-            )}
-          </CommandList>
-        </Command>
-      </PopoverContent>
-    </Popover>
+            </div>
+            <div className="p-2 space-y-1 max-h-80 overflow-y-auto">
+              {(() => {
+                const tool = toolsData.tools.find(t => t.name === selectedTool)
+                return tool?.actions.map((action) => (
+                  <div key={action.name} className="flex items-center justify-between py-2 px-3 rounded-md hover:bg-muted/50 border">
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center space-x-2">
+                        <div className="text-sm font-medium">{formatActionName(action.name)}</div>
+                        {action.is_active && (
+                          <div className="w-1.5 h-1.5 bg-green-500 rounded-full" />
+                        )}
+                      </div>
+                      <div className="text-xs text-muted-foreground mt-0.5 truncate">
+                        {action.description}
+                      </div>
+                    </div>
+                    <Switch
+                      checked={action.is_active}
+                      onCheckedChange={() => handleActionToggle(selectedTool, action.name)}
+                      size="xs"
+                      disabled={operationInProgress?.type === 'action' && operationInProgress?.id === `${selectedTool}-${action.name}`}
+                    />
+                  </div>
+                )) || []
+              })()}
+            </div>
+          </div>
+        </div>
+      )}
+    </div>
   )
 } 
