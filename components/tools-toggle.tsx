@@ -725,7 +725,11 @@ export function ToolsToggle() {
                   </div>
                   <div className="p-2 space-y-1 max-h-80 overflow-y-auto">
                     {selectedToolData.actions.map((action) => (
-                      <div key={action.name} className="flex items-center justify-between py-2 px-3 rounded-md hover:bg-muted/50 border">
+                      <div 
+                        key={action.name} 
+                        className="flex items-center justify-between py-2 px-3 rounded-md hover:bg-muted/50 border cursor-pointer transition-colors"
+                        onClick={() => handleActionToggle(selectedTool, action.name)}
+                      >
                         <div className="flex-1 min-w-0">
                           <div className="flex items-center space-x-2">
                             <div className="text-sm font-medium">{formatActionName(action.name)}</div>
@@ -737,13 +741,6 @@ export function ToolsToggle() {
                             {action.description}
                           </div>
                         </div>
-                        <Switch
-                          checked={action.is_active}
-                          onCheckedChange={() => handleActionToggle(selectedTool, action.name)}
-                          variant="green"
-                          size="xs"
-                          disabled={operationInProgress?.type === 'action' && operationInProgress?.id === `${selectedTool}-${action.name}`}
-                        />
                       </div>
                     ))}
                   </div>
