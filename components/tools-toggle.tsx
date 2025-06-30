@@ -681,92 +681,92 @@ export function ToolsToggle() {
               )}
             </CommandList>
           </Command>
-        </PopoverContent>
-      </Popover>
-      
-      {/* Actions Side Panel - Opens to the right when a tool is selected */}
-      {selectedTool && open && (
-        <div className="absolute top-0 left-80 ml-2 z-50">
-          <div className="w-72 bg-background border rounded-md shadow-lg">
-            <div className="border-b p-3">
-              <div className="flex items-center justify-between">
-                <div className="flex items-center space-x-2">
-                  <div className="relative">
-                    <Image
-                      src={getToolIcon(selectedTool)}
-                      alt={toolsData.tools.find(t => t.name === selectedTool)?.display_name || selectedTool}
-                      width={20}
-                      height={20}
-                      className="rounded"
-                      onError={(e) => {
-                        const target = e.target as HTMLImageElement
-                        target.src = '/icons/tools/default.svg'
-                      }}
-                    />
-                    {(() => {
-                      const tool = toolsData.tools.find(t => t.name === selectedTool)
-                      return tool && (
-                        <div className={cn(
-                          "absolute -top-0.5 -right-0.5 w-1.5 h-1.5 rounded-full border border-white",
-                          tool.health_status ? "bg-green-500" : "bg-red-500"
-                        )} />
-                      )
-                    })()}
-                  </div>
-                  <div>
-                    <div className="font-medium text-sm">
-                      {toolsData.tools.find(t => t.name === selectedTool)?.display_name || selectedTool}
+          
+          {/* Actions Side Panel - Inside PopoverContent for proper alignment */}
+          {selectedTool && (
+            <div className="absolute left-full top-0 ml-2 z-50">
+              <div className="w-72 bg-background border rounded-md shadow-lg">
+                <div className="border-b p-3">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center space-x-2">
+                      <div className="relative">
+                        <Image
+                          src={getToolIcon(selectedTool)}
+                          alt={toolsData.tools.find(t => t.name === selectedTool)?.display_name || selectedTool}
+                          width={20}
+                          height={20}
+                          className="rounded"
+                          onError={(e) => {
+                            const target = e.target as HTMLImageElement
+                            target.src = '/icons/tools/default.svg'
+                          }}
+                        />
+                        {(() => {
+                          const tool = toolsData.tools.find(t => t.name === selectedTool)
+                          return tool && (
+                            <div className={cn(
+                              "absolute -top-0.5 -right-0.5 w-1.5 h-1.5 rounded-full border border-white",
+                              tool.health_status ? "bg-green-500" : "bg-red-500"
+                            )} />
+                          )
+                        })()}
+                      </div>
+                      <div>
+                        <div className="font-medium text-sm">
+                          {toolsData.tools.find(t => t.name === selectedTool)?.display_name || selectedTool}
+                        </div>
+                        <div className="text-xs text-muted-foreground">Actions</div>
+                      </div>
                     </div>
-                    <div className="text-xs text-muted-foreground">Actions</div>
+                    <div className="flex items-center space-x-2">
+                      <Badge variant="outline" className="text-xs h-5 px-2">
+                        {(() => {
+                          const tool = toolsData.tools.find(t => t.name === selectedTool)
+                          return tool ? `${tool.actions.filter(action => action.is_active).length}/${tool.actions.length}` : '0/0'
+                        })()}
+                      </Badge>
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        className="h-5 w-5"
+                        onClick={() => setSelectedTool(null)}
+                      >
+                        <ChevronRight className="h-3 w-3 rotate-180" />
+                      </Button>
+                    </div>
                   </div>
                 </div>
-                <div className="flex items-center space-x-2">
-                  <Badge variant="outline" className="text-xs h-5 px-2">
-                    {(() => {
-                      const tool = toolsData.tools.find(t => t.name === selectedTool)
-                      return tool ? `${tool.actions.filter(action => action.is_active).length}/${tool.actions.length}` : '0/0'
-                    })()}
-                  </Badge>
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    className="h-5 w-5"
-                    onClick={() => setSelectedTool(null)}
-                  >
-                    <ChevronRight className="h-3 w-3 rotate-180" />
-                  </Button>
+                <div className="p-2 space-y-1 max-h-80 overflow-y-auto">
+                  {(() => {
+                    const tool = toolsData.tools.find(t => t.name === selectedTool)
+                    return tool?.actions.map((action) => (
+                      <div key={action.name} className="flex items-center justify-between py-2 px-3 rounded-md hover:bg-muted/50 border">
+                        <div className="flex-1 min-w-0">
+                          <div className="flex items-center space-x-2">
+                            <div className="text-sm font-medium">{formatActionName(action.name)}</div>
+                            {action.is_active && (
+                              <div className="w-1.5 h-1.5 bg-green-500 rounded-full" />
+                            )}
+                          </div>
+                          <div className="text-xs text-muted-foreground mt-0.5 truncate">
+                            {action.description}
+                          </div>
+                        </div>
+                        <Switch
+                          checked={action.is_active}
+                          onCheckedChange={() => handleActionToggle(selectedTool, action.name)}
+                          size="xs"
+                          disabled={operationInProgress?.type === 'action' && operationInProgress?.id === `${selectedTool}-${action.name}`}
+                        />
+                      </div>
+                    )) || []
+                  })()}
                 </div>
               </div>
             </div>
-            <div className="p-2 space-y-1 max-h-80 overflow-y-auto">
-              {(() => {
-                const tool = toolsData.tools.find(t => t.name === selectedTool)
-                return tool?.actions.map((action) => (
-                  <div key={action.name} className="flex items-center justify-between py-2 px-3 rounded-md hover:bg-muted/50 border">
-                    <div className="flex-1 min-w-0">
-                      <div className="flex items-center space-x-2">
-                        <div className="text-sm font-medium">{formatActionName(action.name)}</div>
-                        {action.is_active && (
-                          <div className="w-1.5 h-1.5 bg-green-500 rounded-full" />
-                        )}
-                      </div>
-                      <div className="text-xs text-muted-foreground mt-0.5 truncate">
-                        {action.description}
-                      </div>
-                    </div>
-                    <Switch
-                      checked={action.is_active}
-                      onCheckedChange={() => handleActionToggle(selectedTool, action.name)}
-                      size="xs"
-                      disabled={operationInProgress?.type === 'action' && operationInProgress?.id === `${selectedTool}-${action.name}`}
-                    />
-                  </div>
-                )) || []
-              })()}
-            </div>
-          </div>
-        </div>
-      )}
+          )}
+        </PopoverContent>
+      </Popover>
     </div>
   )
 } 
