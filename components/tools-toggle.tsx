@@ -9,7 +9,7 @@ import {
   Unplug
 } from 'lucide-react'
 import Image from 'next/image'
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import { Badge } from './ui/badge'
 import { Button } from './ui/button'
 
@@ -236,8 +236,49 @@ export function ToolsToggle() {
   const [toolsData, setToolsData] = useState<ToolsData>(fallbackToolsData)
   const [selectedTool, setSelectedTool] = useState<string | null>(null)
   const [isLoading, setIsLoading] = useState(false)
-  const [operationInProgress, setOperationInProgress] = useState<{ type: string, id: string } | null>(null)
+  const [operationInProgress, setOperationInProgress] = useState<{
+    type: 'tool' | 'action' | 'disconnect' | 'auth'
+    id: string
+  } | null>(null)
   const [searchValue, setSearchValue] = useState('')
+  
+  // Add refs and state for dynamic positioning
+  const buttonRef = useRef<HTMLButtonElement>(null)
+  const [openUpward, setOpenUpward] = useState(false)
+
+  // Calculate if dialog should open upward or downward
+  useEffect(() => {
+    const calculatePosition = () => {
+      if (open && buttonRef.current) {
+        const buttonRect = buttonRef.current.getBoundingClientRect()
+        const viewportHeight = window.innerHeight
+        const dialogHeight = 350 // Approximate height of the dialog (320px + margins)
+        
+        // Check if there's enough space below the button
+        const spaceBelow = viewportHeight - buttonRect.bottom
+        const spaceAbove = buttonRect.top
+        
+        // Open upward if there's not enough space below but enough above
+        setOpenUpward(spaceBelow < dialogHeight && spaceAbove > dialogHeight)
+      }
+    }
+
+    calculatePosition()
+    
+    // Recalculate on window resize or scroll
+    const handleResize = () => calculatePosition()
+    const handleScroll = () => calculatePosition()
+    
+    if (open) {
+      window.addEventListener('resize', handleResize)
+      window.addEventListener('scroll', handleScroll)
+      
+      return () => {
+        window.removeEventListener('resize', handleResize)
+        window.removeEventListener('scroll', handleScroll)
+      }
+    }
+  }, [open])
 
   useEffect(() => {
     loadToolsData()
@@ -554,6 +595,7 @@ export function ToolsToggle() {
         aria-expanded={open}
         className="text-sm rounded-full shadow-none focus:ring-0"
         onClick={() => setOpen(!open)}
+        ref={buttonRef}
       >
         <div className="flex items-center space-x-1">
           <Settings className="h-4 w-4" />
@@ -579,8 +621,11 @@ export function ToolsToggle() {
             }}
           />
           
-          {/* Main Tools Dialog - Fixed Position */}
-          <div className="absolute top-full left-0 mt-1 w-80 z-50 bg-background border rounded-md shadow-lg">
+                      {/* Main Tools Dialog - Dynamic Position */}
+            <div className={cn(
+              "absolute left-0 w-80 z-50 bg-background border rounded-md shadow-lg",
+              openUpward ? "bottom-full mb-1" : "top-full mt-1"
+            )}>
             {/* Custom Search Input */}
             <div className="flex items-center border-b px-3">
               <input
@@ -694,7 +739,10 @@ export function ToolsToggle() {
               )
               
               return (
-                <div className="absolute top-full left-80 ml-3 mt-1 w-72 z-50 bg-background border rounded-md shadow-lg">
+                <div className={cn(
+                  "absolute left-80 ml-3 w-72 z-50 bg-background border rounded-md shadow-lg",
+                  openUpward ? "bottom-full mb-1" : "top-full mt-1"
+                )}>
                   <div className="border-b p-3">
                     <div className="flex items-center justify-between">
                       <div className="flex items-center space-x-2">
