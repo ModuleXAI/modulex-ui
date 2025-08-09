@@ -1,3 +1,4 @@
+import { isDefaultProvider } from '@/lib/auth/provider'
 import { updateSession } from '@/lib/supabase/middleware'
 import { type NextRequest, NextResponse } from 'next/server'
 
@@ -16,17 +17,33 @@ export async function middleware(request: NextRequest) {
   // Create a response
   let response: NextResponse
 
-  // Handle Supabase session if configured
-  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
-  const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
+  // Route based on auth provider
+  if (isDefaultProvider()) {
+    // Public paths that don't require authentication
+    const publicPaths = ['/', '/auth', '/share', '/api']
+    const pathname = request.nextUrl.pathname
 
-  if (supabaseUrl && supabaseAnonKey) {
-    response = await updateSession(request)
+    const isPublic = publicPaths.some(path => pathname.startsWith(path))
+    const accessToken = request.cookies.get('access-token')?.value
+    const hasAuth = Boolean(accessToken)
+
+    if (!hasAuth && !isPublic) {
+      const url = request.nextUrl.clone()
+      url.pathname = '/auth/login'
+      return NextResponse.redirect(url)
+    }
+
+    response = NextResponse.next({ request })
   } else {
-    // If Supabase is not configured, just pass the request through
-    response = NextResponse.next({
-      request
-    })
+    // Supabase session handling (existing flow)
+    const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
+    const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
+
+    if (supabaseUrl && supabaseAnonKey) {
+      response = await updateSession(request)
+    } else {
+      response = NextResponse.next({ request })
+    }
   }
 
   // Add request information to response headers

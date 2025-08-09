@@ -11,6 +11,8 @@ import {
 import { IconLogo } from '@/components/ui/icons'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
+import { loginWithDefaultProvider } from '@/lib/auth/api'
+import { isDefaultProvider } from '@/lib/auth/provider'
 import { createClient } from '@/lib/supabase/client'
 import { cn } from '@/lib/utils/index'
 import Link from 'next/link'
@@ -29,16 +31,20 @@ export function LoginForm({
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault()
-    const supabase = createClient()
     setIsLoading(true)
     setError(null)
 
     try {
-      const { error } = await supabase.auth.signInWithPassword({
-        email,
-        password
-      })
-      if (error) throw error
+      if (isDefaultProvider()) {
+        await loginWithDefaultProvider({ email, password })
+      } else {
+        const supabase = createClient()
+        const { error } = await supabase.auth.signInWithPassword({
+          email,
+          password
+        })
+        if (error) throw error
+      }
       // Redirect to root and refresh to ensure server components get updated session
       router.push('/')
       router.refresh()
@@ -58,7 +64,7 @@ export function LoginForm({
       const { error } = await supabase.auth.signInWithOAuth({
         provider: 'google',
         options: {
-          redirectTo: `${location.origin}/auth/oauth`
+          redirectTo: `${location.origin}/auth/callback`
         }
       })
       if (error) throw error

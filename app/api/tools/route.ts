@@ -14,18 +14,16 @@ export async function GET(request: NextRequest) {
     }
 
     const modulexServerUrl = process.env.NEXT_PUBLIC_MODULEX_HOST
-    const mcpApiKey = process.env.MCP_SERVER_API_KEY
-
-    if (!modulexServerUrl || !mcpApiKey) {
+    if (!modulexServerUrl) {
       return NextResponse.json(
-        { error: 'MCP server configuration missing' },
+        { error: 'Backend URL not configured' },
         { status: 500 }
       )
     }
 
-    // Get Supabase access token
-    const supabaseToken = await getCurrentUserToken()
-    if (!supabaseToken) {
+    // Get access token (supabase or default)
+    const accessToken = await getCurrentUserToken()
+    if (!accessToken) {
       return NextResponse.json(
         { error: 'Unable to retrieve user token' },
         { status: 401 }
@@ -37,16 +35,16 @@ export async function GET(request: NextRequest) {
       {
         method: 'GET',
         headers: {
-          'X-API-KEY': `${mcpApiKey}`,
+          'Authorization': `Bearer ${accessToken}`,
           'Content-Type': 'application/json',
         },
       }
     )
 
     if (!response.ok) {
-      console.error('MCP server error:', response.status, response.statusText)
+      console.error('Backend error:', response.status, response.statusText)
       return NextResponse.json(
-        { error: 'Failed to fetch tools from MCP server' },
+        { error: 'Failed to fetch tools from backend' },
         { status: response.status }
       )
     }
@@ -75,18 +73,16 @@ export async function POST(request: NextRequest) {
     }
 
     const modulexServerUrl = process.env.NEXT_PUBLIC_MODULEX_HOST
-    const mcpApiKey = process.env.MCP_SERVER_API_KEY
-
-    if (!modulexServerUrl || !mcpApiKey) {
+    if (!modulexServerUrl) {
       return NextResponse.json(
-        { error: 'MCP server configuration missing' },
+        { error: 'Backend URL not configured' },
         { status: 500 }
       )
     }
 
-    // Get Supabase access token
-    const supabaseToken = await getCurrentUserToken()
-    if (!supabaseToken) {
+    // Get access token (supabase or default)
+    const accessToken = await getCurrentUserToken()
+    if (!accessToken) {
       return NextResponse.json(
         { error: 'Unable to retrieve user token' },
         { status: 401 }
@@ -100,7 +96,7 @@ export async function POST(request: NextRequest) {
       {
         method: 'POST',
         headers: {
-          'X-API-KEY': `${mcpApiKey}`,
+          'Authorization': `Bearer ${accessToken}`,
           'Content-Type': 'application/json',
         },
         body: JSON.stringify(body)
@@ -108,9 +104,9 @@ export async function POST(request: NextRequest) {
     )
 
     if (!response.ok) {
-      console.error('MCP server error:', response.status, response.statusText)
+      console.error('Backend error:', response.status, response.statusText)
       return NextResponse.json(
-        { error: 'Failed to update tools on MCP server' },
+        { error: 'Failed to update tools on backend' },
         { status: response.status }
       )
     }

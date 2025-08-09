@@ -1,4 +1,6 @@
+import { isDefaultProvider } from '@/lib/auth/provider'
 import { createClient } from '@/lib/supabase/server'
+import { cookies } from 'next/headers'
 
 export async function getCurrentUser() {
  /* return {
@@ -37,6 +39,12 @@ export async function getCurrentUserId() {
 }
 
 export async function getCurrentUserToken() {
+  // If default provider, read backend-issued token from cookies
+  if (isDefaultProvider()) {
+    const cookieStore = await cookies()
+    return cookieStore.get('access-token')?.value ?? null
+  }
+
   const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
   const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
 
