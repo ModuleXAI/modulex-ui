@@ -28,10 +28,10 @@ interface MCPTool {
 // Fetch MCP tools from server
 async function fetchMCPTools(userId: string): Promise<MCPTool[]> {
   try {
-    const mcpServerUrl = process.env.MCP_SERVER_URL
+    const modulexServerUrl = process.env.NEXT_PUBLIC_MODULEX_HOST
     const mcpApiKey = process.env.MCP_SERVER_API_KEY
 
-    if (!mcpServerUrl || !mcpApiKey || !userId) {
+    if (!modulexServerUrl || !mcpApiKey || !userId) {
       console.log('MCP server not configured or no user ID')
       return []
     }
@@ -43,7 +43,7 @@ async function fetchMCPTools(userId: string): Promise<MCPTool[]> {
       return []
     }
 
-    const response = await fetch(`${mcpServerUrl}/tools/openai-tools?user_id=${userId}`, {
+    const response = await fetch(`${modulexServerUrl}/tools/openai-tools?user_id=${userId}`, {
       method: 'GET',
       headers: {
         'X-API-KEY': `${mcpApiKey}`,
@@ -67,10 +67,10 @@ async function fetchMCPTools(userId: string): Promise<MCPTool[]> {
 // Execute MCP tool using tool_key and action
 async function executeMCPTool(toolKey: string, action: string, parameters: any, userId: string): Promise<any> {
   try {
-    const mcpServerUrl = process.env.MCP_SERVER_URL
+    const modulexServerUrl = process.env.NEXT_PUBLIC_MODULEX_HOST
     const mcpApiKey = process.env.MCP_SERVER_API_KEY
 
-    if (!mcpServerUrl || !mcpApiKey || !userId) {
+    if (!modulexServerUrl || !mcpApiKey || !userId) {
       throw new Error('MCP server not configured or no user ID')
     }
 
@@ -80,7 +80,7 @@ async function executeMCPTool(toolKey: string, action: string, parameters: any, 
       throw new Error('Unable to retrieve Supabase token')
     }
 
-    const response = await fetch(`${mcpServerUrl}/tools/${toolKey}/execute?user_id=${userId}`, {
+    const response = await fetch(`${modulexServerUrl}/tools/${toolKey}/execute?user_id=${userId}`, {
       method: 'POST',
       headers: {
         'X-API-KEY': `${mcpApiKey}`,

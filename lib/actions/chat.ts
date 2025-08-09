@@ -1,11 +1,11 @@
 'use server'
 
-import { getRedisClient, RedisWrapper } from '@/lib/redis/config'
+import { getRedisClient, type AppRedisClient } from '@/lib/redis/config'
 import { type Chat } from '@/lib/types'
 import { revalidatePath } from 'next/cache'
 import { redirect } from 'next/navigation'
 
-async function getRedis(): Promise<RedisWrapper> {
+async function getRedis(): Promise<AppRedisClient> {
   return await getRedisClient()
 }
 

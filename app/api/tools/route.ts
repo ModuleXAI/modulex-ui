@@ -13,10 +13,10 @@ export async function GET(request: NextRequest) {
       )
     }
 
-    const mcpServerUrl = process.env.MCP_SERVER_URL
+    const modulexServerUrl = process.env.NEXT_PUBLIC_MODULEX_HOST
     const mcpApiKey = process.env.MCP_SERVER_API_KEY
 
-    if (!mcpServerUrl || !mcpApiKey) {
+    if (!modulexServerUrl || !mcpApiKey) {
       return NextResponse.json(
         { error: 'MCP server configuration missing' },
         { status: 500 }
@@ -33,7 +33,7 @@ export async function GET(request: NextRequest) {
     }
 
     const response = await fetch(
-      `${mcpServerUrl}/auth/tools?user_id=${userId}`,
+      `${modulexServerUrl}/auth/tools?user_id=${userId}`,
       {
         method: 'GET',
         headers: {
@@ -74,10 +74,10 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    const mcpServerUrl = process.env.MCP_SERVER_URL
+    const modulexServerUrl = process.env.NEXT_PUBLIC_MODULEX_HOST
     const mcpApiKey = process.env.MCP_SERVER_API_KEY
 
-    if (!mcpServerUrl || !mcpApiKey) {
+    if (!modulexServerUrl || !mcpApiKey) {
       return NextResponse.json(
         { error: 'MCP server configuration missing' },
         { status: 500 }
@@ -96,7 +96,7 @@ export async function POST(request: NextRequest) {
     const body = await request.json()
     
     const response = await fetch(
-      `${mcpServerUrl}/auth/tools?user_id=${userId}`,
+      `${modulexServerUrl}/auth/tools?user_id=${userId}`,
       {
         method: 'POST',
         headers: {

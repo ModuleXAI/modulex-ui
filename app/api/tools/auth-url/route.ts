@@ -23,10 +23,10 @@ export async function GET(request: NextRequest) {
       )
     }
 
-    const mcpServerUrl = process.env.MCP_SERVER_URL
+    const modulexServerUrl = process.env.NEXT_PUBLIC_MODULEX_HOST
     const mcpApiKey = process.env.MCP_SERVER_API_KEY
 
-    if (!mcpServerUrl || !mcpApiKey) {
+    if (!modulexServerUrl || !mcpApiKey) {
       return NextResponse.json(
         { error: 'MCP server not configured' },
         { status: 500 }
@@ -43,7 +43,7 @@ export async function GET(request: NextRequest) {
     }
 
     // MCP server'dan auth URL'ini al
-    const response = await fetch(`${mcpServerUrl}/auth/url/${toolName}?user_id=${userId}`, {
+    const response = await fetch(`${modulexServerUrl}/auth/url/${toolName}?user_id=${userId}`, {
       method: 'GET',
       headers: {
         'X-API-KEY': `${mcpApiKey}`,

@@ -21,10 +21,10 @@ export async function DELETE(request: NextRequest) {
       )
     }
 
-    const mcpServerUrl = process.env.MCP_SERVER_URL
+    const modulexServerUrl = process.env.NEXT_PUBLIC_MODULEX_HOST
     const mcpApiKey = process.env.MCP_SERVER_API_KEY
 
-    if (!mcpServerUrl || !mcpApiKey) {
+    if (!modulexServerUrl || !mcpApiKey) {
       return NextResponse.json(
         { error: 'MCP server not configured' },
         { status: 500 }
@@ -41,7 +41,7 @@ export async function DELETE(request: NextRequest) {
     }
 
     // MCP server'a disconnect isteği gönder
-    const response = await fetch(`${mcpServerUrl}/auth/tools/${toolName}?user_id=${userId}`, {
+    const response = await fetch(`${modulexServerUrl}/auth/tools/${toolName}?user_id=${userId}`, {
       method: 'DELETE',
       headers: {
         'X-API-KEY': `${mcpApiKey}`,

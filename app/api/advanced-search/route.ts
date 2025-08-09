@@ -1,16 +1,14 @@
-import { NextResponse } from 'next/server'
+import { getRedisClient } from '@/lib/redis/config'
+import {
+    SearXNGResponse,
+    SearXNGResult,
+    SearXNGSearchResults,
+    SearchResultItem
+} from '@/lib/types'
 import http from 'http'
 import https from 'https'
 import { JSDOM, VirtualConsole } from 'jsdom'
-import {
-  SearXNGSearchResults,
-  SearXNGResponse,
-  SearXNGResult,
-  SearchResultItem
-} from '@/lib/types'
-import { Agent } from 'http'
-import { Redis } from '@upstash/redis'
-import { createClient } from 'redis'
+import { NextResponse } from 'next/server'
 
 /**
  * Maximum number of results to fetch from SearXNG.
@@ -25,32 +23,12 @@ const SEARXNG_MAX_RESULTS = Math.max(
 const CACHE_TTL = 3600 // Cache time-to-live in seconds (1 hour)
 const CACHE_EXPIRATION_CHECK_INTERVAL = 3600000 // 1 hour in milliseconds
 
-let redisClient: Redis | ReturnType<typeof createClient> | null = null
-
-// Initialize Redis client based on environment variables
-async function initializeRedisClient() {
-  if (redisClient) return redisClient
-
-  const useLocalRedis = process.env.USE_LOCAL_REDIS === 'true'
-
-  if (useLocalRedis) {
-    const localRedisUrl =
-      process.env.LOCAL_REDIS_URL || 'redis://localhost:6379'
-    redisClient = createClient({ url: localRedisUrl })
-    await redisClient.connect()
-  } else {
-    const upstashRedisRestUrl = process.env.UPSTASH_REDIS_REST_URL
-    const upstashRedisRestToken = process.env.UPSTASH_REDIS_REST_TOKEN
-
-    if (upstashRedisRestUrl && upstashRedisRestToken) {
-      redisClient = new Redis({
-        url: upstashRedisRestUrl,
-        token: upstashRedisRestToken
-      })
-    }
+let redisReady = false
+async function ensureRedisReady() {
+  if (!redisReady) {
+    await getRedisClient() // will throw if misconfigured
+    redisReady = true
   }
-
-  return redisClient
 }
 
 // Function to get cached results
@@ -58,15 +36,10 @@ async function getCachedResults(
   cacheKey: string
 ): Promise<SearXNGSearchResults | null> {
   try {
-    const client = await initializeRedisClient()
-    if (!client) return null
+    await ensureRedisReady()
+    const client = await getRedisClient()
 
-    let cachedData: string | null
-    if (client instanceof Redis) {
-      cachedData = await client.get(cacheKey)
-    } else {
-      cachedData = await client.get(cacheKey)
-    }
+    const cachedData = await client.get(cacheKey)
 
     if (cachedData) {
       console.log(`Cache hit for key: ${cacheKey}`)
@@ -87,15 +60,11 @@ async function setCachedResults(
   results: SearXNGSearchResults
 ): Promise<void> {
   try {
-    const client = await initializeRedisClient()
-    if (!client) return
+    await ensureRedisReady()
+    const client = await getRedisClient()
 
     const serializedResults = JSON.stringify(results)
-    if (client instanceof Redis) {
-      await client.set(cacheKey, serializedResults, { ex: CACHE_TTL })
-    } else {
-      await client.set(cacheKey, serializedResults, { EX: CACHE_TTL })
-    }
+    await client.set(cacheKey, serializedResults, { ex: CACHE_TTL })
     console.log(`Cached results for key: ${cacheKey}`)
   } catch (error) {
     console.error('Redis cache error:', error)
@@ -105,8 +74,8 @@ async function setCachedResults(
 // Function to periodically clean up expired cache entries
 async function cleanupExpiredCache() {
   try {
-    const client = await initializeRedisClient()
-    if (!client) return
+    await ensureRedisReady()
+    const client = await getRedisClient()
 
     const keys = await client.keys('search:*')
     for (const key of keys) {

@@ -5,6 +5,7 @@ export type RedisConfig = {
   useLocalRedis: boolean
   upstashRedisRestUrl?: string
   upstashRedisRestToken?: string
+  upstashRedisProxyUrl?: string
   localRedisUrl?: string
 }
 
@@ -12,14 +13,47 @@ export const redisConfig: RedisConfig = {
   useLocalRedis: process.env.USE_LOCAL_REDIS === 'true',
   upstashRedisRestUrl: process.env.UPSTASH_REDIS_REST_URL,
   upstashRedisRestToken: process.env.UPSTASH_REDIS_REST_TOKEN,
+  upstashRedisProxyUrl: process.env.UPSTASH_REDIS_PROXY_URL,
   localRedisUrl: process.env.LOCAL_REDIS_URL || 'redis://localhost:6379'
 }
 
 let localRedisClient: RedisClientType | null = null
-let redisWrapper: RedisWrapper | null = null
 
 // Wrapper class for Redis client
-export class RedisWrapper {
+export interface AppRedisClient {
+  zrange(
+    key: string,
+    start: number,
+    stop: number,
+    options?: { rev: boolean }
+  ): Promise<string[]>
+  hgetall<T extends Record<string, unknown>>(key: string): Promise<T | null>
+  pipeline(): PipelineLike
+  hmset(key: string, value: Record<string, any>): Promise<'OK' | number>
+  zadd(key: string, score: number, member: string): Promise<number | null>
+  del(key: string): Promise<number>
+  zrem(key: string, member: string): Promise<number>
+  close(): Promise<void>
+  get(key: string): Promise<string | null>
+  set(
+    key: string,
+    value: string,
+    options?: { ex?: number; EX?: number }
+  ): Promise<string | null>
+  keys(pattern: string): Promise<string[]>
+  ttl(key: string): Promise<number>
+}
+
+interface PipelineLike {
+  hgetall(key: string): this
+  del(key: string): this
+  zrem(key: string, member: string): this
+  hmset(key: string, value: Record<string, any>): this
+  zadd(key: string, score: number, member: string): this
+  exec(): Promise<unknown>
+}
+
+export class RedisWrapper implements AppRedisClient {
   private client: Redis | RedisClientType
 
   constructor(client: Redis | RedisClientType) {
@@ -44,6 +78,50 @@ export class RedisWrapper {
       }
     }
     return result
+  }
+
+  async get(key: string): Promise<string | null> {
+    if (this.client instanceof Redis) {
+      return this.client.get<string | null>(key)
+    } else {
+      return (this.client as RedisClientType).get(key)
+    }
+  }
+
+  async set(
+    key: string,
+    value: string,
+    options?: { ex?: number; EX?: number }
+  ): Promise<string | null> {
+    const ttl = options?.ex ?? options?.EX
+    if (this.client instanceof Redis) {
+      if (ttl && ttl > 0) {
+        return this.client.set(key, value, { ex: ttl })
+      }
+      return this.client.set(key, value)
+    } else {
+      if (ttl && ttl > 0) {
+        return (this.client as RedisClientType).set(key, value, { EX: ttl })
+      }
+      return (this.client as RedisClientType).set(key, value)
+    }
+  }
+
+  async keys(pattern: string): Promise<string[]> {
+    if (this.client instanceof Redis) {
+      // Upstash supports KEYS; for large datasets SCAN would be safer, but we mirror current usage
+      return this.client.keys(pattern)
+    } else {
+      return (this.client as RedisClientType).keys(pattern)
+    }
+  }
+
+  async ttl(key: string): Promise<number> {
+    if (this.client instanceof Redis) {
+      return this.client.ttl(key)
+    } else {
+      return (this.client as RedisClientType).ttl(key)
+    }
   }
 
   async hgetall<T extends Record<string, unknown>>(
@@ -201,8 +279,16 @@ class LocalPipelineWrapper {
 }
 
 // Function to get a Redis client
-export async function getRedisClient(): Promise<RedisWrapper> {
+let redisWrapper: AppRedisClient | null = null
+
+export async function getRedisClient(): Promise<AppRedisClient> {
   if (redisWrapper) {
+    return redisWrapper
+  }
+
+  // Priority 1: Proxy mode via Supabase Edge Function or any HTTP proxy
+  if (redisConfig.upstashRedisProxyUrl) {
+    redisWrapper = new ProxyRedisWrapper(redisConfig.upstashRedisProxyUrl)
     return redisWrapper
   }
 
@@ -298,5 +384,150 @@ export async function closeRedisConnection(): Promise<void> {
   if (localRedisClient) {
     await localRedisClient.quit()
     localRedisClient = null
+  }
+}
+
+// Proxy-based wrappers (HTTP → Supabase Edge Function)
+class ProxyRedisWrapper implements AppRedisClient {
+  private proxyUrl: string
+  private secret: string | undefined
+
+  constructor(proxyUrl: string) {
+    this.proxyUrl = proxyUrl
+    this.secret = process.env.UPSTASH_REDIS_PROXY_SECRET
+  }
+
+  private async request<T>(body: Record<string, unknown>): Promise<T> {
+    const headers: Record<string, string> = {
+      'content-type': 'application/json'
+    }
+    if (this.secret) {
+      headers['x-proxy-secret'] = this.secret
+    }
+    const res = await fetch(this.proxyUrl, {
+      method: 'POST',
+      headers,
+      body: JSON.stringify(body)
+    })
+    if (!res.ok) {
+      const text = await res.text().catch(() => '')
+      throw new Error(`Proxy request failed: ${res.status} ${text}`)
+    }
+    const data = (await res.json()) as { result?: T; results?: T; error?: string }
+    if ((data as any).error) {
+      throw new Error((data as any).error)
+    }
+    return (data.result ?? data.results) as T
+  }
+
+  async zrange(
+    key: string,
+    start: number,
+    stop: number,
+    options?: { rev: boolean }
+  ): Promise<string[]> {
+    return this.request<string[]>({ op: 'zrange', args: { key, start, stop, options } })
+  }
+
+  async hgetall<T extends Record<string, unknown>>(key: string): Promise<T | null> {
+    return this.request<T | null>({ op: 'hgetall', args: { key } })
+  }
+
+  pipeline() {
+    return new ProxyPipelineWrapper(this.proxyUrl)
+  }
+
+  async hmset(key: string, value: Record<string, any>): Promise<'OK' | number> {
+    return this.request<'OK' | number>({ op: 'hmset', args: { key, value } })
+  }
+
+  async zadd(key: string, score: number, member: string): Promise<number | null> {
+    return this.request<number | null>({ op: 'zadd', args: { key, score, member } })
+  }
+
+  async del(key: string): Promise<number> {
+    return this.request<number>({ op: 'del', args: { key } })
+  }
+
+  async zrem(key: string, member: string): Promise<number> {
+    return this.request<number>({ op: 'zrem', args: { key, member } })
+  }
+
+  async get(key: string): Promise<string | null> {
+    return this.request<string | null>({ op: 'get', args: { key } })
+  }
+
+  async set(
+    key: string,
+    value: string,
+    options?: { ex?: number; EX?: number }
+  ): Promise<string | null> {
+    const ex = options?.ex ?? options?.EX
+    return this.request<string | null>({ op: 'set', args: { key, value, ex } })
+  }
+
+  async keys(pattern: string): Promise<string[]> {
+    return this.request<string[]>({ op: 'keys', args: { pattern } })
+  }
+
+  async ttl(key: string): Promise<number> {
+    return this.request<number>({ op: 'ttl', args: { key } })
+  }
+
+  async close(): Promise<void> {
+    // no-op for proxy
+  }
+}
+
+class ProxyPipelineWrapper {
+  private proxyUrl: string
+  private ops: Array<{ op: string; args: Record<string, unknown> }> = []
+
+  constructor(proxyUrl: string) {
+    this.proxyUrl = proxyUrl
+  }
+
+  hgetall(key: string) {
+    this.ops.push({ op: 'hgetall', args: { key } })
+    return this
+  }
+
+  del(key: string) {
+    this.ops.push({ op: 'del', args: { key } })
+    return this
+  }
+
+  zrem(key: string, member: string) {
+    this.ops.push({ op: 'zrem', args: { key, member } })
+    return this
+  }
+
+  hmset(key: string, value: Record<string, any>) {
+    this.ops.push({ op: 'hmset', args: { key, value } })
+    return this
+  }
+
+  zadd(key: string, score: number, member: string) {
+    this.ops.push({ op: 'zadd', args: { key, score, member } })
+    return this
+  }
+
+  async exec() {
+    const res = await fetch(this.proxyUrl, {
+      method: 'POST',
+      headers: {
+        'content-type': 'application/json'
+      },
+      body: JSON.stringify({ ops: this.ops })
+    })
+    if (!res.ok) {
+      const text = await res.text().catch(() => '')
+      throw new Error(`Proxy pipeline failed: ${res.status} ${text}`)
+    }
+    const data = (await res.json()) as { results?: unknown; error?: string }
+    if ((data as any).error) {
+      throw new Error((data as any).error)
+    }
+    return data.results
   }
 }

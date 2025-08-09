@@ -12,10 +12,10 @@ export async function PUT(request: NextRequest) {
       )
     }
 
-    const mcpServerUrl = process.env.MCP_SERVER_URL
+    const modulexServerUrl = process.env.NEXT_PUBLIC_MODULEX_HOST
     const mcpApiKey = process.env.MCP_SERVER_API_KEY
 
-    if (!mcpServerUrl || !mcpApiKey) {
+    if (!modulexServerUrl || !mcpApiKey) {
       return NextResponse.json(
         { error: 'MCP server configuration missing' },
         { status: 500 }
@@ -36,7 +36,7 @@ export async function PUT(request: NextRequest) {
     // Backend endpoint: PUT /tools/{tool_name}/actions/{action_name}/status
     // Backend expects is_disabled (inverted from isActive)
     const response = await fetch(
-      `${mcpServerUrl}/auth/tools/${toolName}/actions/${actionName}/status?user_id=${userId}`,
+      `${modulexServerUrl}/auth/tools/${toolName}/actions/${actionName}/status?user_id=${userId}`,
       {
         method: 'PUT',
         headers: {
