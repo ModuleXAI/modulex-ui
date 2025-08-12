@@ -19,8 +19,8 @@ export async function middleware(request: NextRequest) {
 
   // Route based on auth provider
   if (isDefaultProvider()) {
-    // Public paths that don't require authentication
-    const publicPaths = ['/', '/auth', '/share', '/api']
+    // Public paths that don't require authentication (root '/' is protected now)
+    const publicPaths = ['/auth', '/share', '/api']
     const pathname = request.nextUrl.pathname
 
     const isPublic = publicPaths.some(path => pathname.startsWith(path))

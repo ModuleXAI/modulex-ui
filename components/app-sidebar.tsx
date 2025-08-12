@@ -1,13 +1,15 @@
 import {
-  Sidebar,
-  SidebarContent,
-  SidebarHeader,
-  SidebarMenu,
-  SidebarMenuButton,
-  SidebarMenuItem,
-  SidebarRail,
-  SidebarTrigger
+    Sidebar,
+    SidebarContent,
+    SidebarHeader,
+    SidebarMenu,
+    SidebarMenuButton,
+    SidebarMenuItem,
+    SidebarRail,
+    SidebarTrigger
 } from '@/components/ui/sidebar'
+import { isDefaultProvider } from '@/lib/auth/provider'
+import { createClient } from '@/lib/supabase/server'
 import { cn } from '@/lib/utils'
 import { Plus } from 'lucide-react'
 import Link from 'next/link'
@@ -16,7 +18,24 @@ import { ChatHistorySection } from './sidebar/chat-history-section'
 import { ChatHistorySkeleton } from './sidebar/chat-history-skeleton'
 import { ModulexTextIcon } from './ui/icons'
 
-export default function AppSidebar() {
+export default async function AppSidebar() {
+  let isAuthenticated = true
+  if (!isDefaultProvider()) {
+    try {
+      const supabase = await createClient()
+      const {
+        data: { user }
+      } = await supabase.auth.getUser()
+      isAuthenticated = Boolean(user)
+    } catch {
+      isAuthenticated = false
+    }
+  }
+
+  if (!isAuthenticated) {
+    return null
+  }
+
   return (
     <Sidebar side="left" variant="sidebar" collapsible="offcanvas">
       <SidebarHeader className="flex flex-row justify-between items-center min-h-[40px] py-0 px-4">

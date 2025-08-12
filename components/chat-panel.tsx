@@ -1,5 +1,6 @@
 'use client'
 
+import { createClient } from '@/lib/supabase/client'
 import { Model } from '@/lib/types/models'
 import { cn } from '@/lib/utils'
 import { Message } from 'ai'
@@ -11,6 +12,7 @@ import { useArtifact } from './artifact/artifact-context'
 import { EmptyScreen } from './empty-screen'
 import { ModelSelector } from './model-selector'
 import { SearchModeToggle } from './search-mode-toggle'
+import { SignInDialog } from './sign-in-dialog'
 import { ToolsToggle } from './tools-toggle'
 import { Button } from './ui/button'
 import { IconLogo } from './ui/icons'
@@ -47,6 +49,7 @@ export function ChatPanel({
   scrollContainerRef
 }: ChatPanelProps) {
   const [showEmptyScreen, setShowEmptyScreen] = useState(false)
+  const [loginOpen, setLoginOpen] = useState(false)
   const router = useRouter()
   const inputRef = useRef<HTMLTextAreaElement>(null)
   const isFirstRender = useRef(true)
@@ -123,8 +126,27 @@ export function ChatPanel({
           </p>
         </div>
       )}
+      <SignInDialog open={loginOpen} onOpenChange={setLoginOpen} />
       <form
-        onSubmit={handleSubmit}
+        onSubmit={async e => {
+          // Prevent the browser's default form submission immediately
+          e.preventDefault()
+          if (
+            (process.env.NEXT_PUBLIC_UPSTASH_REDIS_PROXY_URL ||
+              process.env.UPSTASH_REDIS_PROXY_URL) &&
+            !loginOpen
+          ) {
+            const supabase = createClient()
+            const {
+              data: { session }
+            } = await supabase.auth.getSession()
+            if (!session) {
+              setLoginOpen(true)
+              return
+            }
+          }
+          handleSubmit(e)
+        }}
         className={cn('max-w-3xl w-full mx-auto relative')}
       >
         {/* Scroll to bottom button - only shown when showScrollToBottomButton is true */}

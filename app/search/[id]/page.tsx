@@ -3,7 +3,7 @@ import { getChat } from '@/lib/actions/chat'
 import { getCurrentUserId } from '@/lib/auth/get-current-user'
 import { getModels } from '@/lib/config/models'
 import { convertToUIMessages } from '@/lib/utils'
-import { notFound, redirect } from 'next/navigation'
+import { notFound } from 'next/navigation'
 
 export const maxDuration = 60
 
@@ -28,11 +28,7 @@ export default async function SearchPage(props: {
   // convertToUIMessages for useChat hook
   const messages = convertToUIMessages(chat?.messages || [])
 
-  if (!chat) {
-    redirect('/')
-  }
-
-  if (chat?.userId !== userId && chat?.userId !== 'anonymous') {
+  if (chat && chat.userId !== userId && chat.userId !== 'anonymous') {
     notFound()
   }
 

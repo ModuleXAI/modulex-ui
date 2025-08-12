@@ -1,3 +1,4 @@
+import { getCurrentUserToken } from '@/lib/auth/get-current-user'
 import { Redis } from '@upstash/redis'
 import { createClient, RedisClientType } from 'redis'
 
@@ -13,7 +14,10 @@ export const redisConfig: RedisConfig = {
   useLocalRedis: process.env.USE_LOCAL_REDIS === 'true',
   upstashRedisRestUrl: process.env.UPSTASH_REDIS_REST_URL,
   upstashRedisRestToken: process.env.UPSTASH_REDIS_REST_TOKEN,
-  upstashRedisProxyUrl: process.env.UPSTASH_REDIS_PROXY_URL,
+  // Prefer server env; fallback to NEXT_PUBLIC for unified toggle (per request)
+  upstashRedisProxyUrl:
+    process.env.UPSTASH_REDIS_PROXY_URL ||
+    process.env.NEXT_PUBLIC_UPSTASH_REDIS_PROXY_URL,
   localRedisUrl: process.env.LOCAL_REDIS_URL || 'redis://localhost:6379'
 }
 
@@ -403,6 +407,16 @@ class ProxyRedisWrapper implements AppRedisClient {
     }
     if (this.secret) {
       headers['x-proxy-secret'] = this.secret
+    } else {
+      // Fallback: try Supabase user bearer token when secret is not provided
+      try {
+        const token = await getCurrentUserToken()
+        if (token) {
+          headers['authorization'] = `Bearer ${token}`
+        }
+      } catch {
+        // ignore, will likely 401 if function requires auth
+      }
     }
     const res = await fetch(this.proxyUrl, {
       method: 'POST',
@@ -434,7 +448,7 @@ class ProxyRedisWrapper implements AppRedisClient {
   }
 
   pipeline() {
-    return new ProxyPipelineWrapper(this.proxyUrl)
+    return new ProxyPipelineWrapper(this.proxyUrl, this.secret)
   }
 
   async hmset(key: string, value: Record<string, any>): Promise<'OK' | number> {
@@ -481,10 +495,12 @@ class ProxyRedisWrapper implements AppRedisClient {
 
 class ProxyPipelineWrapper {
   private proxyUrl: string
+  private secret: string | undefined
   private ops: Array<{ op: string; args: Record<string, unknown> }> = []
 
-  constructor(proxyUrl: string) {
+  constructor(proxyUrl: string, secret?: string) {
     this.proxyUrl = proxyUrl
+    this.secret = secret
   }
 
   hgetall(key: string) {
@@ -513,11 +529,25 @@ class ProxyPipelineWrapper {
   }
 
   async exec() {
+    const headers: Record<string, string> = {
+      'content-type': 'application/json'
+    }
+    if (this.secret) {
+      headers['x-proxy-secret'] = this.secret
+    } else {
+      try {
+        const token = await getCurrentUserToken()
+        if (token) {
+          headers['authorization'] = `Bearer ${token}`
+        }
+      } catch {
+        // ignore
+      }
+    }
+
     const res = await fetch(this.proxyUrl, {
       method: 'POST',
-      headers: {
-        'content-type': 'application/json'
-      },
+      headers,
       body: JSON.stringify({ ops: this.ops })
     })
     if (!res.ok) {
