@@ -48,7 +48,7 @@ export function ChatPanel({
   showScrollToBottomButton,
   scrollContainerRef
 }: ChatPanelProps) {
-  const [showEmptyScreen, setShowEmptyScreen] = useState(false)
+  const [showEmptyScreen, setShowEmptyScreen] = useState(input.length === 0)
   const [loginOpen, setLoginOpen] = useState(false)
   const router = useRouter()
   const inputRef = useRef<HTMLTextAreaElement>(null)
@@ -197,8 +197,6 @@ export function ChatPanel({
                 textarea.form?.requestSubmit()
               }
             }}
-            onFocus={() => setShowEmptyScreen(true)}
-            onBlur={() => setShowEmptyScreen(false)}
           />
 
           {/* Bottom menu area */}

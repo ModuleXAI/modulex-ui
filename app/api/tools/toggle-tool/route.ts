@@ -3,6 +3,8 @@ import { NextRequest, NextResponse } from 'next/server'
 
 export async function PUT(request: NextRequest) {
   try {
+    const { searchParams } = new URL(request.url)
+    const organizationId = searchParams.get('organization_id')
     const userId = await getCurrentUserId()
     
     if (!userId || userId === 'anonymous') {
@@ -33,7 +35,7 @@ export async function PUT(request: NextRequest) {
     
     // Backend endpoint: PUT /tools/{tool_name}/status
     const response = await fetch(
-      `${modulexServerUrl}/auth/tools/${toolName}/status?user_id=${userId}`,
+      `${modulexServerUrl}/auth/tools/${toolName}/status?user_id=${userId}${organizationId ? `&organization_id=${organizationId}` : ''}`,
       {
         method: 'PUT',
         headers: {

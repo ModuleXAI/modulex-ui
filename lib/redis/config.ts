@@ -285,14 +285,32 @@ class LocalPipelineWrapper {
 // Function to get a Redis client
 let redisWrapper: AppRedisClient | null = null
 
-export async function getRedisClient(): Promise<AppRedisClient> {
+export async function getRedisClient(organizationId?: string): Promise<AppRedisClient> {
   if (redisWrapper) {
+    // If using proxy and an organizationId is provided, return a per-request wrapper
+    if (redisConfig.upstashRedisProxyUrl && organizationId) {
+      try {
+        const u = new URL(redisConfig.upstashRedisProxyUrl)
+        u.searchParams.set('organization_id', organizationId)
+        return new ProxyRedisWrapper(u.toString())
+      } catch {
+        // fallback to cached wrapper
+      }
+    }
     return redisWrapper
   }
 
   // Priority 1: Proxy mode via Supabase Edge Function or any HTTP proxy
   if (redisConfig.upstashRedisProxyUrl) {
-    redisWrapper = new ProxyRedisWrapper(redisConfig.upstashRedisProxyUrl)
+    let proxyUrl = redisConfig.upstashRedisProxyUrl
+    if (organizationId) {
+      try {
+        const u = new URL(proxyUrl)
+        u.searchParams.set('organization_id', organizationId)
+        proxyUrl = u.toString()
+      } catch {}
+    }
+    redisWrapper = new ProxyRedisWrapper(proxyUrl)
     return redisWrapper
   }
 
@@ -392,6 +410,18 @@ export async function closeRedisConnection(): Promise<void> {
 }
 
 // Proxy-based wrappers (HTTP → Supabase Edge Function)
+import { cookies } from 'next/headers'
+
+async function getSelectedOrganizationIdServer(): Promise<string | null> {
+  try {
+    const store = await cookies()
+    const value = store.get('selected_organization_id')?.value
+    return value ?? null
+  } catch {
+    return null
+  }
+}
+
 class ProxyRedisWrapper implements AppRedisClient {
   private proxyUrl: string
   private secret: string | undefined
@@ -418,7 +448,17 @@ class ProxyRedisWrapper implements AppRedisClient {
         // ignore, will likely 401 if function requires auth
       }
     }
-    const res = await fetch(this.proxyUrl, {
+    let url = this.proxyUrl
+    try {
+      const orgId = await getSelectedOrganizationIdServer()
+      if (orgId) {
+        const u = new URL(url)
+        u.searchParams.set('organization_id', orgId)
+        url = u.toString()
+      }
+    } catch {}
+
+    const res = await fetch(url, {
       method: 'POST',
       headers,
       body: JSON.stringify(body)
@@ -544,8 +584,17 @@ class ProxyPipelineWrapper {
         // ignore
       }
     }
+    let url = this.proxyUrl
+    try {
+      const orgId = await getSelectedOrganizationIdServer()
+      if (orgId) {
+        const u = new URL(url)
+        u.searchParams.set('organization_id', orgId)
+        url = u.toString()
+      }
+    } catch {}
 
-    const res = await fetch(this.proxyUrl, {
+    const res = await fetch(url, {
       method: 'POST',
       headers,
       body: JSON.stringify({ ops: this.ops })

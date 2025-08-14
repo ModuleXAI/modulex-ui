@@ -3,7 +3,8 @@ import { NextRequest, NextResponse } from 'next/server'
 
 export async function GET(request: NextRequest) {
   try {
-  
+    const { searchParams } = new URL(request.url)
+    const organizationId = searchParams.get('organization_id')
     const userId = await getCurrentUserId()
     
     if (!userId || userId === 'anonymous') {
@@ -31,7 +32,7 @@ export async function GET(request: NextRequest) {
     }
 
     const response = await fetch(
-      `${modulexServerUrl}/auth/tools?user_id=${userId}`,
+      `${modulexServerUrl}/auth/tools?user_id=${userId}${organizationId ? `&organization_id=${organizationId}` : ''}`,
       {
         method: 'GET',
         headers: {
@@ -63,6 +64,8 @@ export async function GET(request: NextRequest) {
 
 export async function POST(request: NextRequest) {
   try {
+    const { searchParams } = new URL(request.url)
+    const organizationId = searchParams.get('organization_id')
     const userId = await getCurrentUserId()
     
     if (!userId || userId === 'anonymous') {
@@ -92,7 +95,7 @@ export async function POST(request: NextRequest) {
     const body = await request.json()
     
     const response = await fetch(
-      `${modulexServerUrl}/auth/tools?user_id=${userId}`,
+      `${modulexServerUrl}/auth/tools?user_id=${userId}${organizationId ? `&organization_id=${organizationId}` : ''}`,
       {
         method: 'POST',
         headers: {

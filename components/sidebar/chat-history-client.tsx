@@ -27,10 +27,21 @@ export function ChatHistoryClient() {
   const loadMoreRef = useRef<HTMLDivElement>(null)
   const [isPending, startTransition] = useTransition()
 
+  const getSelectedOrganizationId = () => {
+    try {
+      const raw = localStorage.getItem('modulex_selected_organization')
+      if (!raw) return null
+      const parsed = JSON.parse(raw) as { id?: string }
+      return parsed?.id ?? null
+    } catch { return null }
+  }
+
   const fetchInitialChats = useCallback(async () => {
     setIsLoading(true)
     try {
-      const response = await fetch(`/api/chats?offset=0&limit=20`)
+      const orgId = getSelectedOrganizationId()
+      const url = orgId ? `/api/chats?offset=0&limit=20&organization_id=${encodeURIComponent(orgId)}` : `/api/chats?offset=0&limit=20`
+      const response = await fetch(url)
       if (!response.ok) {
         throw new Error('Failed to fetch initial chat history')
       }
@@ -50,6 +61,11 @@ export function ChatHistoryClient() {
 
   useEffect(() => {
     fetchInitialChats()
+    const onOrgChanged = () => {
+      fetchInitialChats()
+    }
+    window.addEventListener('organization-changed', onOrgChanged)
+    return () => window.removeEventListener('organization-changed', onOrgChanged)
   }, [fetchInitialChats])
 
   useEffect(() => {
@@ -69,7 +85,9 @@ export function ChatHistoryClient() {
 
     setIsLoading(true)
     try {
-      const response = await fetch(`/api/chats?offset=${nextOffset}&limit=20`)
+      const orgId = getSelectedOrganizationId()
+      const url = orgId ? `/api/chats?offset=${nextOffset}&limit=20&organization_id=${encodeURIComponent(orgId)}` : `/api/chats?offset=${nextOffset}&limit=20`
+      const response = await fetch(url)
       if (!response.ok) {
         throw new Error('Failed to fetch more chat history')
       }

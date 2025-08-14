@@ -74,24 +74,7 @@ export async function POST(req: Request) {
       if (!headers.has('content-type')) headers.set('content-type', 'text/plain; charset=utf-8')
       headers.set('cache-control', 'no-store')
 
-      // Fire-and-forget save (does not block streaming)
-      if (process.env.ENABLE_SAVE_CHAT_HISTORY === 'true') {
-        const origin = (() => {
-          try {
-            return new URL(req.url).origin
-          } catch {
-            return process.env.NEXT_PUBLIC_BASE_URL || ''
-          }
-        })()
-        fetch(`${origin}/api/chats/save`, {
-          method: 'POST',
-          headers: {
-            'content-type': 'application/json',
-            ...(supabaseToken ? { Authorization: `Bearer ${supabaseToken}` } : {})
-          },
-          body: JSON.stringify({ id: chatId, messages, userId })
-        }).catch(() => {})
-      }
+      // Do not save here; saving is handled on client onFinish with full transcript
 
       return new Response(proxyRes.body, {
         status: proxyRes.status,

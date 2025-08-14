@@ -2,17 +2,17 @@
 
 import { cn } from '@/lib/utils'
 import {
-  BookCheck,
-  Check,
-  File,
-  Film,
-  Image,
-  MessageCircleMore,
-  Newspaper,
-  Repeat2,
-  Search
+    BookCheck,
+    Check,
+    File,
+    Film,
+    Image,
+    MessageCircleMore,
+    Newspaper,
+    Repeat2,
+    Search
 } from 'lucide-react'
-import React from 'react'
+import * as React from 'react'
 import { ToolBadge } from './tool-badge'
 import { Badge } from './ui/badge'
 import { Separator } from './ui/separator'

@@ -4,14 +4,14 @@ import { CHAT_ID } from '@/lib/constants'
 import { useChat } from '@ai-sdk/react'
 import { JSONValue } from 'ai'
 import { ArrowRight } from 'lucide-react'
-import React from 'react'
+import * as React from 'react'
 import { CollapsibleMessage } from './collapsible-message'
 import { Section } from './section'
 import { Button } from './ui/button'
 import { Skeleton } from './ui/skeleton'
 
 export interface RelatedQuestionsProps {
-  annotations: JSONValue[]
+  annotations?: JSONValue[]
   onQuerySelect: (query: string) => void
   isOpen: boolean
   onOpenChange: (open: boolean) => void
@@ -30,25 +30,142 @@ export const RelatedQuestions: React.FC<RelatedQuestionsProps> = ({
   isOpen,
   onOpenChange
 }) => {
-  const { status } = useChat({
+  const { status, messages } = useChat({
     id: CHAT_ID
   })
   const isLoading = status === 'submitted' || status === 'streaming'
 
-  if (!annotations) {
-    return null
-  }
+  // If annotations are missing (e.g., proxy didn't emit the loading annotation),
+  // we still want to render a loading skeleton while streaming.
+  const safeAnnotations = Array.isArray(annotations) ? annotations : []
 
-  const lastRelatedQuestionsAnnotation = annotations[
-    annotations.length - 1
+  const lastRelatedQuestionsAnnotation = safeAnnotations[
+    safeAnnotations.length - 1
   ] as RelatedQuestionsAnnotation
 
   const relatedQuestions = lastRelatedQuestionsAnnotation?.data
   if ((!relatedQuestions || !relatedQuestions.items) && !isLoading) {
-    return null
+    // We might try client-side fallback via a separate related endpoint.
+    // If no items and not streaming, we'll attempt once and render if available.
   }
 
-  if (relatedQuestions.items.length === 0 && isLoading) {
+  // Client-side fallback: fetch related questions from a dedicated proxy endpoint
+  // when streaming is finished and no annotations arrived from server.
+  const [externalItems, setExternalItems] = React.useState<Array<{ query: string }> | null>(null)
+  const [externalLoading, setExternalLoading] = React.useState(false)
+  React.useEffect(() => {
+    const proxy = (process.env.NEXT_PUBLIC_AI_PROXY || '').trim()
+    const shouldFetch =
+      !isLoading &&
+      (!relatedQuestions || !Array.isArray(relatedQuestions.items) || relatedQuestions.items.length === 0) &&
+      !externalItems &&
+      proxy
+    if (!shouldFetch) return
+
+    let cancelled = false
+    async function run() {
+      try {
+        setExternalLoading(true)
+        // Determine last user query text
+        const lastUser = [...(messages || [])].reverse().find(m => m.role === 'user')
+        const content = typeof lastUser?.content === 'string' ? lastUser?.content : ''
+        const selectedModelCookie = typeof document !== 'undefined' ? document.cookie.split('; ').find(c => c.startsWith('selectedModel=')) : undefined
+        let selectedModelId = 'gpt-4o-mini'
+        if (selectedModelCookie) {
+          try {
+            const raw = decodeURIComponent(selectedModelCookie.split('=')[1] || '')
+            const parsed = JSON.parse(raw)
+            if (parsed && typeof parsed.id === 'string' && parsed.id) {
+              selectedModelId = parsed.id
+            }
+          } catch {}
+        }
+
+        const url = `${proxy}-related`
+        const res = await fetch(url, {
+          method: 'POST',
+          headers: { 'content-type': 'application/json' },
+          body: JSON.stringify({
+            messages: [{ role: 'user', content }],
+            selectedModel: { id: selectedModelId }
+          })
+        })
+        if (!res.ok) throw new Error('Failed to fetch related questions')
+        const data = await res.json().catch(() => null)
+        if (cancelled) return
+        const items =
+          data?.items ||
+          data?.data?.items ||
+          (Array.isArray(data) ? data : null)
+        if (Array.isArray(items)) {
+          setExternalItems(
+            items
+              .filter((it: any) => it && typeof it.query === 'string' && it.query.trim())
+              .map((it: any) => ({ query: it.query }))
+          )
+        }
+      } catch {
+      } finally {
+        if (!cancelled) setExternalLoading(false)
+      }
+    }
+    run()
+    return () => {
+      cancelled = true
+    }
+  }, [isLoading, relatedQuestions, messages])
+
+  // Persist external related items to chat history by adding them as an annotation
+  // to the last assistant message and calling /api/chats/save in merge mode.
+  React.useEffect(() => {
+    if (!externalItems || externalItems.length === 0) return
+    try {
+      // Derive chat id from URL: /search/:id
+      const pathname = typeof window !== 'undefined' ? window.location.pathname : ''
+      const match = pathname.match(/\/search\/([^/]+)/)
+      const chatId = match?.[1]
+      if (!chatId) return
+
+      // Clone messages and inject annotation into the last assistant message
+      const base = Array.isArray(messages) ? [...messages] : []
+      let lastAssistantIndex = -1
+      for (let i = base.length - 1; i >= 0; i--) {
+        if ((base[i] as any)?.role === 'assistant') {
+          lastAssistantIndex = i
+          break
+        }
+      }
+      if (lastAssistantIndex < 0) return
+
+      const lastAssistant = base[lastAssistantIndex] as any
+      const prevAnnotations: any[] = Array.isArray(lastAssistant.annotations)
+        ? [...lastAssistant.annotations]
+        : []
+      const relatedAnnotation = {
+        type: 'related-questions',
+        data: { items: externalItems }
+      }
+      const updatedAssistant = {
+        ...lastAssistant,
+        annotations: [...prevAnnotations, relatedAnnotation]
+      }
+      const payloadMessages = [...base]
+      payloadMessages[lastAssistantIndex] = updatedAssistant
+
+      // Fire and forget; backend merges to avoid duplicates
+      fetch('/api/chats/save', {
+        method: 'POST',
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({ id: chatId, messages: payloadMessages, mode: 'merge' })
+      }).catch(() => {})
+    } catch {}
+  }, [externalItems, messages])
+
+  const itemsToRender = Array.isArray(relatedQuestions?.items) && relatedQuestions!.items.length > 0
+    ? relatedQuestions!.items
+    : externalItems || []
+
+  if ((!relatedQuestions || relatedQuestions.items?.length === 0) && isLoading) {
     return (
       <CollapsibleMessage
         role="assistant"
@@ -73,9 +190,9 @@ export const RelatedQuestions: React.FC<RelatedQuestionsProps> = ({
     >
       <Section title="Related" className="pt-0 pb-4">
         <div className="flex flex-col">
-          {Array.isArray(relatedQuestions.items) ? (
-            relatedQuestions.items
-              ?.filter(item => item?.query !== '')
+          {Array.isArray(itemsToRender) && itemsToRender.length > 0 ? (
+            itemsToRender
+              .filter(item => item?.query !== '')
               .map((item, index) => (
                 <div className="flex items-start w-full" key={index}>
                   <ArrowRight className="h-4 w-4 mr-2 mt-1 flex-shrink-0 text-accent-foreground/50" />
@@ -91,9 +208,9 @@ export const RelatedQuestions: React.FC<RelatedQuestionsProps> = ({
                   </Button>
                 </div>
               ))
-          ) : (
-            <div>Not an array</div>
-          )}
+          ) : externalLoading ? (
+            <Skeleton className="w-full h-6" />
+          ) : null}
         </div>
       </Section>
     </CollapsibleMessage>

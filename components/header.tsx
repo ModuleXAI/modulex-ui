@@ -4,9 +4,9 @@ import { useSidebar } from '@/components/ui/sidebar'
 import { cn } from '@/lib/utils'
 import { User } from '@supabase/supabase-js'
 // import Link from 'next/link' // No longer needed directly here for Sign In button
-import React from 'react'
+import * as React from 'react'
 // import { Button } from './ui/button' // No longer needed directly here for Sign In button
-import GuestMenu from './guest-menu' // Import the new GuestMenu component
+import GuestMenu from './guest-menu'; // Import the new GuestMenu component
 import UserMenu from './user-menu'
 
 interface HeaderProps {
@@ -23,7 +23,7 @@ export const Header: React.FC<HeaderProps> = ({ user }) => {
         'w-full'
       )}
     >
-      {/* This div can be used for a logo or title on the left if needed */}
+      {/* Left section left empty; org switcher is in sidebar header */}
       <div></div>
 
       <div className="flex items-center gap-2">

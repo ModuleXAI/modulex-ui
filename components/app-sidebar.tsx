@@ -14,6 +14,7 @@ import { cn } from '@/lib/utils'
 import { Plus } from 'lucide-react'
 import Link from 'next/link'
 import { Suspense } from 'react'
+import OrganizationSwitcher from './organization-switcher'
 import { ChatHistorySection } from './sidebar/chat-history-section'
 import { ChatHistorySkeleton } from './sidebar/chat-history-skeleton'
 import { ModulexTextIcon } from './ui/icons'
@@ -38,11 +39,16 @@ export default async function AppSidebar() {
 
   return (
     <Sidebar side="left" variant="sidebar" collapsible="offcanvas">
-      <SidebarHeader className="flex flex-row justify-between items-center min-h-[40px] py-0 px-4">
-        <Link href="/" className="flex items-center justify-center h-full">
-          <ModulexTextIcon className={cn('size-20')} />
-        </Link>
-        <SidebarTrigger />
+      <SidebarHeader className="flex flex-col gap-2 py-2 px-4">
+        <div className="flex flex-row justify-between items-center">
+          <Link href="/" className="flex items-center justify-center h-full">
+            <ModulexTextIcon className={cn('size-20')} />
+          </Link>
+          <SidebarTrigger />
+        </div>
+        <div className="flex items-center">
+          <OrganizationSwitcher />
+        </div>
       </SidebarHeader>
       <SidebarContent className="flex flex-col px-2 py-0 h-full">
         <SidebarMenu>

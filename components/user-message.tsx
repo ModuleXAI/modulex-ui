@@ -2,7 +2,8 @@
 
 import { cn } from '@/lib/utils'
 import { Pencil } from 'lucide-react'
-import React, { useState } from 'react'
+import * as React from 'react'
+import { useState } from 'react'
 import TextareaAutosize from 'react-textarea-autosize'
 import { CollapsibleMessage } from './collapsible-message'
 import { Button } from './ui/button'

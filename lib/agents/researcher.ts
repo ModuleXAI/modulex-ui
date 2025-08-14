@@ -51,7 +51,19 @@ async function fetchMCPTools(userId: string): Promise<MCPTool[]> {
       return []
     }
 
-    const response = await fetch(`${modulexServerUrl}/tools/openai-tools?user_id=${userId}`, {
+    let url = `${modulexServerUrl}/tools/openai-tools?user_id=${userId}`
+    try {
+      // Try to read selected org from cookie in server context
+      const { cookies } = await import('next/headers')
+      const store = await cookies()
+      const orgId = store.get('selected_organization_id')?.value
+      if (orgId) {
+        const u = new URL(url)
+        u.searchParams.set('organization_id', orgId)
+        url = u.toString()
+      }
+    } catch {}
+    const response = await fetch(url, {
       method: 'GET',
       headers: {
         'X-API-KEY': `${mcpApiKey}`,
@@ -89,7 +101,18 @@ async function executeMCPTool(toolKey: string, action: string, parameters: any, 
       throw new Error('Unable to retrieve Supabase token')
     }
 
-    const response = await fetch(`${modulexServerUrl}/tools/${toolKey}/execute?user_id=${userId}`, {
+    let url = `${modulexServerUrl}/tools/${toolKey}/execute?user_id=${userId}`
+    try {
+      const { cookies } = await import('next/headers')
+      const store = await cookies()
+      const orgId = store.get('selected_organization_id')?.value
+      if (orgId) {
+        const u = new URL(url)
+        u.searchParams.set('organization_id', orgId)
+        url = u.toString()
+      }
+    } catch {}
+    const response = await fetch(url, {
       method: 'POST',
       headers: {
         'X-API-KEY': `${mcpApiKey}`,

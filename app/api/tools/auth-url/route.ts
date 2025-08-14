@@ -15,6 +15,7 @@ export async function GET(request: NextRequest) {
     // Query parameter'dan toolName'i al
     const { searchParams } = new URL(request.url)
     const toolName = searchParams.get('toolName')
+    const organizationId = searchParams.get('organization_id')
 
     if (!toolName) {
       return NextResponse.json(
@@ -41,7 +42,7 @@ export async function GET(request: NextRequest) {
     }
 
     // Backend'den auth URL'ini al
-    const response = await fetch(`${modulexServerUrl}/auth/url/${toolName}?user_id=${userId}`, {
+    const response = await fetch(`${modulexServerUrl}/auth/url/${toolName}?user_id=${userId}${organizationId ? `&organization_id=${organizationId}` : ''}`, {
       method: 'GET',
       headers: {
         'Authorization': `Bearer ${accessToken}`,

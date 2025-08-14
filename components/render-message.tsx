@@ -167,14 +167,12 @@ export function RenderMessage({
             return null
         }
       })}
-      {relatedQuestions && relatedQuestions.length > 0 && (
-        <RelatedQuestions
-          annotations={relatedQuestions as JSONValue[]}
-          onQuerySelect={onQuerySelect}
-          isOpen={getIsOpen(`${messageId}-related`)}
-          onOpenChange={open => onOpenChange(`${messageId}-related`, open)}
-        />
-      )}
+      <RelatedQuestions
+        annotations={(relatedQuestions as JSONValue[]) || []}
+        onQuerySelect={onQuerySelect}
+        isOpen={getIsOpen(`${messageId}-related`)}
+        onOpenChange={open => onOpenChange(`${messageId}-related`, open)}
+      />
     </>
   )
 }

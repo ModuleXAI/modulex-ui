@@ -51,9 +51,32 @@ export function Chat({
     body: {
       id
     },
-    onFinish: () => {
-      window.history.replaceState({}, '', `/search/${id}`)
-      window.dispatchEvent(new CustomEvent('chat-history-updated'))
+    onFinish: async (finalMessage) => {
+      try {
+        // Persist full conversation (including assistant) after stream completes
+        if (process.env.NEXT_PUBLIC_ENABLE_SAVE_CHAT_HISTORY === 'true') {
+          // Defer to ensure hook state is fully updated, then read latest messages
+          const latestMessagesRef = { current: messages }
+          // keep ref in sync until next tick
+          // eslint-disable-next-line react-hooks/exhaustive-deps
+          ;(latestMessagesRef.current = messages)
+          setTimeout(() => {
+            try {
+              const base = latestMessagesRef.current || []
+              const hasFinal = base.some(m => m.id === finalMessage?.id)
+              const full = hasFinal ? base : [...base, finalMessage]
+              fetch('/api/chats/save', {
+                method: 'POST',
+                headers: { 'content-type': 'application/json' },
+                body: JSON.stringify({ id, messages: full })
+              }).catch(() => {})
+            } catch {}
+          }, 0)
+        }
+      } finally {
+        window.history.replaceState({}, '', `/search/${id}`)
+        window.dispatchEvent(new CustomEvent('chat-history-updated'))
+      }
     },
     onError: error => {
       toast.error(`Error in chat: ${error.message}`)
@@ -196,6 +219,17 @@ export function Chat({
   const onSubmit = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault()
     setData(undefined)
+    // Append-only save of the user message so assistant can be appended later onFinish
+    if (process.env.NEXT_PUBLIC_ENABLE_SAVE_CHAT_HISTORY === 'true') {
+      const userMsg = { role: 'user', content: input }
+      try {
+        fetch('/api/chats/save', {
+          method: 'POST',
+          headers: { 'content-type': 'application/json' },
+          body: JSON.stringify({ id, messages: [userMsg], mode: 'append' })
+        }).catch(() => {})
+      } catch {}
+    }
     handleSubmit(e)
   }
 

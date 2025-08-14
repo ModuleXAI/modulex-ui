@@ -3,6 +3,8 @@ import { NextRequest, NextResponse } from 'next/server'
 
 export async function DELETE(request: NextRequest) {
   try {
+    const { searchParams } = new URL(request.url)
+    const organizationId = searchParams.get('organization_id')
     const userId = await getCurrentUserId()
     
     if (!userId) {
@@ -39,7 +41,7 @@ export async function DELETE(request: NextRequest) {
     }
 
     // Backend'e disconnect isteği gönder
-    const response = await fetch(`${modulexServerUrl}/auth/tools/${toolName}?user_id=${userId}`, {
+    const response = await fetch(`${modulexServerUrl}/auth/tools/${toolName}?user_id=${userId}${organizationId ? `&organization_id=${organizationId}` : ''}`, {
       method: 'DELETE',
       headers: {
         'Authorization': `Bearer ${accessToken}`,

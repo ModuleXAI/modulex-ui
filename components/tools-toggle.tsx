@@ -35,9 +35,22 @@ interface ToolsData {
 }
 
 // API functions
+const getSelectedOrganizationId = (): string | null => {
+  try {
+    const raw = localStorage.getItem('modulex_selected_organization')
+    if (!raw) return null
+    const parsed = JSON.parse(raw) as { id?: string }
+    return parsed?.id ?? null
+  } catch {
+    return null
+  }
+}
+
 const fetchToolsData = async (): Promise<ToolsData | null> => {
   try {
-    const response = await fetch('/api/tools', {
+    const orgId = getSelectedOrganizationId()
+    const url = orgId ? `/api/tools?organization_id=${encodeURIComponent(orgId)}` : '/api/tools'
+    const response = await fetch(url, {
       method: 'GET',
       headers: {
         'Content-Type': 'application/json',
@@ -58,7 +71,9 @@ const fetchToolsData = async (): Promise<ToolsData | null> => {
 
 const updateToolsData = async (toolsData: ToolsData): Promise<boolean> => {
   try {
-    const response = await fetch('/api/tools', {
+    const orgId = getSelectedOrganizationId()
+    const url = orgId ? `/api/tools?organization_id=${encodeURIComponent(orgId)}` : '/api/tools'
+    const response = await fetch(url, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -81,7 +96,9 @@ const updateToolsData = async (toolsData: ToolsData): Promise<boolean> => {
 // API functions for specific tool operations
 const toggleToolStatus = async (toolName: string, isActive: boolean): Promise<boolean> => {
   try {
-    const response = await fetch('/api/tools/toggle-tool', {
+    const orgId = getSelectedOrganizationId()
+    const url = orgId ? `/api/tools/toggle-tool?organization_id=${encodeURIComponent(orgId)}` : '/api/tools/toggle-tool'
+    const response = await fetch(url, {
       method: 'PUT',
       headers: {
         'Content-Type': 'application/json',
@@ -103,7 +120,9 @@ const toggleToolStatus = async (toolName: string, isActive: boolean): Promise<bo
 
 const toggleActionStatus = async (toolName: string, actionName: string, isActive: boolean): Promise<boolean> => {
   try {
-    const response = await fetch('/api/tools/toggle-action', {
+    const orgId = getSelectedOrganizationId()
+    const url = orgId ? `/api/tools/toggle-action?organization_id=${encodeURIComponent(orgId)}` : '/api/tools/toggle-action'
+    const response = await fetch(url, {
       method: 'PUT',
       headers: {
         'Content-Type': 'application/json',
@@ -125,7 +144,10 @@ const toggleActionStatus = async (toolName: string, actionName: string, isActive
 
 const getAuthUrl = async (toolName: string): Promise<{ auth_url: string; state: string; tool_name: string } | null> => {
   try {
-    const response = await fetch(`/api/tools/auth-url?toolName=${encodeURIComponent(toolName)}`, {
+    const orgId = getSelectedOrganizationId()
+    const qs = new URLSearchParams({ toolName })
+    if (orgId) qs.set('organization_id', orgId)
+    const response = await fetch(`/api/tools/auth-url?${qs.toString()}`, {
       method: 'GET',
       headers: {
         'Content-Type': 'application/json',
@@ -147,7 +169,9 @@ const getAuthUrl = async (toolName: string): Promise<{ auth_url: string; state: 
 
 const disconnectTool = async (toolName: string): Promise<boolean> => {
   try {
-    const response = await fetch('/api/tools/disconnect', {
+    const orgId = getSelectedOrganizationId()
+    const url = orgId ? `/api/tools/disconnect?organization_id=${encodeURIComponent(orgId)}` : '/api/tools/disconnect'
+    const response = await fetch(url, {
       method: 'DELETE',
       headers: {
         'Content-Type': 'application/json',
@@ -282,6 +306,11 @@ export function ToolsToggle() {
 
   useEffect(() => {
     loadToolsData()
+    const onOrgChanged = async () => {
+      await loadToolsData()
+    }
+    window.addEventListener('organization-changed', onOrgChanged as EventListener)
+    return () => window.removeEventListener('organization-changed', onOrgChanged as EventListener)
   }, [])
 
   const loadToolsData = async () => {
@@ -460,15 +489,17 @@ export function ToolsToggle() {
          window.addEventListener('message', handleMessage)
          
          // Auth durumunu 3 saniyede bir kontrol et (COOP nedeniyle popup.closed kullanamıyoruz)
-         const checkAuth = setInterval(async () => {
+          const checkAuth = setInterval(async () => {
            try {
              console.log(`Checking auth status for ${toolName}...`)
-             const response = await fetch(`/api/tools`, {
-               method: 'GET',
-               headers: {
-                 'Content-Type': 'application/json',
-               }
-             })
+              const orgId = getSelectedOrganizationId()
+              const url = orgId ? `/api/tools?organization_id=${encodeURIComponent(orgId)}` : '/api/tools'
+              const response = await fetch(url, {
+                method: 'GET',
+                headers: {
+                  'Content-Type': 'application/json',
+                }
+              })
              
              if (response.ok) {
                const data = await response.json()
