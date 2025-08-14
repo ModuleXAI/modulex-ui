@@ -25,10 +25,18 @@ interface MCPTool {
   }
 }
 
-// Fetch MCP tools from server
+// Resolve the base URL for AI-related tool operations.
+// If NEXT_PUBLIC_AI_PROXY is set and non-empty, route via the proxy; otherwise use NEXT_PUBLIC_MODULEX_HOST.
+function getAiToolBaseUrl(): string | null {
+  const proxy = process.env.NEXT_PUBLIC_AI_PROXY?.trim()
+  if (proxy) return proxy
+  return process.env.NEXT_PUBLIC_MODULEX_HOST ?? null
+}
+
+// Fetch MCP tools from server (optionally via AI proxy)
 async function fetchMCPTools(userId: string): Promise<MCPTool[]> {
   try {
-    const modulexServerUrl = process.env.NEXT_PUBLIC_MODULEX_HOST
+    const modulexServerUrl = getAiToolBaseUrl()
     const mcpApiKey = process.env.MCP_SERVER_API_KEY
 
     if (!modulexServerUrl || !mcpApiKey || !userId) {
@@ -47,7 +55,8 @@ async function fetchMCPTools(userId: string): Promise<MCPTool[]> {
       method: 'GET',
       headers: {
         'X-API-KEY': `${mcpApiKey}`,
-        'Content-Type': 'application/json'
+        'Content-Type': 'application/json',
+        ...(supabaseToken ? { Authorization: `Bearer ${supabaseToken}` } : {})
       }
     })
 
@@ -64,10 +73,10 @@ async function fetchMCPTools(userId: string): Promise<MCPTool[]> {
   }
 }
 
-// Execute MCP tool using tool_key and action
+// Execute MCP tool using tool_key and action (optionally via AI proxy)
 async function executeMCPTool(toolKey: string, action: string, parameters: any, userId: string): Promise<any> {
   try {
-    const modulexServerUrl = process.env.NEXT_PUBLIC_MODULEX_HOST
+    const modulexServerUrl = getAiToolBaseUrl()
     const mcpApiKey = process.env.MCP_SERVER_API_KEY
 
     if (!modulexServerUrl || !mcpApiKey || !userId) {
@@ -84,7 +93,8 @@ async function executeMCPTool(toolKey: string, action: string, parameters: any, 
       method: 'POST',
       headers: {
         'X-API-KEY': `${mcpApiKey}`,
-        'Content-Type': 'application/json'
+        'Content-Type': 'application/json',
+        ...(supabaseToken ? { Authorization: `Bearer ${supabaseToken}` } : {})
       },
       body: JSON.stringify({
         parameters: {

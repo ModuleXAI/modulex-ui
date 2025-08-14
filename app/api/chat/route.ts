@@ -1,4 +1,4 @@
-import { getCurrentUserId } from '@/lib/auth/get-current-user'
+import { getCurrentUserId, getCurrentUserToken } from '@/lib/auth/get-current-user'
 import { createManualToolStreamResponse } from '@/lib/streaming/create-manual-tool-stream'
 import { createToolCallingStreamResponse } from '@/lib/streaming/create-tool-calling-stream'
 import { Model } from '@/lib/types/models'
@@ -6,6 +6,8 @@ import { isProviderEnabled } from '@/lib/utils/registry'
 import { cookies } from 'next/headers'
 
 export const maxDuration = 30
+export const runtime = 'edge'
+export const dynamic = 'force-dynamic'
 
 const DEFAULT_MODEL: Model = {
   id: 'gpt-4o-mini',
@@ -44,6 +46,60 @@ export async function POST(req: Request) {
       }
     }
 
+    // If an AI proxy is configured, forward the entire request to the proxy endpoint.
+    const aiProxy = (process.env.AI_PROXY_URL || process.env.NEXT_PUBLIC_AI_PROXY)?.trim()
+    console.log('aiProxy', aiProxy)
+    if (aiProxy) {
+      const supabaseToken = await getCurrentUserToken()
+      const proxyPayload = {
+        messages,
+        id: chatId,
+        selectedModel,
+        searchMode,
+        userId
+      }
+
+      const proxyRes = await fetch(aiProxy, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          ...(supabaseToken ? { Authorization: `Bearer ${supabaseToken}` } : {})
+        },
+        body: JSON.stringify(proxyPayload)
+      })
+
+      const headers = new Headers(proxyRes.headers)
+      // Ensure AI SDK stream header and content-type are preserved for the client parser
+      if (!headers.has('x-vercel-ai-data-stream')) headers.set('x-vercel-ai-data-stream', 'v1')
+      if (!headers.has('content-type')) headers.set('content-type', 'text/plain; charset=utf-8')
+      headers.set('cache-control', 'no-store')
+
+      // Fire-and-forget save (does not block streaming)
+      if (process.env.ENABLE_SAVE_CHAT_HISTORY === 'true') {
+        const origin = (() => {
+          try {
+            return new URL(req.url).origin
+          } catch {
+            return process.env.NEXT_PUBLIC_BASE_URL || ''
+          }
+        })()
+        fetch(`${origin}/api/chats/save`, {
+          method: 'POST',
+          headers: {
+            'content-type': 'application/json',
+            ...(supabaseToken ? { Authorization: `Bearer ${supabaseToken}` } : {})
+          },
+          body: JSON.stringify({ id: chatId, messages, userId })
+        }).catch(() => {})
+      }
+
+      return new Response(proxyRes.body, {
+        status: proxyRes.status,
+        statusText: proxyRes.statusText,
+        headers
+      })
+    }
+
     if (
       !isProviderEnabled(selectedModel.providerId) ||
       selectedModel.enabled === false
@@ -59,7 +115,7 @@ export async function POST(req: Request) {
 
     const supportsToolCalling = selectedModel.toolCallType === 'native'
 
-    return supportsToolCalling
+    const baseResp = supportsToolCalling
       ? createToolCallingStreamResponse({
           messages,
           model: selectedModel,
@@ -74,6 +130,18 @@ export async function POST(req: Request) {
           searchMode,
           userId
         })
+
+    // Normalize headers for FE data-stream parser
+    const headers = new Headers((baseResp as Response).headers)
+    if (!headers.has('x-vercel-ai-data-stream')) headers.set('x-vercel-ai-data-stream', 'v1')
+    if (!headers.has('content-type')) headers.set('content-type', 'text/plain; charset=utf-8')
+    headers.set('cache-control', 'no-store')
+    headers.set('x-ai-proxy-used', '0')
+    return new Response((baseResp as Response).body, {
+      status: (baseResp as Response).status,
+      statusText: (baseResp as Response).statusText,
+      headers
+    })
   } catch (error) {
     console.error('API route error:', error)
     return new Response('Error processing your request', {

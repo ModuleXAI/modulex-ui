@@ -1,6 +1,6 @@
 import { isDefaultProvider } from '@/lib/auth/provider'
 import { createClient } from '@/lib/supabase/server'
-import { cookies } from 'next/headers'
+import { cookies, headers } from 'next/headers'
 
 export async function getCurrentUser() {
  /* return {
@@ -51,6 +51,15 @@ export async function getCurrentUserToken() {
   if (!supabaseUrl || !supabaseAnonKey) {
     return null // Supabase is not configured
   }
+
+  // Try to read Authorization header (for server-to-server internal calls)
+  try {
+    const h = await headers()
+    const auth = h.get('authorization') || h.get('Authorization')
+    if (auth && auth.toLowerCase().startsWith('bearer ')) {
+      return auth.slice(7)
+    }
+  } catch {}
 
   const supabase = await createClient()
   const { data } = await supabase.auth.getSession()
