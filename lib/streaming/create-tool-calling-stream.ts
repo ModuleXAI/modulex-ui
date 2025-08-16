@@ -1,14 +1,15 @@
 import { researcher } from '@/lib/agents/researcher'
 import {
-  convertToCoreMessages,
-  CoreMessage,
-  createDataStreamResponse,
-  DataStreamWriter,
-  streamText
+    convertToCoreMessages,
+    CoreMessage,
+    createDataStreamResponse,
+    DataStreamWriter,
+    streamText
 } from 'ai'
 import { getMaxAllowedTokens, truncateMessages } from '../utils/context-window'
 import { isReasoningModel } from '../utils/registry'
 import { handleStreamFinish } from './handle-stream-finish'
+import { executeToolCall } from './tool-execution'
 import { BaseStreamConfig } from './types'
 
 // Function to check if a message contains ask_question tool invocation
@@ -37,8 +38,16 @@ export function createToolCallingStreamResponse(config: BaseStreamConfig) {
           getMaxAllowedTokens(model)
         )
 
+        // Pre-execute tool call (search) if search mode is enabled, to ensure search is attempted
+        const { toolCallDataAnnotation, toolCallMessages } = await executeToolCall(
+          truncatedMessages,
+          dataStream,
+          modelId,
+          searchMode
+        )
+
         let researcherConfig = await researcher({
-          messages: truncatedMessages,
+          messages: [...truncatedMessages, ...toolCallMessages],
           model: modelId,
           searchMode,
           userId

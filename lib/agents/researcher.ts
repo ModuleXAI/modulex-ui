@@ -26,10 +26,7 @@ interface MCPTool {
 }
 
 // Resolve the base URL for AI-related tool operations.
-// If NEXT_PUBLIC_AI_PROXY is set and non-empty, route via the proxy; otherwise use NEXT_PUBLIC_MODULEX_HOST.
 function getAiToolBaseUrl(): string | null {
-  const proxy = process.env.NEXT_PUBLIC_AI_PROXY?.trim()
-  if (proxy) return proxy
   return process.env.NEXT_PUBLIC_MODULEX_HOST ?? null
 }
 
@@ -318,6 +315,7 @@ export async function researcher({
     // Combine base tools with MCP tools
     const allTools = { ...baseTools, ...mcpTools }
     const allActiveTools = searchMode ? [...baseActiveTools, ...mcpActiveTools] : [...mcpActiveTools]
+    console.log('[researcher] searchMode:', searchMode, 'active tools:', allActiveTools)
 
     return {
       model: getModel(model),

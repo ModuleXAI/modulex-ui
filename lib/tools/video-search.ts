@@ -10,12 +10,11 @@ export function createVideoSearchTool(fullModel: string) {
     parameters: getSearchSchemaForModel(fullModel),
     execute: async ({ query }) => {
       try {
+        const headers: Record<string, string> = { 'Content-Type': 'application/json' }
+        headers['X-API-KEY'] = process.env.SERPER_API_KEY || ''
         const response = await fetch('https://google.serper.dev/videos', {
           method: 'POST',
-          headers: {
-            'X-API-KEY': process.env.SERPER_API_KEY || '',
-            'Content-Type': 'application/json'
-          },
+          headers,
           body: JSON.stringify({ q: query })
         })
 

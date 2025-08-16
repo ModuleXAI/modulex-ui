@@ -46,43 +46,6 @@ export async function POST(req: Request) {
       }
     }
 
-    // If an AI proxy is configured, forward the entire request to the proxy endpoint.
-    const aiProxy = (process.env.AI_PROXY_URL || process.env.NEXT_PUBLIC_AI_PROXY)?.trim()
-    console.log('aiProxy', aiProxy)
-    if (aiProxy) {
-      const supabaseToken = await getCurrentUserToken()
-      const proxyPayload = {
-        messages,
-        id: chatId,
-        selectedModel,
-        searchMode,
-        userId
-      }
-
-      const proxyRes = await fetch(aiProxy, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          ...(supabaseToken ? { Authorization: `Bearer ${supabaseToken}` } : {})
-        },
-        body: JSON.stringify(proxyPayload)
-      })
-
-      const headers = new Headers(proxyRes.headers)
-      // Ensure AI SDK stream header and content-type are preserved for the client parser
-      if (!headers.has('x-vercel-ai-data-stream')) headers.set('x-vercel-ai-data-stream', 'v1')
-      if (!headers.has('content-type')) headers.set('content-type', 'text/plain; charset=utf-8')
-      headers.set('cache-control', 'no-store')
-
-      // Do not save here; saving is handled on client onFinish with full transcript
-
-      return new Response(proxyRes.body, {
-        status: proxyRes.status,
-        statusText: proxyRes.statusText,
-        headers
-      })
-    }
-
     if (
       !isProviderEnabled(selectedModel.providerId) ||
       selectedModel.enabled === false

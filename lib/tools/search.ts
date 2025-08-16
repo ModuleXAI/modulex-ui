@@ -43,6 +43,7 @@ export function createSearchTool(fullModel: string) {
       )
 
       try {
+        // Always use direct provider path from FE/runtime
         if (
           searchAPI === 'searxng' &&
           effectiveSearchDepthForAPI === 'advanced'

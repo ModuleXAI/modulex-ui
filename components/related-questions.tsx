@@ -51,69 +51,8 @@ export const RelatedQuestions: React.FC<RelatedQuestionsProps> = ({
 
   // Client-side fallback: fetch related questions from a dedicated proxy endpoint
   // when streaming is finished and no annotations arrived from server.
-  const [externalItems, setExternalItems] = React.useState<Array<{ query: string }> | null>(null)
-  const [externalLoading, setExternalLoading] = React.useState(false)
-  React.useEffect(() => {
-    const proxy = (process.env.NEXT_PUBLIC_AI_PROXY || '').trim()
-    const shouldFetch =
-      !isLoading &&
-      (!relatedQuestions || !Array.isArray(relatedQuestions.items) || relatedQuestions.items.length === 0) &&
-      !externalItems &&
-      proxy
-    if (!shouldFetch) return
-
-    let cancelled = false
-    async function run() {
-      try {
-        setExternalLoading(true)
-        // Determine last user query text
-        const lastUser = [...(messages || [])].reverse().find(m => m.role === 'user')
-        const content = typeof lastUser?.content === 'string' ? lastUser?.content : ''
-        const selectedModelCookie = typeof document !== 'undefined' ? document.cookie.split('; ').find(c => c.startsWith('selectedModel=')) : undefined
-        let selectedModelId = 'gpt-4o-mini'
-        if (selectedModelCookie) {
-          try {
-            const raw = decodeURIComponent(selectedModelCookie.split('=')[1] || '')
-            const parsed = JSON.parse(raw)
-            if (parsed && typeof parsed.id === 'string' && parsed.id) {
-              selectedModelId = parsed.id
-            }
-          } catch {}
-        }
-
-        const url = `${proxy}-related`
-        const res = await fetch(url, {
-          method: 'POST',
-          headers: { 'content-type': 'application/json' },
-          body: JSON.stringify({
-            messages: [{ role: 'user', content }],
-            selectedModel: { id: selectedModelId }
-          })
-        })
-        if (!res.ok) throw new Error('Failed to fetch related questions')
-        const data = await res.json().catch(() => null)
-        if (cancelled) return
-        const items =
-          data?.items ||
-          data?.data?.items ||
-          (Array.isArray(data) ? data : null)
-        if (Array.isArray(items)) {
-          setExternalItems(
-            items
-              .filter((it: any) => it && typeof it.query === 'string' && it.query.trim())
-              .map((it: any) => ({ query: it.query }))
-          )
-        }
-      } catch {
-      } finally {
-        if (!cancelled) setExternalLoading(false)
-      }
-    }
-    run()
-    return () => {
-      cancelled = true
-    }
-  }, [isLoading, relatedQuestions, messages])
+  const [externalItems] = React.useState<Array<{ query: string }> | null>(null)
+  const [externalLoading] = React.useState(false)
 
   // Persist external related items to chat history by adding them as an annotation
   // to the last assistant message and calling /api/chats/save in merge mode.
