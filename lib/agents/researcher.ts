@@ -1,3 +1,4 @@
+import { createOpenAI } from '@ai-sdk/openai'
 import { CoreMessage, smoothStream, streamText, tool } from 'ai'
 import { z } from 'zod'
 import { getCurrentUserToken } from '../auth/get-current-user'
@@ -5,6 +6,7 @@ import { createQuestionTool } from '../tools/question'
 import { retrieveTool } from '../tools/retrieve'
 import { createSearchTool } from '../tools/search'
 import { createVideoSearchTool } from '../tools/video-search'
+import { getServerOrganizationId } from '../usage/manager'
 import { getModel } from '../utils/registry'
 
 // MCP Tool types - OpenAI function calling format
@@ -317,8 +319,41 @@ export async function researcher({
     const allActiveTools = searchMode ? [...baseActiveTools, ...mcpActiveTools] : [...mcpActiveTools]
     console.log('[researcher] searchMode:', searchMode, 'active tools:', allActiveTools)
 
+    // Resolve model, routing OpenAI via ModuleX AI proxy with per-request headers
+    const [provider, ...modelNameParts] = model.split(':') ?? []
+    const modelName = modelNameParts.join(':')
+    let resolvedModel = getModel(model)
+    console.log('[researcher] resolvedModel:', resolvedModel)
+    console.log('[researcher] modelName:', modelName)
+
+    if (provider === 'openai') {
+      try {
+        const baseUrl = process.env.NEXT_PUBLIC_MODULEX_HOST
+        const supabaseToken = await getCurrentUserToken()
+        const organizationId = await getServerOrganizationId()
+
+        if (baseUrl && supabaseToken) {
+          const base = `${baseUrl.replace(/\/$/, '')}/ai-proxy/providers/openai`
+          const openaiViaProxy = createOpenAI({
+            apiKey:'dummy-key',
+            baseURL: base,
+            headers: {
+              Authorization: `Bearer ${supabaseToken}`,
+              'X-Provider-Endpoint': 'https://api.openai.com/v1/chat/completions',
+              ...(organizationId ? { 'X-Organization-Id': organizationId } : {}),
+              'X-Model-Id': modelName
+            }
+          })
+          resolvedModel = openaiViaProxy(modelName)
+        }
+      } catch (e) {
+        // Fallback to default model resolution if proxy setup fails
+        resolvedModel = getModel(model)
+      }
+    }
+
     return {
-      model: getModel(model),
+      model: resolvedModel,
       system: `${SYSTEM_PROMPT}\nCurrent date and time: ${currentDate}`,
       messages,
       tools: allTools,

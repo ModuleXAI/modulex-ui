@@ -1,8 +1,8 @@
-import { getCurrentUserId, getCurrentUserToken } from '@/lib/auth/get-current-user'
+import { getCurrentUserId } from '@/lib/auth/get-current-user'
 import { createManualToolStreamResponse } from '@/lib/streaming/create-manual-tool-stream'
 import { createToolCallingStreamResponse } from '@/lib/streaming/create-tool-calling-stream'
 import { Model } from '@/lib/types/models'
-import { isProviderEnabled } from '@/lib/utils/registry'
+//  import { isProviderEnabled } from '@/lib/utils/registry'
 import { cookies } from 'next/headers'
 
 export const maxDuration = 30
@@ -46,7 +46,7 @@ export async function POST(req: Request) {
       }
     }
 
-    if (
+   /* if (
       !isProviderEnabled(selectedModel.providerId) ||
       selectedModel.enabled === false
     ) {
@@ -57,7 +57,7 @@ export async function POST(req: Request) {
           statusText: 'Not Found'
         }
       )
-    }
+    }*/
 
     const supportsToolCalling = selectedModel.toolCallType === 'native'
 

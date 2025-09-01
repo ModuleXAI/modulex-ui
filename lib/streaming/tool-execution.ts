@@ -1,3 +1,4 @@
+import { createOpenAI } from '@ai-sdk/openai'
 import {
   CoreMessage,
   DataStreamWriter,
@@ -6,9 +7,11 @@ import {
   JSONValue
 } from 'ai'
 import { z } from 'zod'
+import { getCurrentUserToken } from '../auth/get-current-user'
 import { searchSchema } from '../schema/search'
 import { search } from '../tools/search'
 import { ExtendedCoreMessage } from '../types'
+import { getServerOrganizationId } from '../usage/manager'
 import { getModel } from '../utils/registry'
 import { parseToolCallXml } from './parse-tool-call'
 
@@ -39,8 +42,33 @@ export async function executeToolCall(
   const defaultMaxResults = model?.includes('ollama') ? 5 : 20
 
   // Generate tool selection using XML format
+  // Route OpenAI tool-selection generation via proxy when applicable
+  let selectionModel = getModel(model)
+  try {
+    const [provider, ...nameParts] = model.split(':') ?? []
+    const modelName = nameParts.join(':')
+    if (provider === 'openai') {
+      const baseUrl = process.env.NEXT_PUBLIC_MODULEX_HOST
+      const supabaseToken = await getCurrentUserToken()
+      const organizationId = await getServerOrganizationId()
+      if (baseUrl && supabaseToken) {
+        const base = `${baseUrl.replace(/\/$/, '')}/ai-proxy/providers/openai`
+        const openaiViaProxy = createOpenAI({
+          apiKey:'dummy-key',
+          baseURL: base,
+          headers: {
+            Authorization: `Bearer ${supabaseToken}`,
+            'X-Provider-Endpoint': 'https://api.openai.com/v1/chat/completions',
+            ...(organizationId ? { 'X-Organization-Id': organizationId } : {})
+          }
+        })
+        selectionModel = openaiViaProxy(modelName)
+      }
+    }
+  } catch {}
+
   const toolSelectionResponse = await generateText({
-    model: getModel(model),
+    model: selectionModel,
     system: `You are an intelligent assistant that analyzes conversations to select the most appropriate tools and their parameters.
             You excel at understanding context to determine when and how to use available tools, including crafting effective search queries.
             Current date: ${new Date().toISOString().split('T')[0]}
@@ -86,10 +114,16 @@ export async function executeToolCall(
   dataStream.writeData(toolCallAnnotation)
 
   // Support for search tool only for now
+
+  const depth = (toolCall.parameters?.search_depth as 'basic' | 'advanced') || 'basic'
+  const maxResults = toolCall.parameters?.max_results
+  const query = toolCall.parameters?.query ?? ''
+
+
   const searchResults = await search(
-    toolCall.parameters?.query ?? '',
-    toolCall.parameters?.max_results,
-    toolCall.parameters?.search_depth as 'basic' | 'advanced',
+    query,
+    maxResults,
+    depth,
     toolCall.parameters?.include_domains ?? [],
     toolCall.parameters?.exclude_domains ?? []
   )

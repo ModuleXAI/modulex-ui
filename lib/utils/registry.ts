@@ -89,7 +89,7 @@ export function getModel(model: string) {
   )
 }
 
-export function isProviderEnabled(providerId: string): boolean {
+/*export function isProviderEnabled(providerId: string): boolean {
   switch (providerId) {
     case 'openai':
       return !!process.env.OPENAI_API_KEY
@@ -117,7 +117,7 @@ export function isProviderEnabled(providerId: string): boolean {
     default:
       return false
   }
-}
+}*/
 
 export function getToolCallModel(model?: string) {
   const [provider, ...modelNameParts] = model?.split(':') ?? []

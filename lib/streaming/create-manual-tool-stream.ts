@@ -73,6 +73,7 @@ export function createManualToolStreamResponse(config: BaseStreamConfig) {
               skipRelatedQuestions: true,
               annotations
             })
+
           },
           onChunk(event) {
             const chunkType = event.chunk?.type

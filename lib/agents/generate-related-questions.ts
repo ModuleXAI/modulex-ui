@@ -1,8 +1,10 @@
 import { relatedSchema } from '@/lib/schema/related'
+import { createOpenAI } from '@ai-sdk/openai'
 import { CoreMessage, generateObject } from 'ai'
+import { getCurrentUserToken } from '../auth/get-current-user'
+import { getServerOrganizationId } from '../usage/manager'
 import {
   getModel,
-  getToolCallModel,
   isToolCallSupported
 } from '../utils/registry'
 
@@ -16,9 +18,39 @@ export async function generateRelatedQuestions(
   })) as CoreMessage[]
 
   const supportedModel = isToolCallSupported(model)
-  const currentModel = supportedModel
-    ? getModel(model)
-    : getToolCallModel(model)
+  const selected = supportedModel ? model : ((): string => {
+    // getToolCallModel returns a wrapped model instance; we need provider:id form
+    // For simplicity, fall back to original when unsupported
+    return model
+  })()
+
+  // Route OpenAI via ModuleX AI proxy
+  const [provider, ...nameParts] = selected.split(':') ?? []
+  const modelName = nameParts.join(':')
+  let currentModel = getModel(selected)
+
+  if (provider === 'openai') {
+    try {
+      const baseUrl = process.env.NEXT_PUBLIC_MODULEX_HOST
+      const [token, organizationId] = await Promise.all([
+        getCurrentUserToken(),
+        getServerOrganizationId()
+      ])
+      if (baseUrl && token) {
+        const base = `${baseUrl.replace(/\/$/, '')}/ai-proxy/providers/openai`
+        const openaiViaProxy = createOpenAI({
+          baseURL: base,
+          apiKey:'dummy-key',
+          headers: {
+            Authorization: `Bearer ${token}`,
+            'X-Provider-Endpoint': 'https://api.openai.com/v1/chat/completions',
+            ...(organizationId ? { 'X-Organization-Id': organizationId } : {})
+          }
+        })
+        currentModel = openaiViaProxy(modelName)
+      }
+    } catch {}
+  }
 
   const result = await generateObject({
     model: currentModel,
