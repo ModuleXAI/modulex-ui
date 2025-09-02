@@ -2,17 +2,17 @@
 
 import { Button } from '@/components/ui/button'
 import {
-    DropdownMenu,
-    DropdownMenuContent,
-    DropdownMenuItem,
-    DropdownMenuLabel,
-    DropdownMenuSeparator,
-    DropdownMenuTrigger
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger
 } from '@/components/ui/dropdown-menu'
 import { createClient } from '@/lib/supabase/client'
 import { cn } from '@/lib/utils'
 import { setCookie } from '@/lib/utils/cookies'
-import { Building2, ChevronDown } from 'lucide-react'
+import { Building2, ChevronDown, Settings2 } from 'lucide-react'
 import { usePathname, useRouter } from 'next/navigation'
 import React from 'react'
 
@@ -34,6 +34,12 @@ type OrganizationsResponse = {
 }
 
 const STORAGE_KEY = 'modulex_selected_organization'
+
+function truncateText(value: string | null | undefined, max: number = 25): string {
+  const text = value ?? ''
+  if (text.length <= max) return text
+  return text.slice(0, max) + '...'
+}
 
 function loadStoredOrganization(): Organization | null {
   if (typeof window === 'undefined') return null
@@ -64,6 +70,7 @@ export default function OrganizationSwitcher({
   const [selected, setSelected] = React.useState<Organization | null>(null)
   const [loading, setLoading] = React.useState<boolean>(false)
   const [error, setError] = React.useState<string | null>(null)
+  const [menuOpen, setMenuOpen] = React.useState<boolean>(false)
 
   // On mount, hydrate selection from localStorage to avoid SSR/client mismatch
   React.useEffect(() => {
@@ -131,19 +138,39 @@ export default function OrganizationSwitcher({
     }
   }, [selected])
 
+  const isSettingsPath = React.useMemo(() => {
+    if (!pathname) return false
+    return /^\/organizations\/.+\/settings(\/?|$)/.test(pathname)
+  }, [pathname])
+
+  const isAdminOrOwner = (role?: string | null) => {
+    const r = (role || '').toLowerCase()
+    return r === 'admin' || r === 'owner'
+  }
+
   const handleSelect = (org: Organization) => {
+    const nextIsSettings = isSettingsPath
+    const canAccessSettings = isAdminOrOwner(org.role)
+
     setSelected(org)
     storeOrganization(org)
     try { setCookie('selected_organization_id', org.id) } catch {}
     try { window.dispatchEvent(new CustomEvent('organization-changed', { detail: org.id })) } catch {}
-    // Reload the whole page when organization changes
+
     try {
       if (selected?.id !== org.id) {
-        // SPA navigation to avoid white flash; ensure server refetches with new cookie
-        if (pathname !== '/') {
-          router.replace('/')
+        if (nextIsSettings) {
+          if (canAccessSettings) {
+            router.push(`/organizations/${org.slug}/settings`)
+            router.refresh()
+          }
+          // If cannot access settings here, do nothing (disabled in UI already)
+        } else {
+          if (pathname !== '/') {
+            router.replace('/')
+          }
+          router.refresh()
         }
-        router.refresh()
       }
     } catch {}
   }
@@ -151,7 +178,7 @@ export default function OrganizationSwitcher({
   const buttonLabel = selected?.name || (loading ? 'Loading...' : 'Select organization')
 
   return (
-    <DropdownMenu>
+    <DropdownMenu open={menuOpen} onOpenChange={setMenuOpen}>
       <DropdownMenuTrigger asChild>
         <Button
           variant="outline"
@@ -177,18 +204,42 @@ export default function OrganizationSwitcher({
           organizations.map(org => (
             <DropdownMenuItem
               key={org.id}
-              onSelect={() => {
+              disabled={isSettingsPath && !isAdminOrOwner(org.role)}
+              onSelect={event => {
+                if (isSettingsPath && !isAdminOrOwner(org.role)) {
+                  event.preventDefault()
+                  return
+                }
                 handleSelect(org)
               }}
               className={cn(
-                'flex flex-col items-start gap-0.5',
+                'flex items-center gap-2',
                 selected?.id === org.id && 'bg-accent/60'
               )}
             >
-              <span className="w-full truncate font-medium">{org.name}</span>
-              <span className="w-full truncate text-xs text-muted-foreground">
-                {org.domain || org.slug}
-              </span>
+              <div className="flex min-w-0 flex-1 flex-col items-start gap-0.5">
+                <span className="w-full truncate font-medium">{truncateText(org.name, 30)}</span>
+                <span className="w-full truncate text-xs text-muted-foreground">
+                  {truncateText(org.domain || org.slug, 30)}
+                </span>
+              </div>
+              {!isSettingsPath && ['admin', 'owner'].includes((org.role || '').toLowerCase()) ? (
+                <button
+                  type="button"
+                  className="ml-2 inline-flex items-center justify-center rounded hover:bg-accent p-1 text-muted-foreground"
+                  aria-label="Open organization settings"
+                  onClick={(e) => {
+                    e.preventDefault()
+                    e.stopPropagation()
+                    try {
+                      router.push(`/organizations/${org.slug}/settings`)
+                      setMenuOpen(false)
+                    } catch {}
+                  }}
+                >
+                  <Settings2 className="h-4 w-4" />
+                </button>
+              ) : null}
             </DropdownMenuItem>
           ))
         )}

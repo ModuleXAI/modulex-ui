@@ -2,21 +2,20 @@ import {
     Sidebar,
     SidebarContent,
     SidebarHeader,
-    SidebarMenu,
-    SidebarMenuButton,
-    SidebarMenuItem,
     SidebarRail,
     SidebarTrigger
 } from '@/components/ui/sidebar'
 import { isDefaultProvider } from '@/lib/auth/provider'
 import { createClient } from '@/lib/supabase/server'
 import { cn } from '@/lib/utils'
-import { Plus } from 'lucide-react'
 import Link from 'next/link'
 import { Suspense } from 'react'
 import OrganizationSwitcher from './organization-switcher'
 import { ChatHistorySection } from './sidebar/chat-history-section'
 import { ChatHistorySkeleton } from './sidebar/chat-history-skeleton'
+import { SettingsMenu } from './sidebar/settings-menu'
+import { SidebarNewButton } from './sidebar/sidebar-new-button'
+import { SidebarSections } from './sidebar/sidebar-sections'
 import { ModulexTextIcon } from './ui/icons'
 
 export default async function AppSidebar() {
@@ -41,7 +40,7 @@ export default async function AppSidebar() {
     <Sidebar side="left" variant="sidebar" collapsible="offcanvas">
       <SidebarHeader className="flex flex-col gap-2 py-2 px-4">
         <div className="flex flex-row justify-between items-center">
-          <Link href="/" className="flex items-center justify-center h-full">
+          <Link href="/" prefetch={false} className="flex items-center justify-center h-full">
             <ModulexTextIcon className={cn('size-20')} />
           </Link>
           <SidebarTrigger />
@@ -51,21 +50,15 @@ export default async function AppSidebar() {
         </div>
       </SidebarHeader>
       <SidebarContent className="flex flex-col px-2 py-0 h-full">
-        <SidebarMenu>
-          <SidebarMenuItem>
-            <SidebarMenuButton asChild>
-              <Link href="/" className="flex items-center gap-2">
-                <Plus className="size-4" />
-                <span>New</span>
-              </Link>
-            </SidebarMenuButton>
-          </SidebarMenuItem>
-        </SidebarMenu>
-        <div className="flex-1 overflow-y-auto">
-          <Suspense fallback={<ChatHistorySkeleton />}>
-            <ChatHistorySection />
-          </Suspense>
-        </div>
+        <SidebarNewButton />
+        <SidebarSections
+          defaultContent={
+            <Suspense fallback={<ChatHistorySkeleton />}>
+              <ChatHistorySection />
+            </Suspense>
+          }
+          settingsContent={<SettingsMenu />}
+        />
       </SidebarContent>
       <SidebarRail />
     </Sidebar>

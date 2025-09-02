@@ -33,13 +33,13 @@ function getAiToolBaseUrl(): string | null {
 }
 
 // Fetch MCP tools from server (optionally via AI proxy)
-async function fetchMCPTools(userId: string): Promise<MCPTool[]> {
+async function fetchMCPTools(userId?: string): Promise<MCPTool[]> {
+  console.log('Fetching MCP tools. userId:', userId)
   try {
     const modulexServerUrl = getAiToolBaseUrl()
-    const mcpApiKey = process.env.MCP_SERVER_API_KEY
-
-    if (!modulexServerUrl || !mcpApiKey || !userId) {
-      console.log('MCP server not configured or no user ID')
+    
+    if (!modulexServerUrl) {
+      console.log('MCP server not configured')
       return []
     }
 
@@ -50,7 +50,8 @@ async function fetchMCPTools(userId: string): Promise<MCPTool[]> {
       return []
     }
 
-    let url = `${modulexServerUrl}/tools/openai-tools?user_id=${userId}`
+    let url = `${modulexServerUrl}/tools/openai-tools`
+    console.log('URL:', url)
     try {
       // Try to read selected org from cookie in server context
       const { cookies } = await import('next/headers')
@@ -61,13 +62,26 @@ async function fetchMCPTools(userId: string): Promise<MCPTool[]> {
         u.searchParams.set('organization_id', orgId)
         url = u.toString()
       }
+    } catch {
+      console.log('Error getting org id')
+    }
+    // Fallback to server organization id if not present in cookies
+    try {
+      const orgId = await getServerOrganizationId()
+      if (orgId) {
+        const u = new URL(url)
+        if (!u.searchParams.get('organization_id')) {
+          u.searchParams.set('organization_id', orgId)
+          url = u.toString()
+        }
+      }
     } catch {}
+    console.log('[MCP] fetch tools final URL:', url)
     const response = await fetch(url, {
       method: 'GET',
       headers: {
-        'X-API-KEY': `${mcpApiKey}`,
         'Content-Type': 'application/json',
-        ...(supabaseToken ? { Authorization: `Bearer ${supabaseToken}` } : {})
+        Authorization: `Bearer ${supabaseToken}`
       }
     })
 
@@ -75,9 +89,18 @@ async function fetchMCPTools(userId: string): Promise<MCPTool[]> {
       console.error('Failed to fetch MCP tools:', response.status, response.statusText)
       return []
     }
+    console.log('[MCP] fetch tools status:', response.status)
 
-    const tools = await response.json()
-    return Array.isArray(tools) ? tools : []
+    const body = await response.json()
+    const tools = Array.isArray(body?.tools) ? body.tools : (Array.isArray(body) ? body : [])
+    try {
+      const toolCount = Array.isArray(tools) ? tools.length : 0
+      const toolNames = Array.isArray(tools)
+        ? tools.map((t: any) => t?.function?.name).filter((n: any) => !!n)
+        : []
+      console.log('[MCP] fetched tools count:', toolCount, 'names:', toolNames)
+    } catch {}
+    return tools
   } catch (error) {
     console.error('Error fetching MCP tools:', error)
     return []
@@ -88,9 +111,8 @@ async function fetchMCPTools(userId: string): Promise<MCPTool[]> {
 async function executeMCPTool(toolKey: string, action: string, parameters: any, userId: string): Promise<any> {
   try {
     const modulexServerUrl = getAiToolBaseUrl()
-    const mcpApiKey = process.env.MCP_SERVER_API_KEY
-
-    if (!modulexServerUrl || !mcpApiKey || !userId) {
+    
+    if (!modulexServerUrl) {
       throw new Error('MCP server not configured or no user ID')
     }
 
@@ -100,7 +122,7 @@ async function executeMCPTool(toolKey: string, action: string, parameters: any, 
       throw new Error('Unable to retrieve Supabase token')
     }
 
-    let url = `${modulexServerUrl}/tools/${toolKey}/execute?user_id=${userId}`
+    let url = `${modulexServerUrl}/tools/${toolKey}/execute`
     try {
       const { cookies } = await import('next/headers')
       const store = await cookies()
@@ -111,27 +133,51 @@ async function executeMCPTool(toolKey: string, action: string, parameters: any, 
         url = u.toString()
       }
     } catch {}
+    // Fallback to server organization id if not present in cookies
+    try {
+      const orgId = await getServerOrganizationId()
+      if (orgId) {
+        const u = new URL(url)
+        if (!u.searchParams.get('organization_id')) {
+          u.searchParams.set('organization_id', orgId)
+          url = u.toString()
+        }
+      }
+    } catch {}
+    console.log('[MCP] execute tool request:', {
+      toolKey,
+      action,
+      url,
+      parameterKeys: Object.keys(parameters || {})
+    })
     const response = await fetch(url, {
       method: 'POST',
       headers: {
-        'X-API-KEY': `${mcpApiKey}`,
         'Content-Type': 'application/json',
-        ...(supabaseToken ? { Authorization: `Bearer ${supabaseToken}` } : {})
+        Authorization: `Bearer ${supabaseToken}`
       },
       body: JSON.stringify({
-        parameters: {
-          action: action,
-          ...parameters
-        }
+        action: action,
+        parameters: parameters || {}
       })
     })
 
     if (!response.ok) {
-      throw new Error(`MCP tool execution failed: ${response.status} ${response.statusText}`)
+      let errorBody: any = null
+      try {
+        const text = await response.text()
+        try { errorBody = JSON.parse(text) } catch { errorBody = text }
+      } catch {}
+      console.error('[MCP] execute tool error:', response.status, response.statusText, errorBody)
+      throw new Error(`MCP tool execution failed: ${response.status} ${response.statusText}${errorBody ? ` - ${typeof errorBody === 'string' ? errorBody : JSON.stringify(errorBody)}` : ''}`)
     }
+    console.log('[MCP] execute tool status:', response.status)
 
     const result = await response.json()
     // Return the result data
+    try {
+      console.log('[MCP] execute tool result keys:', Object.keys(result || {}))
+    } catch {}
     return result.result || result
   } catch (error) {
     console.error(`Error executing MCP tool ${toolKey}/${action}:`, error)
@@ -286,32 +332,30 @@ export async function researcher({
 
     const baseActiveTools = ['search', 'retrieve', 'videoSearch', 'ask_question']
 
-    // Fetch MCP tools if user ID is provided
+    // Fetch MCP tools (no longer gated by userId)
     let mcpTools: Record<string, any> = {}
     let mcpActiveTools: string[] = []
 
-    if (userId) {
-      try {
-        const mcpToolsData = await fetchMCPTools(userId)
-        console.log('Raw MCP tools data:', JSON.stringify(mcpToolsData, null, 2))
+    try {
+      const mcpToolsData = await fetchMCPTools(userId)
+      console.log('Raw MCP tools data:', JSON.stringify(mcpToolsData, null, 2))
+      
+      for (const mcpTool of mcpToolsData) {
+        const toolName = mcpTool.function.name
+        const toolKey = mcpTool.metadata?.tool_key
+        const action = mcpTool.metadata?.action
         
-        for (const mcpTool of mcpToolsData) {
-          const toolName = mcpTool.function.name
-          const toolKey = mcpTool.metadata?.tool_key
-          const action = mcpTool.metadata?.action
-          
-          console.log(`Processing MCP tool: ${toolName} (${toolKey}/${action})`)
-          console.log(`Parameters:`, mcpTool.function.parameters)
-          
-          const toolInstance = createMCPTool(mcpTool, userId)
-          mcpTools[toolName] = toolInstance
-          mcpActiveTools.push(toolName)
-        }
+        console.log(`Processing MCP tool: ${toolName} (${toolKey}/${action})`)
+        console.log(`Parameters:`, mcpTool.function.parameters)
         
-        console.log(`Loaded ${mcpToolsData.length} MCP tools for user ${userId}`)
-      } catch (error) {
-        console.error('Failed to load MCP tools:', error)
+        const toolInstance = createMCPTool(mcpTool, userId || '')
+        mcpTools[toolName] = toolInstance
+        mcpActiveTools.push(toolName)
       }
+      
+      console.log(`Loaded ${mcpToolsData.length} MCP tools`)
+    } catch (error) {
+      console.error('Failed to load MCP tools:', error)
     }
 
     // Combine base tools with MCP tools
