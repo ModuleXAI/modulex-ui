@@ -14,12 +14,14 @@ export async function GET(request: NextRequest) {
     }
 
     const { searchParams } = new URL(request.url)
-    const period = searchParams.get('period') || '24h'
     const organizationId = searchParams.get('organization_id') || undefined
+    const limit = searchParams.get('limit') || '20'
+    const offset = searchParams.get('offset') || '0'
 
     const backendUrl = new URL(`${modulexServerUrl}/dashboard/analytics/overview`)
-    backendUrl.searchParams.set('period', period)
     if (organizationId) backendUrl.searchParams.set('organization_id', organizationId)
+    backendUrl.searchParams.set('limit', limit)
+    backendUrl.searchParams.set('offset', offset)
 
     const response = await fetch(backendUrl.toString(), {
       method: 'GET',

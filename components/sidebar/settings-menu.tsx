@@ -67,7 +67,7 @@ export function SettingsMenu() {
         return (
           <SidebarMenuItem key={key}>
             <SidebarMenuButton asChild isActive={isActive}>
-              <Link href={buildPath(key, isActive ? subtab : undefined)} prefetch={false} className="flex items-center gap-2">
+              <Link href={buildPath(key, isActive ? subtab : undefined)} prefetch className="flex items-center gap-2">
                 <Icon className="size-4" />
                 <span>{label}</span>
               </Link>
@@ -76,8 +76,10 @@ export function SettingsMenu() {
               <SidebarMenuSub>
                 {subTabs.map(({ key: sKey, label: sLabel }) => (
                   <SidebarMenuSubItem key={sKey}>
-                    <SidebarMenuSubButton href={buildPath(key, sKey)} isActive={subtab === sKey}>
-                      <span>{sLabel}</span>
+                    <SidebarMenuSubButton asChild isActive={subtab === sKey}>
+                      <Link href={buildPath(key, sKey)} prefetch className="flex items-center gap-2">
+                        <span>{sLabel}</span>
+                      </Link>
                     </SidebarMenuSubButton>
                   </SidebarMenuSubItem>
                 ))}

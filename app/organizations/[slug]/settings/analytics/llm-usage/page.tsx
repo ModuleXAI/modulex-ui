@@ -1,6 +1,7 @@
 "use client"
 
 import { Button } from '@/components/ui/button'
+import { Skeleton } from '@/components/ui/skeleton'
 import * as React from 'react'
 
 type LlmUsageResponse = {
@@ -47,13 +48,15 @@ export default function Page() {
   const [loading, setLoading] = React.useState(true)
   const [error, setError] = React.useState<string | null>(null)
   const [data, setData] = React.useState<LlmUsageResponse['data'] | null>(null)
+  const [limit] = React.useState(20)
+  const [offset, setOffset] = React.useState(0)
 
   const fetchUsage = React.useCallback(async () => {
     setLoading(true)
     setError(null)
     try {
       const orgId = getSelectedOrganizationId()
-      const qs = new URLSearchParams({ period })
+      const qs = new URLSearchParams({ period, limit: String(limit), offset: String(offset) })
       if (orgId) qs.set('organization_id', orgId)
       const res = await fetch(`/api/analytics/llm-usage?${qs.toString()}`)
       if (!res.ok) throw new Error(`Failed (${res.status})`)
@@ -64,7 +67,7 @@ export default function Page() {
     } finally {
       setLoading(false)
     }
-  }, [period])
+  }, [period, limit, offset])
 
   React.useEffect(() => {
     fetchUsage()
@@ -92,7 +95,36 @@ export default function Page() {
       </div>
 
       {loading ? (
-        <div className="text-sm text-muted-foreground">Loading...</div>
+        <>
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
+            <div className="lg:col-span-2 rounded-lg bg-[#1D1D1D] border border-[#292929] p-4 sm:p-6">
+              <div className="flex items-center gap-4 sm:gap-6">
+                <Skeleton className="h-18 w-18 rounded-full" />
+                <div>
+                  <Skeleton className="h-3 w-28" />
+                  <div className="mt-2"><Skeleton className="h-4 w-24" /></div>
+                </div>
+              </div>
+              <div className="my-6"><Skeleton className="h-px w-full" /></div>
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                <div className="rounded-md bg-[#232323] border border-[#2F2F2F] p-4"><Skeleton className="h-6 w-36" /><div className="mt-2"><Skeleton className="h-6 w-24" /></div></div>
+                <div className="rounded-md bg-[#232323] border border-[#2F2F2F] p-4"><Skeleton className="h-6 w-40" /><div className="mt-2"><Skeleton className="h-6 w-28" /></div></div>
+                <div className="rounded-md bg-[#232323] border border-[#2F2F2F] p-4"><Skeleton className="h-6 w-48" /><div className="mt-2"><Skeleton className="h-6 w-32" /></div></div>
+              </div>
+            </div>
+            <div className="rounded-lg bg-[#1D1D1D] border border-[#292929] p-4 sm:p-6">
+              <Skeleton className="h-4 w-28 mb-3" />
+              <Skeleton className="h-5 w-48" />
+              <div className="my-4"><Skeleton className="h-px w-full" /></div>
+              <Skeleton className="h-4 w-28 mb-3" />
+              <Skeleton className="h-5 w-60" />
+            </div>
+          </div>
+          <div className="rounded-lg border border-[#292929] bg-[#1D1D1D] overflow-hidden">
+            <div className="h-10 border-b border-[#292929]"><Skeleton className="h-10 w-full" /></div>
+            <div className="h-80"><Skeleton className="h-full w-full" /></div>
+          </div>
+        </>
       ) : error ? (
         <div className="text-sm text-red-500">{error}</div>
       ) : (
@@ -195,6 +227,13 @@ export default function Page() {
             ) : (
               <div className="px-4 py-6 text-sm text-muted-foreground">No usage found for this period.</div>
             )}
+            <div className="flex items-center justify-between px-4 py-3 border-t border-[#292929]">
+              <div className="text-xs text-white/60">Page {Math.floor(offset / limit) + 1}</div>
+              <div className="flex gap-2">
+                <Button variant="outline" size="sm" className="bg-transparent border-[#292929] text-white hover:bg-[#232323]" onClick={() => setOffset(o => Math.max(0, o - limit))} disabled={offset === 0}>Prev</Button>
+                <Button variant="outline" size="sm" className="bg-transparent border-[#292929] text-white hover:bg-[#232323]" onClick={() => setOffset(o => o + limit)} disabled={(data?.llm_usages?.length || 0) < limit}>Next</Button>
+              </div>
+            </div>
           </div>
         </>
       )}
