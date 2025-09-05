@@ -3,16 +3,16 @@ import { ArrowRight } from 'lucide-react'
 
 const exampleMessages = [
   {
-    heading: 'What is DeepSeek R1?',
-    message: 'What is DeepSeek R1?'
+    heading: 'Who is Julius Caesar?',
+    message: 'Who is Julius Caesar?'
   },
   {
     heading: 'Why is Nvidia growing rapidly?',
     message: 'Why is Nvidia growing rapidly?'
   },
   {
-    heading: 'Tesla vs Rivian',
-    message: 'Tesla vs Rivian'
+    heading: 'Does Midas have international investment licenses?',
+    message: 'Does Midas have international investment licenses?'
   },
   {
     heading: 'Summary: https://arxiv.org/pdf/2501.05707',

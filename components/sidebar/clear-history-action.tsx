@@ -53,12 +53,15 @@ export function ClearHistoryAction({ empty }: ClearHistoryActionProps) {
         </SidebarGroupAction>
       </DropdownMenuTrigger>
 
-      <DropdownMenuContent align="end">
+      <DropdownMenuContent
+        align="end"
+        className="rounded-lg border border-white/10 bg-neutral-800/70 backdrop-blur-xl supports-[backdrop-filter]:bg-neutral-800/70 p-1 shadow-xl"
+      >
         <AlertDialog open={open} onOpenChange={setOpen}>
           <AlertDialogTrigger asChild>
             <DropdownMenuItem
               disabled={empty || isPending}
-              className="gap-2 text-destructive focus:text-destructive"
+              className="gap-2 text-destructive focus:text-destructive hover:bg-destructive/10 focus:bg-destructive/15"
               onSelect={event => event.preventDefault()} // Prevent closing dropdown
             >
               <Trash2 size={14} /> Clear History

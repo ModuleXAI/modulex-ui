@@ -1,26 +1,26 @@
 'use client'
 
 import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-  AlertDialogTrigger
+    AlertDialog,
+    AlertDialogAction,
+    AlertDialogCancel,
+    AlertDialogContent,
+    AlertDialogDescription,
+    AlertDialogFooter,
+    AlertDialogHeader,
+    AlertDialogTitle,
+    AlertDialogTrigger
 } from '@/components/ui/alert-dialog'
 import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger
+    DropdownMenu,
+    DropdownMenuContent,
+    DropdownMenuItem,
+    DropdownMenuTrigger
 } from '@/components/ui/dropdown-menu'
 import {
-  SidebarMenuAction,
-  SidebarMenuButton,
-  SidebarMenuItem
+    SidebarMenuAction,
+    SidebarMenuButton,
+    SidebarMenuItem
 } from '@/components/ui/sidebar'
 import { Chat } from '@/lib/types'
 import { MoreHorizontal, Trash2 } from 'lucide-react'
@@ -138,12 +138,16 @@ export function ChatMenuItem({ chat }: ChatMenuItemProps) {
             <span className="sr-only">Chat Actions</span>
           </SidebarMenuAction>
         </DropdownMenuTrigger>
-        <DropdownMenuContent side="right" align="start">
+        <DropdownMenuContent
+          side="right"
+          align="start"
+          className="rounded-lg border border-white/10 bg-neutral-800/70 backdrop-blur-xl supports-[backdrop-filter]:bg-neutral-800/70 p-1 shadow-xl"
+        >
           <AlertDialog open={dialogOpen} onOpenChange={setDialogOpen}>
             <AlertDialogTrigger asChild>
               <DropdownMenuItem
                 disabled={isPending}
-                className="gap-2 text-destructive focus:text-destructive"
+                className="gap-2 text-red-400 focus:text-red-400 hover:bg-white/10 focus:bg-white/15"
                 onSelect={e => {
                   e.preventDefault()
                   // Don't call onDelete directly, just open the dialog
