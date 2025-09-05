@@ -115,7 +115,16 @@ export function ChatMenuItem({ chat }: ChatMenuItemProps) {
         isActive={isActive}
         className="h-auto flex-col gap-0.5 items-start p-2 pr-8"
       >
-        <Link href={chat.path}>
+        <Link
+          href={chat.path}
+          prefetch
+          onMouseEnter={() => {
+            try { router.prefetch(chat.path) } catch {}
+          }}
+          onFocus={() => {
+            try { router.prefetch(chat.path) } catch {}
+          }}
+        >
           <div className="text-xs font-medium truncate select-none w-full">
             {chat.title}
           </div>
@@ -141,13 +150,13 @@ export function ChatMenuItem({ chat }: ChatMenuItemProps) {
         <DropdownMenuContent
           side="right"
           align="start"
-          className="rounded-lg border border-white/10 bg-neutral-800/70 backdrop-blur-xl supports-[backdrop-filter]:bg-neutral-800/70 p-1 shadow-xl"
+          className="rounded-lg border bg-popover text-popover-foreground p-1 shadow-xl"
         >
           <AlertDialog open={dialogOpen} onOpenChange={setDialogOpen}>
             <AlertDialogTrigger asChild>
               <DropdownMenuItem
                 disabled={isPending}
-                className="gap-2 text-red-400 focus:text-red-400 hover:bg-white/10 focus:bg-white/15"
+                className="gap-2 text-destructive focus:text-destructive hover:bg-accent focus:bg-accent"
                 onSelect={e => {
                   e.preventDefault()
                   // Don't call onDelete directly, just open the dialog

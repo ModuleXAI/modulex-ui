@@ -176,8 +176,8 @@ export default function Page() {
           <p className="text-base text-muted-foreground mt-1">Manage members and invitations.</p>
         </div>
         <div className="flex items-center gap-2">
-          <Button variant="outline" className="bg-transparent border-[#292929] text-white hover:bg-[#232323]" onClick={() => fetchUsers()}>Refresh</Button>
-          <Button variant="outline" className={`bg-transparent border-[#292929] ${upgradeRequired ? 'text-white' : 'text-[#67E9AB]'} hover:bg-[#232323]`} onClick={() => !upgradeRequired && setInviteOpen(true)}>{inviteLabel.replace(/^\+\s?/, '')}</Button>
+          <Button variant="outline" className="bg-transparent border border-border text-foreground hover:bg-accent" onClick={() => fetchUsers()}>Refresh</Button>
+          <Button variant="outline" className={`bg-transparent border border-border ${upgradeRequired ? 'text-foreground' : 'text-[#67E9AB]'} hover:bg-accent`} onClick={() => !upgradeRequired && setInviteOpen(true)}>{inviteLabel.replace(/^\+\s?/, '')}</Button>
         </div>
       </div>
 
@@ -185,12 +185,12 @@ export default function Page() {
         <div className="w-64">
           <Input placeholder="Search users..." value={query} onChange={(e) => setQuery(e.target.value)} />
         </div>
-        <div className="text-xs text-white/60">{total} total</div>
+        <div className="text-xs text-muted-foreground">{total} total</div>
       </div>
 
       {loading ? (
-        <div className="rounded-lg border border-[#292929] bg-[#1D1D1D] overflow-hidden">
-          <div className="h-10 border-b border-[#292929]"><Skeleton className="h-10 w-full" /></div>
+        <div className="rounded-lg border bg-card text-card-foreground overflow-hidden">
+          <div className="h-10 border-b"><Skeleton className="h-10 w-full" /></div>
           <div className="h-80"><Skeleton className="h-full w-full" /></div>
         </div>
       ) : error ? (
@@ -198,8 +198,8 @@ export default function Page() {
       ) : users.length === 0 ? (
         <div className="text-sm text-muted-foreground">No users found.</div>
       ) : (
-        <div className="rounded-lg border border-[#292929] bg-[#1D1D1D] overflow-hidden">
-          <div className="grid grid-cols-[1.5fr_1fr_1fr_1fr_1fr_1fr_40px] gap-4 px-4 py-3 text-xs text-white/60 border-b border-[#292929]">
+        <div className="rounded-lg border bg-card text-card-foreground overflow-hidden">
+          <div className="grid grid-cols-[1.5fr_1fr_1fr_1fr_1fr_1fr_40px] gap-4 px-4 py-3 text-xs text-muted-foreground border-b">
             <div className="text-left">User</div>
             <div className="text-left">Role</div>
             <div className="text-left">Status</div>
@@ -208,33 +208,33 @@ export default function Page() {
             <div className="text-left pl-8">Credit Used</div>
             <div></div>
           </div>
-          <div className="max-h-[560px] overflow-y-auto divide-y divide-white/10">
+          <div className="max-h-[560px] overflow-y-auto divide-y divide-border">
             {users.map(u => {
               const statusText = u.is_invitation ? (u.invitation_status || 'pending') : (u.is_active ? 'active' : 'inactive')
-              const roleColor = (u.role || '').toLowerCase() === 'owner' ? 'text-amber-300' : (u.role || '').toLowerCase() === 'admin' ? 'text-blue-300' : 'text-white/80'
+              const roleColor = (u.role || '').toLowerCase() === 'owner' ? 'text-amber-600 dark:text-amber-300' : (u.role || '').toLowerCase() === 'admin' ? 'text-blue-600 dark:text-blue-300' : 'text-foreground/80'
               const isOwner = (u.role || '').toLowerCase() === 'owner'
               return (
                 <div key={u.id} className="grid grid-cols-[1.5fr_1fr_1fr_1fr_1fr_1fr_40px] items-center gap-4 px-4 py-3 relative">
                   <div className="min-w-0 text-left">
-                    <div className="text-sm text-white truncate">{u.email || u.username || '-'}</div>
+                    <div className="text-sm text-foreground truncate">{u.email || u.username || '-'}</div>
                     {u.is_invitation ? (
-                      <div className="text-xs text-white/60 truncate">Invitation • Expires {u.invitation_expires_at ? new Date(u.invitation_expires_at).toLocaleDateString() : '-'}</div>
+                      <div className="text-xs text-muted-foreground truncate">Invitation • Expires {u.invitation_expires_at ? new Date(u.invitation_expires_at).toLocaleDateString() : '-'}</div>
                     ) : (
-                      <div className="text-xs text-white/60 truncate">Joined {u.created_at ? new Date(u.created_at).toLocaleDateString() : '-'}</div>
+                      <div className="text-xs text-muted-foreground truncate">Joined {u.created_at ? new Date(u.created_at).toLocaleDateString() : '-'}</div>
                     )}
                   </div>
                   <div className="text-left text-xs">
-                    <span className={`px-2 py-1 rounded border border-white/15 uppercase ${roleColor}`}>{u.role ?? '-'}</span>
+                    <span className={`px-2 py-1 rounded border border-border uppercase ${roleColor}`}>{u.role ?? '-'}</span>
                   </div>
                   <div className="text-left text-xs">
-                    <span className={`px-2 py-1 rounded border border-white/15 ${statusText==='active' ? 'text-green-400' : statusText==='inactive' ? 'text-yellow-300' : 'text-blue-400'}`}>{statusText}</span>
+                    <span className={`px-2 py-1 rounded border border-border ${statusText==='active' ? 'text-green-600 dark:text-green-400' : statusText==='inactive' ? 'text-yellow-600 dark:text-yellow-300' : 'text-blue-600 dark:text-blue-400'}`}>{statusText}</span>
                   </div>
-                  <div className="text-left pl-2 text-sm text-white font-mono tabular-nums">{typeof u.tool_count === 'number' ? u.tool_count : 0}</div>
-                  <div className="text-center text-xs text-white/80 whitespace-nowrap font-mono tabular-nums">{u.last_active_at ? new Date(u.last_active_at).toLocaleString() : '-'}</div>
-                  <div className="text-left pl-12 text-sm text-white font-mono tabular-nums">{typeof u.period_credit_used === 'number' ? u.period_credit_used : 0}</div>
+                  <div className="text-left pl-2 text-sm text-foreground font-mono tabular-nums">{typeof u.tool_count === 'number' ? u.tool_count : 0}</div>
+                  <div className="text-center text-xs text-muted-foreground whitespace-nowrap font-mono tabular-nums">{u.last_active_at ? new Date(u.last_active_at).toLocaleString() : '-'}</div>
+                  <div className="text-left pl-12 text-sm text-foreground font-mono tabular-nums">{typeof u.period_credit_used === 'number' ? u.period_credit_used : 0}</div>
                   <div className="flex justify-end relative">
                     {!isOwner ? (
-                      <button data-user-actions-trigger aria-label="More actions" className="p-1 rounded hover:bg-[#232323]" onClick={(e) => {
+                      <button data-user-actions-trigger aria-label="More actions" className="p-1 rounded hover:bg-accent" onClick={(e) => {
                         e.stopPropagation()
                         const el = e.currentTarget as HTMLElement
                         const rect = el.getBoundingClientRect()
@@ -249,7 +249,7 @@ export default function Page() {
                         setMenuAnchor({ left, top })
                         setMenuOpenFor(curr => curr === u.id ? null : u.id)
                       }}>
-                        <MoreHorizontal className="h-4 w-4 text-white/80" />
+                        <MoreHorizontal className="h-4 w-4 text-muted-foreground" />
                       </button>
                     ) : null}
                   </div>
@@ -257,11 +257,11 @@ export default function Page() {
               )
             })}
           </div>
-          <div className="flex items-center justify-between px-4 py-3 border-t border-[#292929]">
-            <div className="text-xs text-white/60">Page {page} / {totalPages}</div>
+          <div className="flex items-center justify-between px-4 py-3 border-t border-border">
+            <div className="text-xs text-muted-foreground">Page {page} / {totalPages}</div>
             <div className="flex gap-2">
-              <Button variant="outline" size="sm" className="bg-transparent border-[#292929] text-white hover:bg-[#232323]" onClick={() => setPage(p => Math.max(1, p - 1))} disabled={page <= 1}>Prev</Button>
-              <Button variant="outline" size="sm" className="bg-transparent border-[#292929] text-white hover:bg-[#232323]" onClick={() => setPage(p => p + 1)} disabled={page >= totalPages}>Next</Button>
+              <Button variant="outline" size="sm" className="bg-transparent border border-border text-foreground hover:bg-accent" onClick={() => setPage(p => Math.max(1, p - 1))} disabled={page <= 1}>Prev</Button>
+              <Button variant="outline" size="sm" className="bg-transparent border border-border text-foreground hover:bg-accent" onClick={() => setPage(p => p + 1)} disabled={page >= totalPages}>Next</Button>
             </div>
           </div>
         </div>
@@ -274,20 +274,20 @@ export default function Page() {
           const isPending = !!current.is_invitation && (current.invitation_status || '') === 'pending'
           const isAdmin = (current.role || '').toLowerCase() === 'admin'
           return (
-            <div data-user-actions-menu className="fixed z-50 w-44 rounded-md border border-[#292929] bg-[#1D1D1D] shadow-lg" style={{ left: `${menuAnchor.left}px`, top: `${menuAnchor.top}px` }}>
+            <div data-user-actions-menu className="fixed z-50 w-44 rounded-md border bg-popover text-popover-foreground shadow-lg" style={{ left: `${menuAnchor.left}px`, top: `${menuAnchor.top}px` }}>
               {isPending ? (
                 <div className="py-1 text-sm">
-                  <button className="w-full text-left px-3 py-2 hover:bg-[#232323] text-red-400" onClick={() => handleInvitationAction((current.invitation_id || current.id), 'cancel')}>Cancel Invitation</button>
-                  <button className="w-full text-left px-3 py-2 hover:bg-[#232323]" onClick={() => handleInvitationAction((current.invitation_id || current.id), 'reinvite')}>Reinvite</button>
+                  <button className="w-full text-left px-3 py-2 hover:bg-accent text-destructive" onClick={() => handleInvitationAction((current.invitation_id || current.id), 'cancel')}>Cancel Invitation</button>
+                  <button className="w-full text-left px-3 py-2 hover:bg-accent" onClick={() => handleInvitationAction((current.invitation_id || current.id), 'reinvite')}>Reinvite</button>
                 </div>
               ) : (
                 <div className="py-1 text-sm">
                   {isAdmin ? (
-                    <button className="w-full text-left px-3 py-2 hover:bg-[#232323]" onClick={() => handleUserRole(current.id, false)}>Remove Admin</button>
+                    <button className="w-full text-left px-3 py-2 hover:bg-accent" onClick={() => handleUserRole(current.id, false)}>Remove Admin</button>
                   ) : (
-                    <button className="w-full text-left px-3 py-2 hover:bg-[#232323]" onClick={() => handleUserRole(current.id, true)}>Make Admin</button>
+                    <button className="w-full text-left px-3 py-2 hover:bg-accent" onClick={() => handleUserRole(current.id, true)}>Make Admin</button>
                   )}
-                  <button className="w-full text-left px-3 py-2 hover:bg-[#232323] text-red-400" onClick={() => handleUserRemove(current.id)}>Remove from Organization</button>
+                  <button className="w-full text-left px-3 py-2 hover:bg-accent text-destructive" onClick={() => handleUserRemove(current.id)}>Remove from Organization</button>
                 </div>
               )}
             </div>
@@ -298,31 +298,31 @@ export default function Page() {
       {inviteOpen ? (
         <div className="fixed inset-0 z-50 flex items-center justify-center" role="dialog" aria-modal="true">
           <div className="absolute inset-0 bg-black/50" onClick={() => setInviteOpen(false)} />
-          <div className="relative z-10 w-full max-w-md rounded-lg border border-[#292929] bg-[#1D1D1D] p-5 shadow-xl" onClick={(e) => e.stopPropagation()}>
+          <div className="relative z-10 w-full max-w-md rounded-lg border bg-background text-foreground p-5 shadow-xl" onClick={(e) => e.stopPropagation()}>
             <div className="mb-4">
-              <h3 className="text-base font-semibold text-white">Invite User</h3>
-              <p className="text-xs text-white/60 mt-1">Send an invitation to join your organization.</p>
+              <h3 className="text-base font-semibold">Invite User</h3>
+              <p className="text-xs text-muted-foreground mt-1">Send an invitation to join your organization.</p>
             </div>
             <div className="space-y-3">
               <div>
-                <label className="block text-xs text-white/70 mb-1">Email</label>
-                <input type="email" className="w-full rounded-md border border-[#292929] bg-[#1D1D1D] px-3 py-2 text-sm text-white placeholder:text-white/40 focus:outline-none focus:ring-1 focus:ring-white/20" placeholder="user@example.com" value={inviteEmail} onChange={(e) => setInviteEmail(e.target.value)} />
+                <label className="block text-xs text-muted-foreground mb-1">Email</label>
+                <input type="email" className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-1 focus:ring-ring" placeholder="user@example.com" value={inviteEmail} onChange={(e) => setInviteEmail(e.target.value)} />
               </div>
               <div>
-                <label className="block text-xs text-white/70 mb-1">Role</label>
+                <label className="block text-xs text-muted-foreground mb-1">Role</label>
                 <div className="flex gap-2">
                   {(['member','admin'] as const).map(r => (
-                    <button key={r} type="button" className={`px-3 py-2 rounded-md border ${inviteRole===r ? 'border-white/30 text-white' : 'border-white/15 text-white/70'} bg-transparent`} onClick={() => setInviteRole(r)}>{r[0].toUpperCase()+r.slice(1)}</button>
+                    <button key={r} type="button" className={`px-3 py-2 rounded-md border ${inviteRole===r ? 'border-border text-foreground' : 'border-border text-muted-foreground'} bg-transparent`} onClick={() => setInviteRole(r)}>{r[0].toUpperCase()+r.slice(1)}</button>
                   ))}
                 </div>
               </div>
               <div>
-                <label className="block text-xs text-white/70 mb-1">Message (optional)</label>
-                <textarea rows={3} className="w-full rounded-md border border-[#292929] bg-[#1D1D1D] px-3 py-2 text-sm text-white placeholder:text-white/40 focus:outline-none focus:ring-1 focus:ring-white/20" placeholder="Would you like to join our organization?" value={inviteMessage} onChange={(e) => setInviteMessage(e.target.value)} />
+                <label className="block text-xs text-muted-foreground mb-1">Message (optional)</label>
+                <textarea rows={3} className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-1 focus:ring-ring" placeholder="Would you like to join our organization?" value={inviteMessage} onChange={(e) => setInviteMessage(e.target.value)} />
               </div>
             </div>
             <div className="mt-5 flex items-center justify-end gap-2">
-              <Button variant="outline" className="bg-transparent border-[#292929] text-white hover:bg-[#232323]" onClick={() => setInviteOpen(false)}>Cancel</Button>
+              <Button variant="outline" className="bg-transparent border border-border text-foreground hover:bg-accent" onClick={() => setInviteOpen(false)}>Cancel</Button>
               <Button disabled={inviting || !inviteEmail} className="bg-[#67E9AB] text-black hover:bg-[#58D99C]" onClick={async () => {
                 try {
                   setInviting(true)

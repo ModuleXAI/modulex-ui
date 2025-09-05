@@ -59,7 +59,6 @@ export default function Page() {
       const maskedList: MaskedKey[] = (mJson?.keys as MaskedKey[]) || []
       const maskedMap: Record<string, MaskedKey> = {}
       for (const k of maskedList) maskedMap[k.key_id] = k
-      // Initialize drafts using masked values if present
       const nextDrafts: Record<string, string> = {}
       for (const k of allowedKeys) {
         nextDrafts[k.key_id] = maskedMap[k.key_id]?.masked_value || ''
@@ -132,7 +131,6 @@ export default function Page() {
       toast('Please enter a key value', { duration: 2500 })
       return
     }
-    // Prevent submitting the unchanged masked value
     const existingMasked = masked[keyId]?.masked_value || ''
     if (existingMasked && value === existingMasked) {
       toast('Please enter a new key value (not the masked one).', { duration: 3000 })
@@ -186,9 +184,9 @@ export default function Page() {
         const word1 = match[2]
         const word2 = match[3]
         return (
-          <div className="text-xs text-white/70 mt-1 break-words">
+          <div className="text-xs text-muted-foreground mt-1 break-words">
             {prefix}
-            <a href={url} target="_blank" rel="noreferrer" className="underline text-white hover:text-[#67E9AB]">
+            <a href={url} target="_blank" rel="noreferrer" className="underline text-foreground hover:text-[#67E9AB]">
               {word1} {word2}
             </a>
             {after}
@@ -196,7 +194,7 @@ export default function Page() {
         )
       }
     }
-    return <div className="text-xs text-white/70 mt-1 break-words">{description}</div>
+    return <div className="text-xs text-muted-foreground mt-1 break-words">{description}</div>
   }
 
   return (
@@ -207,7 +205,7 @@ export default function Page() {
       </div>
 
       {loading ? (
-        <div className="rounded-lg bg-[#1D1D1D] border border-[#292929] p-4 sm:p-6">
+        <div className="rounded-lg bg-card border p-4 sm:p-6">
           <div className="space-y-4">
             {Array.from({ length: 3 }).map((_, i) => (
               <div key={i} className="grid grid-cols-[1fr_auto] gap-4 items-center py-2">
@@ -223,7 +221,7 @@ export default function Page() {
       ) : error ? (
         <div className="text-sm text-red-500">{error}</div>
       ) : (
-        <div className="rounded-lg bg-[#1D1D1D] border border-[#292929] divide-y divide-[#292929]">
+        <div className="rounded-lg bg-card border divide-y">
           {items.map((item) => {
             const exists = Boolean(item.masked)
             const enabled = (item.masked?.status || 'disabled') === 'enabled'
@@ -231,7 +229,7 @@ export default function Page() {
               <div key={item.key_id} className="p-3 sm:p-4">
                 <div className="grid grid-cols-1 md:grid-cols-[minmax(220px,280px)_minmax(260px,1fr)_auto] items-start md:items-center gap-3">
                   <div className="min-w-0">
-                    <div className="text-white font-medium truncate flex items-center gap-2">
+                    <div className="text-foreground font-medium truncate flex items-center gap-2">
                       <span className="truncate">{item.display_name}</span>
                       {exists ? (
                         <Switch
@@ -246,7 +244,7 @@ export default function Page() {
                     </div>
                     {item.description ? renderDescription(item.description) : null}
                     {exists && item.masked?.updated_date ? (
-                      <div className="text-[10px] text-white/40 mt-1">Updated: {new Date(item.masked.updated_date!).toLocaleString()}</div>
+                      <div className="text-[10px] text-muted-foreground mt-1">Updated: {new Date(item.masked.updated_date!).toLocaleString()}</div>
                     ) : null}
                   </div>
 
@@ -255,7 +253,7 @@ export default function Page() {
                       value={drafts[item.key_id] || ''}
                       onChange={(e) => setDrafts((prev) => ({ ...prev, [item.key_id]: e.target.value }))}
                       placeholder={exists ? 'Enter new key value' : 'Enter key value'}
-                      className="bg-[#1D1D1D] border-[#292929] text-white placeholder:text-white/40 h-9"
+                      className="bg-background border-input text-foreground placeholder:text-muted-foreground h-9"
                     />
                   </div>
 
@@ -270,7 +268,7 @@ export default function Page() {
                           {shouldShowSave ? (
                             <Button
                               variant="outline"
-                              className="bg-transparent border-[#67E9AB] text-[#67E9AB] hover:bg-[#67E9AB]/10 hover:text-[#67E9AB] disabled:text-white/70 disabled:border-white/20 disabled:hover:bg-transparent disabled:hover:text-white/70"
+                              className="bg-transparent border-[#67E9AB] text-[#67E9AB] hover:bg-[#67E9AB]/10 hover:text-[#67E9AB] disabled:text-muted-foreground disabled:border-border disabled:hover:bg-transparent disabled:hover:text-muted-foreground"
                               onClick={() => handleSaveValue(item.key_id)}
                               disabled={operationKey === item.key_id || !currentDraft || (exists && currentDraft === maskedValue)}
                             >
@@ -284,7 +282,7 @@ export default function Page() {
                                   <AlertDialogTrigger asChild>
                                     <Button
                                       variant="outline"
-                                      className="bg-transparent border-red-500/40 text-red-400 hover:bg-red-500/10"
+                                      className="bg-transparent border border-red-500/40 text-red-600 dark:text-red-400 hover:bg-red-500/10"
                                       disabled={operationKey === item.key_id}
                                     >
                                       Delete

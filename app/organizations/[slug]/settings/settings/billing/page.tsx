@@ -109,15 +109,15 @@ export default function Page() {
   function PlanCard({ plan }: { plan: Plan }) {
     const selected = Boolean(plan.is_selected)
     return (
-      <Card className={`h-full bg-[#161616] border-[#2A2A2A] transition-all hover:border-white/15 ${selected ? 'ring-1 ring-[#67E9AB]/40' : ''} flex flex-col`}>
+      <Card className={`h-full bg-card border transition-all hover:border-border ${selected ? 'ring-1 ring-[#67E9AB]/40' : ''} flex flex-col`}>
         <CardHeader className="p-5 pb-4">
           <div className="flex items-start justify-between gap-3">
             <div className="min-w-0">
-              <CardTitle className="text-white text-base tracking-wide">{plan.name}</CardTitle>
+              <CardTitle className="text-foreground text-base tracking-wide">{plan.name}</CardTitle>
               {typeof plan.price === 'number' ? (
-                <div className="text-white/90 mt-1">
+                <div className="text-foreground/90 mt-1">
                   <span className="text-xl font-semibold font-mono tabular-nums">${plan.price}</span>
-                  <span className="text-xs text-white/60"> / month</span>
+                  <span className="text-xs text-muted-foreground"> / month</span>
                 </div>
               ) : null}
             </div>
@@ -128,22 +128,22 @@ export default function Page() {
         </CardHeader>
         <CardContent className="px-5 pt-0 pb-5 flex flex-col flex-1">
           <div className="flex-1">
-            <div className="text-xs text-white/80 grid grid-cols-2 gap-2 mb-6">
+            <div className="text-xs text-muted-foreground grid grid-cols-2 gap-2 mb-6">
               {typeof plan.max_seats === 'number' ? (
-                <div>Max seats: <span className="text-white font-mono tabular-nums">{plan.max_seats}</span></div>
+                <div>Max seats: <span className="text-foreground font-mono tabular-nums">{plan.max_seats}</span></div>
               ) : null}
               {typeof plan.max_llm_credit === 'number' ? (
-                <div>LLM credits/mo: <span className="text-white font-mono tabular-nums">{formatCompact(plan.max_llm_credit)}</span></div>
+                <div>LLM credits/mo: <span className="text-foreground font-mono tabular-nums">{formatCompact(plan.max_llm_credit)}</span></div>
               ) : null}
               {typeof plan.max_tool_call === 'number' ? (
-                <div>Tool calls/mo: <span className="text-white font-mono tabular-nums">{formatCompact(plan.max_tool_call)}</span></div>
+                <div>Tool calls/mo: <span className="text-foreground font-mono tabular-nums">{formatCompact(plan.max_tool_call)}</span></div>
               ) : null}
-              <div>Own API keys: <span className="text-white">{plan.own_api_allowed ? 'Yes' : 'No'}</span></div>
+              <div>Own API keys: <span className="text-foreground">{plan.own_api_allowed ? 'Yes' : 'No'}</span></div>
             </div>
             {Array.isArray(plan.features) && plan.features.length > 0 ? (
               <ul className="mt-0 space-y-2">
                 {plan.features.map((f, i) => (
-                  <li key={i} className="flex items-start gap-2 text-sm text-white/85">
+                  <li key={i} className="flex items-start gap-2 text-sm text-foreground/85">
                     <Check className="h-4 w-4 text-[#67E9AB] mt-0.5 shrink-0" />
                     <span className="leading-snug">{f}</span>
                   </li>
@@ -153,7 +153,7 @@ export default function Page() {
           </div>
           <div className="pt-4 mt-auto">
             {selected ? (
-              <Button disabled className="w-full bg-transparent border border-white/15 text-white/70 hover:bg-transparent">Current plan</Button>
+              <Button disabled className="w-full bg-transparent border border-border text-muted-foreground hover:bg-transparent">Current plan</Button>
             ) : (() => {
               // Determine CTA based on selected plan max_seats
               let label: string | null = 'Choose plan'
@@ -193,7 +193,7 @@ export default function Page() {
       {loading ? (
         <div className="mt-10 grid grid-cols-1 md:grid-cols-3 gap-6 auto-rows-fr items-stretch">
           {Array.from({ length: 3 }).map((_, i) => (
-            <Card key={i} className="h-full bg-[#161616] border-[#2A2A2A] flex flex-col">
+            <Card key={i} className="h-full bg-card border flex flex-col">
               <CardHeader className="p-5 pb-3">
                 <Skeleton className="h-5 w-24" />
                 <Skeleton className="h-4 w-28" />
@@ -210,7 +210,7 @@ export default function Page() {
           ))}
         </div>
       ) : error ? (
-        <div className="text-sm text-red-400">{error}</div>
+        <div className="text-sm text-red-500">{error}</div>
       ) : (
         <div className="mt-10 grid grid-cols-1 md:grid-cols-3 gap-6 auto-rows-fr items-stretch">
           {plans.map((p) => (

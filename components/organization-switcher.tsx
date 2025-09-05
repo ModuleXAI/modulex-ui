@@ -195,7 +195,7 @@ export default function OrganizationSwitcher({
       </DropdownMenuTrigger>
       <DropdownMenuContent
         align="start"
-        className="w-72 rounded-lg border border-white/10 bg-neutral-800/70 backdrop-blur-xl supports-[backdrop-filter]:bg-neutral-800/70 text-popover-foreground p-1 shadow-xl"
+        className="w-72 rounded-lg border bg-popover text-popover-foreground p-1 shadow-xl"
       >
         <DropdownMenuLabel className="px-2 py-1.5 text-xs text-muted-foreground">Organizations</DropdownMenuLabel>
         <DropdownMenuSeparator />
@@ -219,8 +219,8 @@ export default function OrganizationSwitcher({
                   handleSelect(org)
                 }}
                 className={cn(
-                  'flex items-center gap-2 rounded-md px-2 py-2 transition-colors hover:bg-white/5 focus:bg-white/10 outline-none',
-                  selected?.id === org.id && 'bg-white/5'
+                  'flex items-center gap-2 rounded-md px-2 py-2 transition-colors hover:bg-accent focus:bg-accent outline-none',
+                  selected?.id === org.id && 'bg-accent'
                 )}
               >
                 <div className="flex min-w-0 flex-1 flex-col items-start gap-0.5">
@@ -230,7 +230,7 @@ export default function OrganizationSwitcher({
                   {!isSettingsPath && ['admin', 'owner'].includes((org.role || '').toLowerCase()) ? (
                     <button
                       type="button"
-                      className="inline-flex items-center justify-center rounded hover:bg-accent/40 p-1 text-muted-foreground"
+                      className="inline-flex items-center justify-center rounded hover:bg-accent p-1 text-muted-foreground"
                       aria-label="Manage organization"
                       onClick={(e) => {
                         e.preventDefault()

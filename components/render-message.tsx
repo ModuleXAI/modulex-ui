@@ -19,6 +19,8 @@ interface RenderMessageProps {
     messageId: string,
     options?: ChatRequestOptions
   ) => Promise<string | null | undefined>
+  /** When true, show RelatedQuestions under this assistant message */
+  showRelatedQuestions?: boolean
 }
 
 export function RenderMessage({
@@ -30,7 +32,8 @@ export function RenderMessage({
   chatId,
   addToolResult,
   onUpdateMessage,
-  reload
+  reload,
+  showRelatedQuestions = false
 }: RenderMessageProps) {
   const relatedQuestions = useMemo(
     () =>
@@ -167,12 +170,14 @@ export function RenderMessage({
             return null
         }
       })}
-      <RelatedQuestions
-        annotations={(relatedQuestions as JSONValue[]) || []}
-        onQuerySelect={onQuerySelect}
-        isOpen={getIsOpen(`${messageId}-related`)}
-        onOpenChange={open => onOpenChange(`${messageId}-related`, open)}
-      />
+      {showRelatedQuestions && (
+        <RelatedQuestions
+          annotations={(relatedQuestions as JSONValue[]) || []}
+          onQuerySelect={onQuerySelect}
+          isOpen={getIsOpen(`${messageId}-related`)}
+          onOpenChange={open => onOpenChange(`${messageId}-related`, open)}
+        />
+      )}
     </>
   )
 }

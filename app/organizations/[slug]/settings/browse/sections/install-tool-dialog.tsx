@@ -101,10 +101,10 @@ export default function InstallToolDialog({
 
   return (
     <Sheet open={open} onOpenChange={onOpenChange}>
-      <SheetContent side="right" className="w-[540px] p-0 bg-[#1D1D1D] text-white border-l border-[#292929]">
+      <SheetContent side="right" className="w-[540px] p-0 bg-background text-foreground border-l">
         <div className="h-full flex flex-col">
-          <SheetHeader className="p-4 border-b border-[#292929]">
-            <SheetTitle className="text-white">Install {tool.display_name}</SheetTitle>
+          <SheetHeader className="p-4 border-b">
+            <SheetTitle>Install {tool.display_name}</SheetTitle>
           </SheetHeader>
 
           <div className="flex-1 min-h-0 overflow-hidden p-4">
@@ -112,14 +112,14 @@ export default function InstallToolDialog({
               <div className="h-full max-h-[calc(100vh-180px)] overflow-y-auto overflow-x-hidden">
                 <div className="space-y-3">
                   {(tool.auth_schemas || []).map(schema => (
-                    <Card key={schema.auth_type} className={`cursor-pointer transition-all duration-200 bg-[#1D1D1D] border ${selectedAuthType === schema.auth_type ? 'border-[#67E9AB]' : 'border-[#292929] hover:border-white/30'}`} onClick={() => { setSelectedAuthType(schema.auth_type); setStep('config') }}>
+                    <Card key={schema.auth_type} className={`cursor-pointer transition-all duration-200 bg-card border ${selectedAuthType === schema.auth_type ? 'border-[#67E9AB]' : 'hover:border-border'}`} onClick={() => { setSelectedAuthType(schema.auth_type); setStep('config') }}>
                       <CardHeader className="pb-2">
-                        <CardTitle className="text-sm font-medium flex items-center justify-between text-white">
+                        <CardTitle className="text-sm font-medium flex items-center justify-between">
                           <span className="capitalize">{schema.auth_type}</span>
-                          <Badge variant="outline" className="text-xs border-white/20 text-white/70">{schema.setup_environment_variables.length} variables required</Badge>
+                          <Badge variant="outline" className="text-xs">{schema.setup_environment_variables.length} variables required</Badge>
                         </CardTitle>
                       </CardHeader>
-                      <CardContent className="pt-0 text-xs text-white/60">
+                      <CardContent className="pt-0 text-xs text-muted-foreground">
                         Select {schema.auth_type} authentication method
                       </CardContent>
                     </Card>
@@ -130,24 +130,24 @@ export default function InstallToolDialog({
               <div className="h-full max-h-[calc(100vh-180px)] overflow-y-auto overflow-x-hidden">
                 <div className="space-y-4">
                   {selectedAuthType === 'oauth2' && tool.oauth2_env_available ? (
-                    <Card className="bg-[#1D1D1D] border border-[#292929]">
+                    <Card className="bg-card border">
                       <CardHeader className="pb-3">
-                        <CardTitle className="text-sm font-medium text-white">OAuth2 Credentials</CardTitle>
+                        <CardTitle className="text-sm font-medium">OAuth2 Credentials</CardTitle>
                       </CardHeader>
                       <CardContent>
                         <div className="space-y-4">
-                          <div className="flex items-start space-x-3 p-3 border rounded-lg border-[#292929]">
+                          <div className="flex items-start space-x-3 p-3 border rounded-lg">
                             <input type="radio" id="system" name="oauth-credentials" value="system" checked={!useCustomCredentials} onChange={() => setUseCustomCredentials(false)} className="mt-1 h-4 w-4" />
                             <div className="flex-1">
-                              <Label htmlFor="system" className="text-sm font-medium cursor-pointer text-white">Use system OAuth2 credentials (Recommended)</Label>
-                              <p className="text-xs text-white/60 mt-1">No setup required.</p>
+                              <Label htmlFor="system" className="text-sm font-medium cursor-pointer">Use system OAuth2 credentials (Recommended)</Label>
+                              <p className="text-xs text-muted-foreground mt-1">No setup required.</p>
                             </div>
                           </div>
-                          <div className="flex items-start space-x-3 p-3 border rounded-lg border-[#292929]">
+                          <div className="flex items-start space-x-3 p-3 border rounded-lg">
                             <input type="radio" id="custom" name="oauth-credentials" value="custom" checked={useCustomCredentials} onChange={() => setUseCustomCredentials(true)} className="mt-1 h-4 w-4" />
                             <div className="flex-1">
-                              <Label htmlFor="custom" className="text-sm font-medium cursor-pointer text-white">Use your own developer credentials</Label>
-                              <p className="text-xs text-white/60 mt-1">Provide credentials from your OAuth2 app.</p>
+                              <Label htmlFor="custom" className="text-sm font-medium cursor-pointer">Use your own developer credentials</Label>
+                              <p className="text-xs text-muted-foreground mt-1">Provide credentials from your OAuth2 app.</p>
                             </div>
                           </div>
                         </div>
@@ -165,16 +165,16 @@ export default function InstallToolDialog({
                     <>
                       {(selectedSchema?.setup_environment_variables || []).map(field => (
                         <div key={field.name} className="space-y-2">
-                          <Label className="text-xs font-medium text-white">{field.title || field.name}</Label>
+                          <Label className="text-xs font-medium">{field.title || field.name}</Label>
                           <Input
                             type={field.type === 'secret' || field.type === 'password' ? 'password' : 'text'}
                             value={envVars[field.name] ?? (field.defaultValue as any) ?? ''}
                             onChange={(e) => setEnvVars(prev => ({ ...prev, [field.name]: e.target.value }))}
                             disabled={field.disabled}
                             placeholder={field.sample_format}
-                            className="bg-[#1D1D1D] border-[#292929] text-white placeholder:text-white/40"
+                            className="bg-background border-input text-foreground placeholder:text-muted-foreground"
                           />
-                          {field.subtitle ? <p className="text-[11px] text-white/60">{field.subtitle}</p> : null}
+                          {field.subtitle ? <p className="text-[11px] text-muted-foreground">{field.subtitle}</p> : null}
                         </div>
                       ))}
                     </>
@@ -184,14 +184,14 @@ export default function InstallToolDialog({
             )}
           </div>
 
-          <div className="border-t border-[#292929] bg-[#1D1D1D] p-4">
+          <div className="border-t bg-background p-4">
             {step === 'auth' ? (
               <div className="flex justify-end">
                 <Button
                   variant="outline"
                   size="sm"
                   onClick={() => onOpenChange(false)}
-                  className="h-9 text-xs bg-transparent border-[#292929] text-white hover:bg-[#232323]"
+                  className="h-9 text-xs bg-transparent border border-border text-foreground hover:bg-accent"
                 >
                   Cancel
                 </Button>
@@ -203,7 +203,7 @@ export default function InstallToolDialog({
                     variant="outline"
                     size="sm"
                     onClick={() => onOpenChange(false)}
-                    className="h-9 text-xs bg-transparent border-[#292929] text-white hover:bg-[#232323]"
+                    className="h-9 text-xs bg-transparent border border-border text-foreground hover:bg-accent"
                   >
                     Cancel
                   </Button>

@@ -1,11 +1,12 @@
 'use client'
 
 import {
-  SidebarGroup,
-  SidebarGroupLabel,
-  SidebarMenu
+    SidebarGroup,
+    SidebarGroupLabel,
+    SidebarMenu
 } from '@/components/ui/sidebar'
 import { Chat } from '@/lib/types'
+import { useRouter } from 'next/navigation'
 import { useCallback, useEffect, useRef, useState, useTransition } from 'react'
 import { toast } from 'sonner'
 import { ChatHistorySkeleton } from './chat-history-skeleton'
@@ -26,6 +27,24 @@ export function ChatHistoryClient() {
   const [isLoading, setIsLoading] = useState(true)
   const loadMoreRef = useRef<HTMLDivElement>(null)
   const [isPending, startTransition] = useTransition()
+  const router = useRouter()
+
+  const prefetchTopChats = useCallback(
+    (list: Chat[], limit: number = 5) => {
+      try {
+        const slice = list.slice(0, limit)
+        // Slightly defer to avoid blocking UI
+        setTimeout(() => {
+          slice.forEach(item => {
+            if (item?.path) {
+              try { router.prefetch(item.path) } catch {}
+            }
+          })
+        }, 0)
+      } catch {}
+    },
+    [router]
+  )
 
   const getSelectedOrganizationId = () => {
     try {
@@ -50,6 +69,7 @@ export function ChatHistoryClient() {
 
       setChats(newChats)
       setNextOffset(newNextOffset)
+      prefetchTopChats(newChats)
     } catch (error) {
       console.error('Failed to load initial chats:', error)
       toast.error('Failed to load chat history.')
@@ -96,6 +116,7 @@ export function ChatHistoryClient() {
 
       setChats(prevChats => [...prevChats, ...newChats])
       setNextOffset(newNextOffset)
+      prefetchTopChats(newChats, 3)
     } catch (error) {
       console.error('Failed to load more chats:', error)
       toast.error('Failed to load more chat history.')

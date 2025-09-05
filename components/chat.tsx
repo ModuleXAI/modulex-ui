@@ -30,7 +30,13 @@ export function Chat({
   models?: Model[]
 }) {
   const scrollContainerRef = useRef<HTMLDivElement>(null)
+  const scrollContentRef = useRef<HTMLDivElement>(null)
   const [isAtBottom, setIsAtBottom] = useState(true)
+  const [autoScrollActive, setAutoScrollActive] = useState(false)
+  const prevStatusRef = useRef<string | null>(null)
+  const isProgrammaticScrollRef = useRef(false)
+  const panelRef = useRef<HTMLDivElement>(null)
+  const [panelHeight, setPanelHeight] = useState<number>(0)
 
   const {
     messages,
@@ -124,12 +130,19 @@ export function Chat({
     if (!container) return
 
     const handleScroll = () => {
+      // Ignore programmatic scrolls
+      if (isProgrammaticScrollRef.current) {
+        isProgrammaticScrollRef.current = false
+        return
+      }
       const { scrollTop, scrollHeight, clientHeight } = container
       const threshold = 50 // threshold in pixels
       if (scrollHeight - scrollTop - clientHeight < threshold) {
         setIsAtBottom(true)
       } else {
         setIsAtBottom(false)
+        // If user scrolls away while auto-scroll is active, stop auto-scroll for this stream
+        setAutoScrollActive(prev => (prev ? false : prev))
       }
     }
 
@@ -139,20 +152,92 @@ export function Chat({
     return () => container.removeEventListener('scroll', handleScroll)
   }, [])
 
-  // Scroll to the section when a new user message is sent
+  // On initial mount, jump to bottom so chat opens at the latest messages
+  useEffect(() => {
+    const container = scrollContainerRef.current
+    if (!container) return
+    requestAnimationFrame(() => {
+      isProgrammaticScrollRef.current = true
+      container.scrollTop = container.scrollHeight
+    })
+  }, [])
+
+  // Manage auto-scroll lifecycle based on streaming status transitions
+  useEffect(() => {
+    const prev = prevStatusRef.current
+    const current = status
+    // When a new stream starts, enable auto-scroll only if user is at bottom
+    if ((current === 'submitted' || current === 'streaming') && prev !== 'submitted' && prev !== 'streaming') {
+      setAutoScrollActive(true)
+    }
+    // When stream ends, disable auto-scroll
+    if ((prev === 'submitted' || prev === 'streaming') && current !== 'submitted' && current !== 'streaming') {
+      setAutoScrollActive(false)
+    }
+    prevStatusRef.current = current
+  }, [status, isAtBottom])
+
+  // While auto-scroll is active, keep the view pinned to bottom as content grows
+  useEffect(() => {
+    if (!autoScrollActive) return
+    const container = scrollContainerRef.current
+    if (!container) return
+    // Use rAF to wait for layout
+    const id = requestAnimationFrame(() => {
+      isProgrammaticScrollRef.current = true
+      container.scrollTop = container.scrollHeight
+    })
+    return () => cancelAnimationFrame(id)
+  }, [autoScrollActive, messages, data, sections])
+
+  // Additionally, observe content height changes to follow streams even if message arrays don't re-create
+  useEffect(() => {
+    const container = scrollContainerRef.current
+    const content = scrollContentRef.current
+    if (!container || !content) return
+    let previousHeight = content.offsetHeight
+    const ro = new ResizeObserver(() => {
+      const nextHeight = content.offsetHeight
+      if (autoScrollActive && nextHeight > previousHeight) {
+        isProgrammaticScrollRef.current = true
+        container.scrollTop = container.scrollHeight
+      }
+      previousHeight = nextHeight
+    })
+    ro.observe(content)
+    return () => ro.disconnect()
+  }, [autoScrollActive])
+
+  // When a new user message is sent, jump to the bottom regardless of current position
   useEffect(() => {
     if (sections.length > 0) {
       const lastMessage = messages[messages.length - 1]
       if (lastMessage && lastMessage.role === 'user') {
-        // If the last message is from user, find the corresponding section
-        const sectionId = lastMessage.id
-        requestAnimationFrame(() => {
-          const sectionElement = document.getElementById(`section-${sectionId}`)
-          sectionElement?.scrollIntoView({ behavior: 'smooth', block: 'start' })
-        })
+        const container = scrollContainerRef.current
+        if (container) {
+          requestAnimationFrame(() => {
+            isProgrammaticScrollRef.current = true
+            container.scrollTop = container.scrollHeight
+            setAutoScrollActive(true)
+          })
+        }
       }
     }
   }, [sections, messages])
+
+  // Track chat panel height to set dynamic bottom padding for the scroll area
+  useEffect(() => {
+    const node = panelRef.current
+    if (!node || typeof window === 'undefined') return
+    const ro = new ResizeObserver(entries => {
+      for (const entry of entries) {
+        const h = entry.contentRect.height
+        setPanelHeight(Math.ceil(h))
+      }
+    })
+    ro.observe(node)
+    return () => ro.disconnect()
+  }, [])
 
   useEffect(() => {
     setMessages(savedMessages)
@@ -219,6 +304,13 @@ export function Chat({
   const onSubmit = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault()
     setData(undefined)
+    // Force jump to bottom and enable auto-follow immediately upon submit
+    const container = scrollContainerRef.current
+    if (container) {
+      isProgrammaticScrollRef.current = true
+      container.scrollTop = container.scrollHeight
+    }
+    setAutoScrollActive(true)
     // Append-only save of the user message so assistant can be appended later onFinish
     if (process.env.NEXT_PUBLIC_ENABLE_SAVE_CHAT_HISTORY === 'true') {
       const userMsg = { role: 'user', content: input }
@@ -249,10 +341,13 @@ export function Chat({
         chatId={id}
         addToolResult={addToolResult}
         scrollContainerRef={scrollContainerRef}
+        scrollContentRef={scrollContentRef}
         onUpdateMessage={handleUpdateAndReloadMessage}
         reload={handleReloadFrom}
+        bottomPadding={panelHeight}
       />
-      <ChatPanel
+      <div ref={panelRef} className="w-full">
+        <ChatPanel
         input={input}
         handleInputChange={handleInputChange}
         handleSubmit={onSubmit}
@@ -265,7 +360,8 @@ export function Chat({
         models={models}
         showScrollToBottomButton={!isAtBottom}
         scrollContainerRef={scrollContainerRef}
-      />
+        />
+      </div>
     </div>
   )
 }

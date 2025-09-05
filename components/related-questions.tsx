@@ -127,7 +127,7 @@ export const RelatedQuestions: React.FC<RelatedQuestionsProps> = ({
       showIcon={false}
       showBorder={false}
     >
-      <Section title="Related" className="pt-0 pb-4">
+      <Section title="Related" className="pt-0 pb-0">
         <div className="flex flex-col">
           {Array.isArray(itemsToRender) && itemsToRender.length > 0 ? (
             itemsToRender
@@ -137,7 +137,7 @@ export const RelatedQuestions: React.FC<RelatedQuestionsProps> = ({
                   <ArrowRight className="h-4 w-4 mr-2 mt-1 flex-shrink-0 text-accent-foreground/50" />
                   <Button
                     variant="link"
-                    className="flex-1 justify-start px-0 py-1 h-fit font-semibold text-accent-foreground/50 whitespace-normal text-left"
+                    className="flex-1 justify-start px-0 py-0.5 h-fit font-semibold text-accent-foreground/50 whitespace-normal text-left"
                     type="submit"
                     name={'related_query'}
                     value={item?.query}

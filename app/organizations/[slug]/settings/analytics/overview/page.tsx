@@ -98,7 +98,7 @@ export default function Page() {
       {loading ? (
         <>
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
-            <div className="lg:col-span-2 rounded-lg bg-[#1D1D1D] border border-[#292929] p-4 sm:p-6">
+            <div className="lg:col-span-2 rounded-lg bg-card border p-4 sm:p-6">
               <div className="flex items-center gap-4 sm:gap-6">
                 <Skeleton className="h-18 w-18 rounded-full" />
                 <div>
@@ -108,12 +108,12 @@ export default function Page() {
               </div>
               <div className="my-6"><Skeleton className="h-px w-full" /></div>
               <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-                <div className="rounded-md bg-[#232323] border border-[#2F2F2F] p-4"><Skeleton className="h-6 w-28" /><div className="mt-2"><Skeleton className="h-6 w-20" /></div></div>
-                <div className="rounded-md bg-[#232323] border border-[#2F2F2F] p-4"><Skeleton className="h-6 w-32" /><div className="mt-2"><Skeleton className="h-6 w-24" /></div></div>
-                <div className="rounded-md bg-[#232323] border border-[#2F2F2F] p-4"><Skeleton className="h-6 w-36" /><div className="mt-2"><Skeleton className="h-6 w-28" /></div></div>
+                <div className="rounded-md bg-accent border p-4"><Skeleton className="h-6 w-28" /><div className="mt-2"><Skeleton className="h-6 w-20" /></div></div>
+                <div className="rounded-md bg-accent border p-4"><Skeleton className="h-6 w-32" /><div className="mt-2"><Skeleton className="h-6 w-24" /></div></div>
+                <div className="rounded-md bg-accent border p-4"><Skeleton className="h-6 w-36" /><div className="mt-2"><Skeleton className="h-6 w-28" /></div></div>
               </div>
             </div>
-            <div className="rounded-lg bg-[#1D1D1D] border border-[#292929] p-4 sm:p-6">
+            <div className="rounded-lg bg-card border p-4 sm:p-6">
               <Skeleton className="h-4 w-28 mb-3" />
               <Skeleton className="h-5 w-48" />
               <div className="my-4"><Skeleton className="h-px w-full" /></div>
@@ -121,8 +121,8 @@ export default function Page() {
               <Skeleton className="h-5 w-60" />
             </div>
           </div>
-          <div className="rounded-lg border border-[#292929] bg-[#1D1D1D] overflow-hidden mt-4">
-            <div className="h-10 border-b border-[#292929]"><Skeleton className="h-10 w-full" /></div>
+          <div className="rounded-lg border bg-card overflow-hidden mt-4">
+            <div className="h-10 border-b"><Skeleton className="h-10 w-full" /></div>
             <div className="h-80"><Skeleton className="h-full w-full" /></div>
           </div>
         </>
@@ -131,39 +131,39 @@ export default function Page() {
       ) : (
         <>
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
-            <div className="lg:col-span-2 rounded-lg bg-[#1D1D1D] border border-[#292929] p-4 sm:p-6">
+            <div className="lg:col-span-2 rounded-lg bg-card border p-4 sm:p-6">
               <div className="flex items-center gap-4 sm:gap-6">
                 <div className="relative" style={{ width: 72, height: 72 }}>
-                  <div className="rounded-full" style={{ width: '72px', height: '72px', background: `conic-gradient(#67E9AB ${creditPct * 3.6}deg, #292929 ${creditPct * 3.6}deg)` }} />
-                  <div className="absolute inset-1 rounded-full bg-[#1D1D1D] border border-[#292929] grid place-items-center">
-                    <span className="text-xs text-white">{creditPct}%</span>
+                  <div className="rounded-full" style={{ width: '72px', height: '72px', background: `conic-gradient(#67E9AB ${creditPct * 3.6}deg, hsl(var(--border)) ${creditPct * 3.6}deg)` }} />
+                  <div className="absolute inset-1 rounded-full bg-card border grid place-items-center">
+                    <span className="text-xs text-foreground">{creditPct}%</span>
                   </div>
                 </div>
                 <div>
-                  <div className="text-xs text-white/60">LLM Credits Used</div>
-                  <div className="mt-1 text-sm text-white/80">{creditUsed} / {creditMax}</div>
+                  <div className="text-xs text-muted-foreground">LLM Credits Used</div>
+                  <div className="mt-1 text-sm text-muted-foreground">{creditUsed} / {creditMax}</div>
                 </div>
               </div>
-              <div className="border-t border-[#292929] my-4 sm:my-6" />
+              <div className="border-t my-4 sm:my-6" />
               <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-                <div className="rounded-md bg-[#232323] border border-[#2F2F2F] p-4">
-                  <div className="text-xs text-white/60">Members</div>
-                  <div className="mt-1 text-2xl font-semibold text-white">{data?.total_members ?? 0}</div>
+                <div className="rounded-md bg-accent border p-4">
+                  <div className="text-xs text-muted-foreground">Members</div>
+                  <div className="mt-1 text-2xl font-semibold text-foreground">{data?.total_members ?? 0}</div>
                 </div>
-                <div className="rounded-md bg-[#232323] border border-[#2F2F2F] p-4">
-                  <div className="text-xs text-white/60">Tools Installed</div>
-                  <div className="mt-1 text-sm text-white/80">{toolsRatio} • {toolsPct}%</div>
+                <div className="rounded-md bg-accent border p-4">
+                  <div className="text-xs text-muted-foreground">Tools Installed</div>
+                  <div className="mt-1 text-sm text-muted-foreground">{toolsRatio} • {toolsPct}%</div>
                 </div>
-                <div className="rounded-md bg-[#232323] border border-[#2F2F2F] p-4">
-                  <div className="text-xs text-white/60">Plan</div>
-                  <div className="mt-1 text-sm text-white/80">{data?.plan_name ?? '-'}</div>
+                <div className="rounded-md bg-accent border p-4">
+                  <div className="text-xs text-muted-foreground">Plan</div>
+                  <div className="mt-1 text-sm text-muted-foreground">{data?.plan_name ?? '-'}</div>
                 </div>
               </div>
             </div>
-            <div className="rounded-lg bg-[#1D1D1D] border border-[#292929] p-4 sm:p-6 flex flex-col gap-3 min-h-[220px]">
+            <div className="rounded-lg bg-card border p-4 sm:p-6 flex flex-col gap-3 min-h-[220px]">
               <div>
-                <div className="text-xs text-white/60 mb-2">Billing Period</div>
-                <div className="text-sm text-white/80">
+                <div className="text-xs text-muted-foreground mb-2">Billing Period</div>
+                <div className="text-sm text-muted-foreground">
                   {data?.subscription?.current_period_start ? new Date(data.subscription.current_period_start).toLocaleDateString() : '-'} {' '}–{' '}
                   {data?.subscription?.current_period_end ? new Date(data.subscription.current_period_end).toLocaleDateString() : '-'}
                 </div>
@@ -171,8 +171,8 @@ export default function Page() {
             </div>
           </div>
 
-          <div className="rounded-lg border border-[#292929] bg-[#1D1D1D] overflow-hidden">
-            <div className="grid grid-cols-[1fr_1fr_1fr_140px_200px] gap-4 px-4 py-3 text-xs text-white/60 border-b border-[#292929]">
+          <div className="rounded-lg border bg-card overflow-hidden">
+            <div className="grid grid-cols-[1fr_1fr_1fr_140px_200px] gap-4 px-4 py-3 text-xs text-muted-foreground border-b">
               <div>User</div>
               <div className="text-right">Provider</div>
               <div className="text-right">Service</div>
@@ -180,25 +180,25 @@ export default function Page() {
               <div className="text-right">Usage Time</div>
             </div>
             {data?.credit_usage_logs?.length ? (
-              <div className="h-80 overflow-y-auto divide-y divide-white/10">
+              <div className="h-80 overflow-y-auto divide-y divide-border">
                 {data.credit_usage_logs.map((l, idx) => (
                   <div key={`${l.user_email}:${l.usage_time}:${idx}`} className="grid grid-cols-[1fr_1fr_1fr_140px_200px] items-center gap-4 px-4 py-3">
-                    <div className="text-sm text-white truncate">{l.user_email}</div>
-                    <div className="text-right text-xs text-white/80 truncate">{l.provider}</div>
-                    <div className="text-right text-xs text-white/80 truncate">{l.service}</div>
-                    <div className="text-right text-sm text-white">{l.credit_cost}</div>
-                    <div className="text-right text-xs text-white/80 truncate">{new Date(l.usage_time).toLocaleString()}</div>
+                    <div className="text-sm text-foreground truncate">{l.user_email}</div>
+                    <div className="text-right text-xs text-muted-foreground truncate">{l.provider}</div>
+                    <div className="text-right text-xs text-muted-foreground truncate">{l.service}</div>
+                    <div className="text-right text-sm text-foreground">{l.credit_cost}</div>
+                    <div className="text-right text-xs text-muted-foreground truncate">{new Date(l.usage_time).toLocaleString()}</div>
                   </div>
                 ))}
               </div>
             ) : (
               <div className="px-4 py-6 text-sm text-muted-foreground">No logs.</div>
             )}
-            <div className="flex items-center justify-between px-4 py-3 border-t border-[#292929]">
-              <div className="text-xs text-white/60">Page {Math.floor(offset / limit) + 1}</div>
+            <div className="flex items-center justify-between px-4 py-3 border-t border-border">
+              <div className="text-xs text-muted-foreground">Page {Math.floor(offset / limit) + 1}</div>
               <div className="flex gap-2">
-                <Button variant="outline" size="sm" className="bg-transparent border-[#292929] text-white hover:bg-[#232323]" onClick={() => setOffset(o => Math.max(0, o - limit))} disabled={offset === 0}>Prev</Button>
-                <Button variant="outline" size="sm" className="bg-transparent border-[#292929] text-white hover:bg-[#232323]" onClick={() => setOffset(o => o + limit)} disabled={(data?.credit_usage_logs?.length || 0) < limit}>Next</Button>
+                <Button variant="outline" size="sm" className="bg-transparent border border-border text-foreground hover:bg-accent" onClick={() => setOffset(o => Math.max(0, o - limit))} disabled={offset === 0}>Prev</Button>
+                <Button variant="outline" size="sm" className="bg-transparent border border-border text-foreground hover:bg-accent" onClick={() => setOffset(o => o + limit)} disabled={(data?.credit_usage_logs?.length || 0) < limit}>Next</Button>
               </div>
             </div>
           </div>

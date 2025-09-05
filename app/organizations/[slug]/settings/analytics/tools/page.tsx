@@ -97,7 +97,7 @@ export default function Page() {
         </div>
         <div className="flex items-center gap-2">
           {(['24h','7d','30d','90d'] as const).map(p => (
-            <Button key={p} size="sm" variant={period===p ? 'default' : 'outline'} className={period===p ? '' : 'bg-transparent border-[#292929] text-white hover:bg-[#232323]'} onClick={() => setPeriod(p)}>
+            <Button key={p} size="sm" variant={period===p ? 'default' : 'outline'} className={period===p ? '' : 'bg-transparent border border-border text-foreground hover:bg-accent'} onClick={() => setPeriod(p)}>
               {p}
             </Button>
           ))}
@@ -107,7 +107,7 @@ export default function Page() {
       {loading ? (
         <>
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
-            <div className="lg:col-span-2 rounded-lg bg-[#1D1D1D] border border-[#292929] p-4 sm:p-6">
+            <div className="lg:col-span-2 rounded-lg bg-card border p-4 sm:p-6">
               <div className="flex items-center gap-4 sm:gap-6">
                 <Skeleton className="h-18 w-18 rounded-full" />
                 <div>
@@ -117,12 +117,12 @@ export default function Page() {
               </div>
               <div className="my-6"><Skeleton className="h-px w-full" /></div>
               <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-                <div className="rounded-md bg-[#232323] border border-[#2F2F2F] p-4"><Skeleton className="h-6 w-28" /><div className="mt-2"><Skeleton className="h-6 w-20" /></div></div>
-                <div className="rounded-md bg-[#232323] border border-[#2F2F2F] p-4"><Skeleton className="h-6 w-32" /><div className="mt-2"><Skeleton className="h-6 w-24" /></div></div>
-                <div className="rounded-md bg-[#232323] border border-[#2F2F2F] p-4"><Skeleton className="h-6 w-36" /><div className="mt-2"><Skeleton className="h-6 w-28" /></div></div>
+                <div className="rounded-md bg-accent border p-4"><Skeleton className="h-6 w-28" /><div className="mt-2"><Skeleton className="h-6 w-20" /></div></div>
+                <div className="rounded-md bg-accent border p-4"><Skeleton className="h-6 w-32" /><div className="mt-2"><Skeleton className="h-6 w-24" /></div></div>
+                <div className="rounded-md bg-accent border p-4"><Skeleton className="h-6 w-36" /><div className="mt-2"><Skeleton className="h-6 w-28" /></div></div>
               </div>
             </div>
-            <div className="rounded-lg bg-[#1D1D1D] border border-[#292929] p-4 sm:p-6">
+            <div className="rounded-lg bg-card border p-4 sm:p-6">
               <Skeleton className="h-4 w-28 mb-3" />
               <Skeleton className="h-5 w-48" />
               <div className="my-4"><Skeleton className="h-px w-full" /></div>
@@ -130,8 +130,8 @@ export default function Page() {
               <Skeleton className="h-5 w-60" />
             </div>
           </div>
-          <div className="rounded-lg border border-[#292929] bg-[#1D1D1D] overflow-hidden">
-            <div className="h-10 border-b border-[#292929]"><Skeleton className="h-10 w-full" /></div>
+          <div className="rounded-lg border bg-card overflow-hidden">
+            <div className="h-10 border-b"><Skeleton className="h-10 w-full" /></div>
             <div className="h-80"><Skeleton className="h-full w-full" /></div>
           </div>
         </>
@@ -141,7 +141,7 @@ export default function Page() {
         <>
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
             {/* Usage Summary (wide) */}
-            <div className="lg:col-span-2 rounded-lg bg-[#1D1D1D] border border-[#292929] p-4 sm:p-6">
+            <div className="lg:col-span-2 rounded-lg bg-card border p-4 sm:p-6">
               <div className="flex items-center gap-4 sm:gap-6">
                 <div className="relative" style={{ width: 72, height: 72 }}>
                   <div
@@ -149,59 +149,59 @@ export default function Page() {
                     style={{
                       width: '72px',
                       height: '72px',
-                      background: `conic-gradient(#67E9AB ${toolsPct * 3.6}deg, #292929 ${toolsPct * 3.6}deg)`
+                      background: `conic-gradient(#67E9AB ${toolsPct * 3.6}deg, hsl(var(--border)) ${toolsPct * 3.6}deg)`
                     }}
                   />
-                  <div className="absolute inset-1 rounded-full bg-[#1D1D1D] border border-[#292929] grid place-items-center">
-                    <span className="text-xs text-white">{toolsRatio}</span>
+                  <div className="absolute inset-1 rounded-full bg-card border grid place-items-center">
+                    <span className="text-xs text-foreground">{toolsRatio}</span>
                   </div>
                 </div>
                 <div>
-                  <div className="text-xs text-white/60">Tools Installed</div>
-                  <div className="mt-1 text-sm text-white/80">{toolsPct}% installed</div>
+                  <div className="text-xs text-muted-foreground">Tools Installed</div>
+                  <div className="mt-1 text-sm text-muted-foreground">{toolsPct}% installed</div>
                 </div>
               </div>
 
-              <div className="border-t border-[#292929] my-4 sm:my-6" />
+              <div className="border-t my-4 sm:my-6" />
 
               <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-                <div className="rounded-md bg-[#232323] border border-[#2F2F2F] p-4">
-                  <div className="text-xs text-white/60">Total Executions</div>
-                  <div className="mt-1 text-2xl font-semibold text-white">{data?.total_tool_executions ?? 0}</div>
-                  <div className="text-xs text-white/60 mt-1">All time</div>
+                <div className="rounded-md bg-accent border p-4">
+                  <div className="text-xs text-muted-foreground">Total Executions</div>
+                  <div className="mt-1 text-2xl font-semibold text-foreground">{data?.total_tool_executions ?? 0}</div>
+                  <div className="text-xs text-muted-foreground mt-1">All time</div>
                 </div>
-                <div className="rounded-md bg-[#232323] border border-[#2F2F2F] p-4">
-                  <div className="text-xs text-white/60">Period Executions</div>
-                  <div className="mt-1 text-2xl font-semibold text-white">{data?.period_tool_executions ?? 0}</div>
-                  <div className="text-xs text-white/60 mt-1">In selected period</div>
+                <div className="rounded-md bg-accent border p-4">
+                  <div className="text-xs text-muted-foreground">Period Executions</div>
+                  <div className="mt-1 text-2xl font-semibold text-foreground">{data?.period_tool_executions ?? 0}</div>
+                  <div className="text-xs text-muted-foreground mt-1">In selected period</div>
                 </div>
-                <div className="rounded-md bg-[#232323] border border-[#2F2F2F] p-4">
+                <div className="rounded-md bg-accent border p-4">
                   <div className="flex items-center justify-between">
-                    <div className="text-xs text-white/60">Success Rate</div>
-                    <div className="text-xs text-white/80">{successPct}%</div>
+                    <div className="text-xs text-muted-foreground">Success Rate</div>
+                    <div className="text-xs text-muted-foreground">{successPct}%</div>
                   </div>
-                  <div className="mt-2 h-2 rounded bg-[#2A2A2A] overflow-hidden">
+                  <div className="mt-2 h-2 rounded bg-muted overflow-hidden">
                     <div className="h-2 rounded bg-[#67E9AB]" style={{ width: `${successPct}%` }} />
                   </div>
-                  <div className="text-xs text-white/60 mt-1">Overall</div>
+                  <div className="text-xs text-muted-foreground mt-1">Overall</div>
                 </div>
               </div>
             </div>
 
             {/* Highlights */}
-            <div className="rounded-lg bg-[#1D1D1D] border border-[#292929] p-4 sm:p-6 flex flex-col gap-3 min-h-[220px]">
+            <div className="rounded-lg bg-card border p-4 sm:p-6 flex flex-col gap-3 min-h-[220px]">
               <div>
-                <div className="text-xs text-white/60 mb-2">Most Used Action</div>
+                <div className="text-xs text-muted-foreground mb-2">Most Used Action</div>
                 <div className="flex items-center gap-3">
                   {(() => {
                     const top = data?.actions?.[0]
-                    if (!top || !data?.most_used_action) return <div className="text-sm text-white/70">-</div>
+                    if (!top || !data?.most_used_action) return <div className="text-sm text-muted-foreground">-</div>
                     return (
                       <>
                         <Image src={getToolIcon(top.tool)} alt={top.tool} width={28} height={28} className="rounded" />
                         <div>
-                          <div className="text-white text-sm font-medium">{formatActionName(data.most_used_action)}</div>
-                          <div className="text-xs text-white/60">{top.tool}</div>
+                          <div className="text-foreground text-sm font-medium">{formatActionName(data.most_used_action)}</div>
+                          <div className="text-xs text-muted-foreground">{top.tool}</div>
                         </div>
                       </>
                     )
@@ -209,11 +209,11 @@ export default function Page() {
                 </div>
               </div>
 
-              <div className="border-t border-[#292929] mt-3 mb-1" />
+              <div className="border-t mt-3 mb-1" />
 
               <div>
-                <div className="text-xs text-white/60 mb-2">Most Used Category</div>
-                <div className="inline-flex items-center rounded px-2 py-1 border border-white/15 text-xs text-white/80">
+                <div className="text-xs text-muted-foreground mb-2">Most Used Category</div>
+                <div className="inline-flex items-center rounded px-2 py-1 border text-xs text-muted-foreground">
                   {data?.most_used_category ?? '-'}
                 </div>
               </div>
@@ -221,27 +221,27 @@ export default function Page() {
           </div>
 
           {/* Actions list */}
-          <div className="rounded-lg border border-[#292929] bg-[#1D1D1D] overflow-hidden">
-            <div className="grid grid-cols-[1fr_120px_160px_140px] gap-4 px-4 py-3 text-xs text-white/60 border-b border-[#292929]">
+          <div className="rounded-lg border bg-card overflow-hidden">
+            <div className="grid grid-cols-[1fr_120px_160px_140px] gap-4 px-4 py-3 text-xs text-muted-foreground border-b">
               <div>Action</div>
               <div className="text-right">Tool</div>
               <div className="text-right">Executions</div>
               <div className="text-right">Success Rate</div>
             </div>
             {data?.actions?.length ? (
-              <div className="h-80 overflow-y-auto divide-y divide-white/10">
+              <div className="h-80 overflow-y-auto divide-y divide-border">
                 {data.actions.map((a) => (
                   <div key={`${a.tool}:${a.action}`} className="grid grid-cols-[1fr_120px_160px_140px] items-center gap-4 px-4 py-3">
                     <div className="flex items-center gap-3 min-w-0">
                       <Image src={getToolIcon(a.tool)} alt={a.tool} width={24} height={24} className="rounded shrink-0" />
                       <div className="truncate">
-                        <div className="text-sm text-white truncate">{formatActionName(a.action)}</div>
-                        <div className="text-xs text-white/60 truncate">{a.tool}</div>
+                        <div className="text-sm text-foreground truncate">{formatActionName(a.action)}</div>
+                        <div className="text-xs text-muted-foreground truncate">{a.tool}</div>
                       </div>
                     </div>
-                    <div className="text-right text-xs text-white/80">{a.tool}</div>
-                    <div className="text-right text-sm text-white">{a.execute_amount}</div>
-                    <div className="text-right text-sm text-white">{Math.round((a.success_rate ?? 0))}%</div>
+                    <div className="text-right text-xs text-muted-foreground">{a.tool}</div>
+                    <div className="text-right text-sm text-foreground">{a.execute_amount}</div>
+                    <div className="text-right text-sm text-foreground">{Math.round((a.success_rate ?? 0))}%</div>
                   </div>
                 ))}
               </div>

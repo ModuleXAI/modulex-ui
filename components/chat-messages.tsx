@@ -1,6 +1,7 @@
 'use client'
 
 import { cn } from '@/lib/utils'
+import { getCookie } from '@/lib/utils/cookies'
 import { ChatRequestOptions, JSONValue, Message } from 'ai'
 import { useEffect, useMemo, useState } from 'react'
 import { RenderMessage } from './render-message'
@@ -23,11 +24,15 @@ interface ChatMessagesProps {
   addToolResult?: (params: { toolCallId: string; result: any }) => void
   /** Ref for the scroll container */
   scrollContainerRef: React.RefObject<HTMLDivElement>
+  /** Ref for the scroll content wrapper (to observe height changes) */
+  scrollContentRef?: React.RefObject<HTMLDivElement>
   onUpdateMessage?: (messageId: string, newContent: string) => Promise<void>
   reload?: (
     messageId: string,
     options?: ChatRequestOptions
   ) => Promise<string | null | undefined>
+  /** Dynamic padding to accommodate sticky editor height */
+  bottomPadding?: number
 }
 
 export function ChatMessages({
@@ -38,11 +43,14 @@ export function ChatMessages({
   chatId,
   addToolResult,
   scrollContainerRef,
+  scrollContentRef,
   onUpdateMessage,
-  reload
+  reload,
+  bottomPadding
 }: ChatMessagesProps) {
   const [openStates, setOpenStates] = useState<Record<string, boolean>>({})
   const manualToolCallId = 'manual-tool-call'
+  const [isSearchMode, setIsSearchMode] = useState<boolean>(true)
 
   useEffect(() => {
     // Open manual tool call when the last section is a user message
@@ -53,6 +61,16 @@ export function ChatMessages({
       }
     }
   }, [sections])
+
+  useEffect(() => {
+    // Read search mode preference from cookie
+    try {
+      const savedMode = getCookie('search-mode')
+      if (savedMode !== null) {
+        setIsSearchMode(savedMode === 'true')
+      }
+    } catch {}
+  }, [])
 
   // get last tool data for manual tool call
   const lastToolData = useMemo(() => {
@@ -78,6 +96,14 @@ export function ChatMessages({
       args: toolData.args ? JSON.parse(toolData.args) : undefined
     }
   }, [data])
+
+  // Compute the last assistant message id to only show related questions there
+  const lastAssistantMessageId = useMemo(() => {
+    const allAssistantMessages = sections.flatMap(section => section.assistantMessages)
+    return allAssistantMessages.length > 0
+      ? allAssistantMessages[allAssistantMessages.length - 1].id
+      : undefined
+  }, [sections])
 
   if (!sections.length) return null
 
@@ -121,21 +147,17 @@ export function ChatMessages({
       role="list"
       aria-roledescription="chat messages"
       className={cn(
-        'relative size-full pt-14 pb-48',
+        'relative size-full pt-14',
         sections.length > 0 ? 'flex-1 overflow-y-auto' : ''
       )}
+      style={{ paddingBottom: bottomPadding ?? 0 }}
     >
-      <div className="relative mx-auto w-full max-w-3xl px-4">
+      <div className={cn('relative mx-auto w-full max-w-3xl px-4')} ref={scrollContentRef}>
         {sections.map((section, sectionIndex) => (
           <div
             key={section.id}
             id={`section-${section.id}`}
-            className="chat-section mb-8"
-            style={
-              sectionIndex === sections.length - 1
-                ? { minHeight: 'calc(-228px + 100dvh)' }
-                : {}
-            }
+            className={cn('chat-section', sectionIndex === sections.length - 1 ? 'mb-2' : 'mb-8')}
           >
             {/* User message */}
             <div className="flex flex-col gap-4 mb-4">
@@ -166,13 +188,14 @@ export function ChatMessages({
                   addToolResult={addToolResult}
                   onUpdateMessage={onUpdateMessage}
                   reload={reload}
+                  showRelatedQuestions={assistantMessage.id === lastAssistantMessageId}
                 />
               </div>
             ))}
           </div>
         ))}
 
-        {showLoading && lastToolData && (
+        {isSearchMode && showLoading && lastToolData && (
           <ToolSection
             key={manualToolCallId}
             tool={lastToolData}

@@ -87,7 +87,7 @@ export default function Page() {
         </div>
         <div className="flex items-center gap-2">
           {(['24h','7d','30d','90d'] as const).map(p => (
-            <Button key={p} size="sm" variant={period===p ? 'default' : 'outline'} className={period===p ? '' : 'bg-transparent border-[#292929] text-white hover:bg-[#232323]'} onClick={() => setPeriod(p)}>
+            <Button key={p} size="sm" variant={period===p ? 'default' : 'outline'} className={period===p ? '' : 'bg-transparent border border-border text-foreground hover:bg-accent'} onClick={() => setPeriod(p)}>
               {p}
             </Button>
           ))}
@@ -97,7 +97,7 @@ export default function Page() {
       {loading ? (
         <>
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
-            <div className="lg:col-span-2 rounded-lg bg-[#1D1D1D] border border-[#292929] p-4 sm:p-6">
+            <div className="lg:col-span-2 rounded-lg bg-card border p-4 sm:p-6">
               <div className="flex items-center gap-4 sm:gap-6">
                 <Skeleton className="h-18 w-18 rounded-full" />
                 <div>
@@ -107,12 +107,12 @@ export default function Page() {
               </div>
               <div className="my-6"><Skeleton className="h-px w-full" /></div>
               <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-                <div className="rounded-md bg-[#232323] border border-[#2F2F2F] p-4"><Skeleton className="h-6 w-36" /><div className="mt-2"><Skeleton className="h-6 w-24" /></div></div>
-                <div className="rounded-md bg-[#232323] border border-[#2F2F2F] p-4"><Skeleton className="h-6 w-40" /><div className="mt-2"><Skeleton className="h-6 w-28" /></div></div>
-                <div className="rounded-md bg-[#232323] border border-[#2F2F2F] p-4"><Skeleton className="h-6 w-48" /><div className="mt-2"><Skeleton className="h-6 w-32" /></div></div>
+                <div className="rounded-md bg-accent border p-4"><Skeleton className="h-6 w-36" /><div className="mt-2"><Skeleton className="h-6 w-24" /></div></div>
+                <div className="rounded-md bg-accent border p-4"><Skeleton className="h-6 w-40" /><div className="mt-2"><Skeleton className="h-6 w-28" /></div></div>
+                <div className="rounded-md bg-accent border p-4"><Skeleton className="h-6 w-48" /><div className="mt-2"><Skeleton className="h-6 w-32" /></div></div>
               </div>
             </div>
-            <div className="rounded-lg bg-[#1D1D1D] border border-[#292929] p-4 sm:p-6">
+            <div className="rounded-lg bg-card border p-4 sm:p-6">
               <Skeleton className="h-4 w-28 mb-3" />
               <Skeleton className="h-5 w-48" />
               <div className="my-4"><Skeleton className="h-px w-full" /></div>
@@ -120,8 +120,8 @@ export default function Page() {
               <Skeleton className="h-5 w-60" />
             </div>
           </div>
-          <div className="rounded-lg border border-[#292929] bg-[#1D1D1D] overflow-hidden">
-            <div className="h-10 border-b border-[#292929]"><Skeleton className="h-10 w-full" /></div>
+          <div className="rounded-lg border bg-card overflow-hidden">
+            <div className="h-10 border-b"><Skeleton className="h-10 w-full" /></div>
             <div className="h-80"><Skeleton className="h-full w-full" /></div>
           </div>
         </>
@@ -132,7 +132,7 @@ export default function Page() {
           {/* Summary - match Tools layout */}
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
             {/* Left Wide Card */}
-            <div className="lg:col-span-2 rounded-lg bg-[#1D1D1D] border border-[#292929] p-4 sm:p-6">
+            <div className="lg:col-span-2 rounded-lg bg-card border p-4 sm:p-6">
               <div className="flex items-center gap-4 sm:gap-6">
                 {/* Circular success indicator (mini donut) */}
                 <div className="relative" style={{ width: 72, height: 72 }}>
@@ -141,49 +141,49 @@ export default function Page() {
                     style={{
                       width: '72px',
                       height: '72px',
-                      background: `conic-gradient(#67E9AB ${successPct * 3.6}deg, #292929 ${successPct * 3.6}deg)`
+                      background: `conic-gradient(#67E9AB ${successPct * 3.6}deg, hsl(var(--border)) ${successPct * 3.6}deg)`
                     }}
                   />
-                  <div className="absolute inset-1 rounded-full bg-[#1D1D1D] border border-[#292929] grid place-items-center">
-                    <span className="text-xs text-white">{successPct}%</span>
+                  <div className="absolute inset-1 rounded-full bg-card border grid place-items-center">
+                    <span className="text-xs text-foreground">{successPct}%</span>
                   </div>
                 </div>
                 <div>
-                  <div className="text-xs text-white/60">Success Rate</div>
-                  <div className="mt-1 text-sm text-white/80">Overall</div>
+                  <div className="text-xs text-muted-foreground">Success Rate</div>
+                  <div className="mt-1 text-sm text-muted-foreground">Overall</div>
                 </div>
               </div>
 
-              <div className="border-t border-[#292929] my-4 sm:my-6" />
+              <div className="border-t my-4 sm:my-6" />
 
               <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-                <div className="rounded-md bg-[#232323] border border-[#2F2F2F] p-4">
-                  <div className="text-xs text-white/60">Total AI Requests</div>
-                  <div className="mt-1 text-2xl font-semibold text-white">{data?.total_ai_request ?? 0}</div>
+                <div className="rounded-md bg-accent border p-4">
+                  <div className="text-xs text-muted-foreground">Total AI Requests</div>
+                  <div className="mt-1 text-2xl font-semibold text-foreground">{data?.total_ai_request ?? 0}</div>
                 </div>
-                <div className="rounded-md bg-[#232323] border border-[#2F2F2F] p-4">
-                  <div className="text-xs text-white/60">Total Prompt Tokens</div>
-                  <div className="mt-1 text-2xl font-semibold text-white">{data?.total_prompt_tokens ?? 0}</div>
+                <div className="rounded-md bg-accent border p-4">
+                  <div className="text-xs text-muted-foreground">Total Prompt Tokens</div>
+                  <div className="mt-1 text-2xl font-semibold text-foreground">{data?.total_prompt_tokens ?? 0}</div>
                 </div>
-                <div className="rounded-md bg-[#232323] border border-[#2F2F2F] p-4">
-                  <div className="text-xs text-white/60">Total Completion Tokens</div>
-                  <div className="mt-1 text-2xl font-semibold text-white">{data?.total_completion_tokens ?? 0}</div>
+                <div className="rounded-md bg-accent border p-4">
+                  <div className="text-xs text-muted-foreground">Total Completion Tokens</div>
+                  <div className="mt-1 text-2xl font-semibold text-foreground">{data?.total_completion_tokens ?? 0}</div>
                 </div>
               </div>
             </div>
 
             {/* Right Highlights */}
-            <div className="rounded-lg bg-[#1D1D1D] border border-[#292929] p-4 sm:p-6 flex flex-col gap-3 min-h-[220px]">
+            <div className="rounded-lg bg-card border p-4 sm:p-6 flex flex-col gap-3 min-h-[220px]">
               <div>
-                <div className="text-xs text-white/60 mb-2">Top Member</div>
-                <div className="text-sm text-white/80 truncate">{data?.top_member ?? '-'}</div>
+                <div className="text-xs text-muted-foreground mb-2">Top Member</div>
+                <div className="text-sm text-muted-foreground truncate">{data?.top_member ?? '-'}</div>
               </div>
 
-              <div className="border-t border-[#292929] mt-3 mb-1" />
+              <div className="border-t mt-3 mb-1" />
 
               <div>
-                <div className="text-xs text-white/60 mb-2">Top Model</div>
-                <div className="inline-flex items-center rounded px-2 py-1 border border-white/15 text-xs text-white/80">
+                <div className="text-xs text-muted-foreground mb-2">Top Model</div>
+                <div className="inline-flex items-center rounded px-2 py-1 border text-xs text-muted-foreground">
                   {(() => {
                     const models = (data?.llm_usages || []).map(u => u.model)
                     if (!models.length) return '-'
@@ -198,8 +198,8 @@ export default function Page() {
           </div>
 
           {/* List */}
-          <div className="rounded-lg border border-[#292929] bg-[#1D1D1D] overflow-hidden">
-            <div className="grid grid-cols-[1fr_210px_1fr_140px_140px_120px_160px] gap-4 px-4 py-3 text-xs text-white/60 border-b border-[#292929]">
+          <div className="rounded-lg border bg-card overflow-hidden">
+            <div className="grid grid-cols-[1fr_210px_1fr_140px_140px_120px_160px] gap-4 px-4 py-3 text-xs text-muted-foreground border-b">
               <div>User</div>
               <div className="text-right">Provider</div>
               <div className="text-right">Model</div>
@@ -209,29 +209,29 @@ export default function Page() {
               <div className="text-right">Key Resource</div>
             </div>
             {data?.llm_usages?.length ? (
-              <div className="h-80 overflow-y-auto divide-y divide-white/10">
+              <div className="h-80 overflow-y-auto divide-y divide-border">
                 {data.llm_usages.map((u, idx) => (
                   <div key={`${u.user_email}:${u.request_time}:${idx}`} className="grid grid-cols-[1fr_210px_1fr_140px_140px_120px_160px] items-center gap-4 px-4 py-3">
-                    <div className="text-sm text-white truncate">{u.user_email}</div>
-                    <div className="text-right text-xs text-white/80 truncate">{u.provider}</div>
-                    <div className="text-right text-xs text-white/80 truncate">{u.model}</div>
-                    <div className="text-right text-sm text-white">{u.prompt_tokens}</div>
-                    <div className="text-right text-sm text-white">{u.completion_tokens}</div>
+                    <div className="text-sm text-foreground truncate">{u.user_email}</div>
+                    <div className="text-right text-xs text-muted-foreground truncate">{u.provider}</div>
+                    <div className="text-right text-xs text-muted-foreground truncate">{u.model}</div>
+                    <div className="text-right text-sm text-foreground">{u.prompt_tokens}</div>
+                    <div className="text-right text-sm text-foreground">{u.completion_tokens}</div>
                     <div className="text-right text-xs">
-                      <span className={`px-2 py-0.5 rounded border ${u.status === 'success' ? 'text-green-400 border-green-400/30' : 'text-red-400 border-red-400/30'}`}>{u.status}</span>
+                      <span className={`px-2 py-0.5 rounded border ${u.status === 'success' ? 'text-green-600 dark:text-green-400 border-green-400/30' : 'text-red-600 dark:text-red-400 border-red-400/30'}`}>{u.status}</span>
                     </div>
-                    <div className="text-right text-xs text-white/80">{u.usage_from_modulex ? 'ModuleX' : 'Organization Key'}</div>
+                    <div className="text-right text-xs text-muted-foreground">{u.usage_from_modulex ? 'ModuleX' : 'Organization Key'}</div>
                   </div>
                 ))}
               </div>
             ) : (
               <div className="px-4 py-6 text-sm text-muted-foreground">No usage found for this period.</div>
             )}
-            <div className="flex items-center justify-between px-4 py-3 border-t border-[#292929]">
-              <div className="text-xs text-white/60">Page {Math.floor(offset / limit) + 1}</div>
+            <div className="flex items-center justify-between px-4 py-3 border-t border-border">
+              <div className="text-xs text-muted-foreground">Page {Math.floor(offset / limit) + 1}</div>
               <div className="flex gap-2">
-                <Button variant="outline" size="sm" className="bg-transparent border-[#292929] text-white hover:bg-[#232323]" onClick={() => setOffset(o => Math.max(0, o - limit))} disabled={offset === 0}>Prev</Button>
-                <Button variant="outline" size="sm" className="bg-transparent border-[#292929] text-white hover:bg-[#232323]" onClick={() => setOffset(o => o + limit)} disabled={(data?.llm_usages?.length || 0) < limit}>Next</Button>
+                <Button variant="outline" size="sm" className="bg-transparent border border-border text-foreground hover:bg-accent" onClick={() => setOffset(o => Math.max(0, o - limit))} disabled={offset === 0}>Prev</Button>
+                <Button variant="outline" size="sm" className="bg-transparent border border-border text-foreground hover:bg-accent" onClick={() => setOffset(o => o + limit)} disabled={(data?.llm_usages?.length || 0) < limit}>Next</Button>
               </div>
             </div>
           </div>

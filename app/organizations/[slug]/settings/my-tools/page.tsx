@@ -82,10 +82,10 @@ export default function Page() {
 
   const getAuthTypeColor = (authType?: string) => {
     const t = (authType || '').toLowerCase()
-    if (t === 'oauth2') return 'text-blue-400 bg-transparent border border-white/15'
-    if (t === 'bearer_token') return 'text-purple-400 bg-transparent border border-white/15'
-    if (t === 'api_key') return 'text-pink-400 bg-transparent border border-white/15'
-    return 'text-white/70 bg-transparent border border-white/15'
+    if (t === 'oauth2') return 'text-blue-600 dark:text-blue-400 bg-transparent border border-border'
+    if (t === 'bearer_token') return 'text-purple-600 dark:text-purple-400 bg-transparent border border-border'
+    if (t === 'api_key') return 'text-pink-600 dark:text-pink-400 bg-transparent border border-border'
+    return 'text-foreground/70 bg-transparent border border-border'
   }
 
   const handleUninstall = async (toolName: string) => {
@@ -135,29 +135,29 @@ export default function Page() {
             <div className="w-64">
               <Input placeholder="Search tools..." value={query} onChange={(e) => setQuery(e.target.value)} />
             </div>
-            <div className="text-xs text-white/60">{count} tools</div>
+            <div className="text-xs text-muted-foreground">{count} tools</div>
           </div>
         </div>
       ) : null}
 
       {selectedTool ? (
-        <div className="rounded-lg bg-[#1D1D1D] border border-[#292929] p-6">
+        <div className="rounded-lg bg-card text-card-foreground border p-6">
           <div className="flex items-start justify-between mb-6">
             <div className="flex items-center gap-2.5">
-              <button onClick={() => setSelectedTool(null)} className="p-3 rounded-lg hover:bg-[#232323] transition-colors" aria-label="Back">
-                <span className="inline-block rotate-180 select-none text-white/80">›</span>
+              <button onClick={() => setSelectedTool(null)} className="p-3 rounded-lg hover:bg-accent transition-colors" aria-label="Back">
+                <span className="inline-block rotate-180 select-none text-muted-foreground">›</span>
               </button>
               <Image src={selectedTool.logo || `/icons/tools/${selectedTool.name}.svg`} alt={selectedTool.display_name} width={48} height={48} className="rounded" />
               <div>
-                <div className="text-2xl font-bold text-white">{selectedTool.display_name}</div>
-                <div className="text-xs text-white/60 uppercase tracking-wide">{selectedTool.name}</div>
+                <div className="text-2xl font-bold text-foreground">{selectedTool.display_name}</div>
+                <div className="text-xs text-muted-foreground uppercase tracking-wide">{selectedTool.name}</div>
               </div>
             </div>
             <div className="flex items-center gap-2">
               {selectedTool.app_url ? (
-                <Button variant="outline" className="bg-transparent border-[#292929] text-white hover:bg-[#232323]" onClick={() => window.open(selectedTool.app_url!, '_blank')}>View Documentation</Button>
+                <Button variant="outline" className="bg-transparent border border-border text-foreground hover:bg-accent" onClick={() => window.open(selectedTool.app_url!, '_blank')}>View Documentation</Button>
               ) : null}
-              <Button variant="outline" className="bg-transparent border-red-500/40 text-red-400 hover:bg-red-500/10" onClick={() => handleUninstall(selectedTool.name)}>Uninstall</Button>
+              <Button variant="outline" className="bg-transparent border border-red-500/40 text-red-600 dark:text-red-400 hover:bg-red-500/10" onClick={() => handleUninstall(selectedTool.name)}>Uninstall</Button>
             </div>
           </div>
 
@@ -166,29 +166,29 @@ export default function Page() {
               {selectedTool && (
                 <span className={`px-2 py-1 rounded ${getAuthTypeColor((selectedTool as any).auth_type)}`}>{((selectedTool as any).auth_type || 'auth').toUpperCase()}</span>
               )}
-              <span className="px-2 py-1 rounded border border-white/15 text-[#67E9AB]">INSTALLED</span>
-              <span className="px-2 py-1 rounded border border-white/15 text-white/70">{(selectedTool.enabled_actions || []).length} Actions</span>
+              <span className="px-2 py-1 rounded border border-border text-[#67E9AB]">INSTALLED</span>
+              <span className="px-2 py-1 rounded border border-border text-foreground/70">{(selectedTool.enabled_actions || []).length} Actions</span>
               {selectedTool.version ? (
-                <span className="px-2 py-1 rounded border border-white/15 text-white/70">v{selectedTool.version}</span>
+                <span className="px-2 py-1 rounded border border-border text-foreground/70">v{selectedTool.version}</span>
               ) : null}
             </div>
           </div>
 
-          <div className="mb-4 border-b border-[#292929]">
-            <div className="flex gap-3 text-sm">
+          <div className="mb-4 border-b">
+            <div className="flex gap-1 text-sm">
               {(['actions','environment','settings'] as const).map(t => (
-                <button key={t} onClick={() => setActiveTab(t)} className={`px-3 py-2 rounded-t ${activeTab===t ? 'bg-[#232323] text-white' : 'text-white/70 hover:text-white'}`}>{t[0].toUpperCase()+t.slice(1)}</button>
+                <button key={t} onClick={() => setActiveTab(t)} className={`px-3 py-2 rounded-t ${activeTab===t ? 'bg-accent text-foreground' : 'text-muted-foreground hover:text-foreground'}`}>{t[0].toUpperCase()+t.slice(1)}</button>
               ))}
             </div>
           </div>
 
           {activeTab === 'actions' && (
-            <div className="rounded-lg border border-[#292929] divide-y divide-[#292929] bg-[#1D1D1D]">
+            <div className="rounded-lg border divide-y bg-card text-card-foreground">
               {(selectedTool.enabled_actions || []).map(a => (
                 <div key={a.name} className="grid grid-cols-[220px_1fr_100px] items-start gap-4 p-4">
-                  <div className="text-sm text-white font-medium truncate">{a.name}</div>
-                  <div className="text-sm text-[#7E7E7E] leading-relaxed">{a.description}</div>
-                  <div className="text-xs text-green-400 text-right">Enabled</div>
+                  <div className="text-sm text-foreground font-medium truncate">{a.name}</div>
+                  <div className="text-sm text-muted-foreground leading-relaxed">{a.description}</div>
+                  <div className="text-xs text-green-600 dark:text-green-400 text-right">Enabled</div>
                 </div>
               ))}
             </div>
@@ -196,12 +196,12 @@ export default function Page() {
 
           {activeTab === 'environment' && (
             <div className="space-y-4">
-              <div className="text-sm text-white/80">Environment Variables</div>
+              <div className="text-sm text-foreground/80">Environment Variables</div>
               <div className="space-y-3">
                 {Object.entries(selectedTool.environment_variables || {}).map(([k,v]) => (
                   <div key={k} className="grid grid-cols-[260px_1fr] gap-3 items-center">
-                    <div className="text-xs text-white/70">{k}</div>
-                    <Input defaultValue={v} onChange={(e) => setEnvDraft(prev => ({ ...prev, [k]: e.target.value }))} className="bg-[#1D1D1D] border-[#292929] text-white placeholder:text-white/40" />
+                    <div className="text-xs text-muted-foreground">{k}</div>
+                    <Input defaultValue={v} onChange={(e) => setEnvDraft(prev => ({ ...prev, [k]: e.target.value }))} className="bg-background border-input text-foreground placeholder:text-muted-foreground" />
                   </div>
                 ))}
               </div>
@@ -213,9 +213,9 @@ export default function Page() {
 
           {activeTab === 'settings' && (
             <div className="space-y-3">
-              <div className="text-sm font-medium text-white">Tool Configuration</div>
-              <p className="text-sm text-[#7E7E7E]">This tool is installed and ready to use. You can manage its environment variables in the Environment tab or uninstall it using the uninstall button in the header.</p>
-              <div className="text-sm text-green-400">Tool is active and configured</div>
+              <div className="text-sm font-medium text-foreground">Tool Configuration</div>
+              <p className="text-sm text-muted-foreground">This tool is installed and ready to use. You can manage its environment variables in the Environment tab or uninstall it using the uninstall button in the header.</p>
+              <div className="text-sm text-green-600 dark:text-green-400">Tool is active and configured</div>
             </div>
           )}
         </div>
@@ -246,19 +246,19 @@ export default function Page() {
           {filtered.map((tool) => {
             const shortDesc = tool.description?.length > 100 ? tool.description.substring(0, 100) + '...' : tool.description
             return (
-              <div key={tool.id} className="bg-[#1D1D1D] text-white rounded-lg border-[1px] border-[#292929] p-6 hover:bg-[#232323] hover:shadow-lg hover:ring-1 hover:ring-white/10 transition-colors transition-shadow duration-200 cursor-pointer" onClick={() => setSelectedTool(tool)}>
+              <div key={tool.id} className="bg-card text-card-foreground rounded-lg border p-6 hover:bg-accent hover:shadow-lg transition-colors transition-shadow duration-200 cursor-pointer" onClick={() => setSelectedTool(tool)}>
                 <div className="flex items-start space-x-4 mb-4">
                   <Image src={tool.logo || `/icons/tools/${tool.name}.svg`} alt={tool.display_name} width={48} height={48} className="w-12 h-12 rounded-lg" />
                   <div className="flex-1">
-                    <h3 className="font-semibold text-white mb-1">{tool.display_name}</h3>
-                    <p className="text-xs text-white/60 uppercase tracking-wide">{tool.name}</p>
+                    <h3 className="font-semibold text-foreground mb-1">{tool.display_name}</h3>
+                    <p className="text-xs text-muted-foreground uppercase tracking-wide">{tool.name}</p>
                   </div>
                 </div>
-                <p className="text-sm text-[#7E7E7E] mb-4 leading-relaxed">{shortDesc}</p>
+                <p className="text-sm text-muted-foreground mb-4 leading-relaxed">{shortDesc}</p>
                 <div className="flex items-center justify-start">
                   <div className="flex flex-wrap gap-2">
                     <span className={`px-2 py-1 rounded text-xs font-medium ${getAuthTypeColor((tool as any).auth_type)}`}>{(((tool as any).auth_type) || 'auth').toUpperCase()}</span>
-                    <span className="px-2 py-1 rounded text-xs font-medium border border-white/15 text-[#67E9AB]">INSTALLED</span>
+                    <span className="px-2 py-1 rounded text-xs font-medium border border-border text-[#67E9AB]">INSTALLED</span>
                   </div>
                 </div>
               </div>

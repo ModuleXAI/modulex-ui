@@ -96,7 +96,7 @@ export default function Page() {
         </div>
         <div className="flex items-center gap-2">
           {(['24h','7d','30d','90d'] as const).map(p => (
-            <Button key={p} size="sm" variant={period===p ? 'default' : 'outline'} className={period===p ? '' : 'bg-transparent border-[#292929] text-white hover:bg-[#232323]'} onClick={() => { setOffset(0); setPeriod(p) }}>
+            <Button key={p} size="sm" variant={period===p ? 'default' : 'outline'} className={period===p ? '' : 'bg-transparent border border-border text-foreground hover:bg-accent'} onClick={() => { setOffset(0); setPeriod(p) }}>
               {p}
             </Button>
           ))}
@@ -106,7 +106,7 @@ export default function Page() {
       {loading ? (
         <>
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
-            <div className="lg:col-span-2 rounded-lg bg-[#1D1D1D] border border-[#292929] p-4 sm:p-6">
+            <div className="lg:col-span-2 rounded-lg bg-card border p-4 sm:p-6">
               <div className="flex items-center gap-4 sm:gap-6">
                 <Skeleton className="h-18 w-18 rounded-full" />
                 <div>
@@ -116,12 +116,12 @@ export default function Page() {
               </div>
               <div className="my-6"><Skeleton className="h-px w-full" /></div>
               <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-                <div className="rounded-md bg-[#232323] border border-[#2F2F2F] p-4"><Skeleton className="h-6 w-36" /><div className="mt-2"><Skeleton className="h-6 w-24" /></div></div>
-                <div className="rounded-md bg-[#232323] border border-[#2F2F2F] p-4"><Skeleton className="h-6 w-40" /><div className="mt-2"><Skeleton className="h-6 w-28" /></div></div>
-                <div className="rounded-md bg-[#232323] border border-[#2F2F2F] p-4"><Skeleton className="h-6 w-48" /><div className="mt-2"><Skeleton className="h-6 w-32" /></div></div>
+                <div className="rounded-md bg-accent border p-4"><Skeleton className="h-6 w-36" /><div className="mt-2"><Skeleton className="h-6 w-24" /></div></div>
+                <div className="rounded-md bg-accent border p-4"><Skeleton className="h-6 w-40" /><div className="mt-2"><Skeleton className="h-6 w-28" /></div></div>
+                <div className="rounded-md bg-accent border p-4"><Skeleton className="h-6 w-48" /><div className="mt-2"><Skeleton className="h-6 w-32" /></div></div>
               </div>
             </div>
-            <div className="rounded-lg bg-[#1D1D1D] border border-[#292929] p-4 sm:p-6">
+            <div className="rounded-lg bg-card border p-4 sm:p-6">
               <Skeleton className="h-4 w-28 mb-3" />
               <Skeleton className="h-5 w-48" />
               <div className="my-4"><Skeleton className="h-px w-full" /></div>
@@ -129,8 +129,8 @@ export default function Page() {
               <Skeleton className="h-5 w-60" />
             </div>
           </div>
-          <div className="rounded-lg border border-[#292929] bg-[#1D1D1D] overflow-hidden">
-            <div className="h-10 border-b border-[#292929]"><Skeleton className="h-10 w-full" /></div>
+          <div className="rounded-lg border bg-card overflow-hidden">
+            <div className="h-10 border-b"><Skeleton className="h-10 w-full" /></div>
             <div className="h-80"><Skeleton className="h-full w-full" /></div>
           </div>
         </>
@@ -141,85 +141,85 @@ export default function Page() {
           {/* Summary cards */}
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
             {/* Left wide card */}
-            <div className="lg:col-span-2 rounded-lg bg-[#1D1D1D] border border-[#292929] p-4 sm:p-6">
+            <div className="lg:col-span-2 rounded-lg bg-card border p-4 sm:p-6">
               <div className="flex items-center gap-4 sm:gap-6">
                 <div className="relative" style={{ width: 72, height: 72 }}>
                   <div
                     className="rounded-full"
-                    style={{ width: '72px', height: '72px', background: `conic-gradient(#67E9AB ${successRate * 3.6}deg, #292929 ${successRate * 3.6}deg)` }}
+                    style={{ width: '72px', height: '72px', background: `conic-gradient(#67E9AB ${successRate * 3.6}deg, hsl(var(--border)) ${successRate * 3.6}deg)` }}
                   />
-                  <div className="absolute inset-1 rounded-full bg-[#1D1D1D] border border-[#292929] grid place-items-center">
-                    <span className="text-xs text-white">{successRate}%</span>
+                  <div className="absolute inset-1 rounded-full bg-card border grid place-items-center">
+                    <span className="text-xs text-foreground">{successRate}%</span>
                   </div>
                 </div>
                 <div>
-                  <div className="text-xs text-white/60">Success Rate</div>
-                  <div className="mt-1 text-sm text-white/80">In current view</div>
+                  <div className="text-xs text-muted-foreground">Success Rate</div>
+                  <div className="mt-1 text-sm text-muted-foreground">In current view</div>
                 </div>
               </div>
-              <div className="border-t border-[#292929] my-4 sm:my-6" />
+              <div className="border-t my-4 sm:my-6" />
               <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-                <div className="rounded-md bg-[#232323] border border-[#2F2F2F] p-4">
-                  <div className="text-xs text-white/60">Total Logs (page)</div>
-                  <div className="mt-1 text-2xl font-semibold text-white">{logs.length}</div>
+                <div className="rounded-md bg-accent border p-4">
+                  <div className="text-xs text-muted-foreground">Total Logs (page)</div>
+                  <div className="mt-1 text-2xl font-semibold text-foreground">{logs.length}</div>
                 </div>
-                <div className="rounded-md bg-[#232323] border border-[#2F2F2F] p-4">
-                  <div className="text-xs text-white/60">Success</div>
-                  <div className="mt-1 text-2xl font-semibold text-white">{successCount}</div>
+                <div className="rounded-md bg-accent border p-4">
+                  <div className="text-xs text-muted-foreground">Success</div>
+                  <div className="mt-1 text-2xl font-semibold text-foreground">{successCount}</div>
                 </div>
-                <div className="rounded-md bg-[#232323] border border-[#2F2F2F] p-4">
-                  <div className="text-xs text-white/60">Errors</div>
-                  <div className="mt-1 text-2xl font-semibold text-white">{errorCount}</div>
+                <div className="rounded-md bg-accent border p-4">
+                  <div className="text-xs text-muted-foreground">Errors</div>
+                  <div className="mt-1 text-2xl font-semibold text-foreground">{errorCount}</div>
                 </div>
               </div>
             </div>
             {/* Right highlights */}
-            <div className="rounded-lg bg-[#1D1D1D] border border-[#292929] p-4 sm:p-6 flex flex-col gap-3 min-h-[220px]">
+            <div className="rounded-lg bg-card border p-4 sm:p-6 flex flex-col gap-3 min-h-[220px]">
               <div>
-                <div className="text-xs text-white/60 mb-2">Levels (page)</div>
+                <div className="text-xs text-muted-foreground mb-2">Levels (page)</div>
                 <div className="grid grid-cols-3 gap-2">
-                  <div className="rounded px-2 py-1 border border-white/15 text-xs text-white/80">INFO: {infoCount}</div>
-                  <div className="rounded px-2 py-1 border border-white/15 text-xs text-white/80">WARN: {warnCount}</div>
-                  <div className="rounded px-2 py-1 border border-white/15 text-xs text-white/80">ERROR: {errorCount}</div>
+                  <div className="rounded px-2 py-1 border text-xs text-muted-foreground">INFO: {infoCount}</div>
+                  <div className="rounded px-2 py-1 border text-xs text-muted-foreground">WARN: {warnCount}</div>
+                  <div className="rounded px-2 py-1 border text-xs text-muted-foreground">ERROR: {errorCount}</div>
                 </div>
               </div>
-              <div className="border-t border-[#292929] mt-3 mb-1" />
+              <div className="border-t mt-3 mb-1" />
               <div>
-                <div className="text-xs text-white/60 mb-2">Total (backend)</div>
-                <div className="text-sm text-white/80">{totalCount}</div>
+                <div className="text-xs text-muted-foreground mb-2">Total (backend)</div>
+                <div className="text-sm text-muted-foreground">{totalCount}</div>
               </div>
             </div>
           </div>
 
           {/* List */}
-          <div className="rounded-lg border border-[#292929] bg-[#1D1D1D] overflow-hidden">
-            <div className="grid grid-cols-[220px_100px_100px_1fr] gap-4 px-4 py-3 text-xs text-white/60 border-b border-[#292929]">
+          <div className="rounded-lg border bg-card overflow-hidden">
+            <div className="grid grid-cols-[220px_100px_100px_1fr] gap-4 px-4 py-3 text-xs text-muted-foreground border-b">
               <div>Time</div>
               <div className="text-right">Type</div>
               <div className="text-right">Level</div>
               <div className="text-left">Message</div>
             </div>
             {logs.length ? (
-              <div className="h-80 overflow-y-auto divide-y divide-white/10">
+              <div className="h-80 overflow-y-auto divide-y divide-border">
                 {logs.map(l => (
                   <div key={l.id} className="grid grid-cols-[220px_100px_100px_1fr] items-center gap-4 px-4 py-3">
-                    <div className="text-xs text-white/80 font-mono tabular-nums whitespace-nowrap">{new Date(l.timestamp).toLocaleString()}</div>
-                    <div className="text-right text-xs text-white/80 truncate">{l.log_type}</div>
+                    <div className="text-xs text-muted-foreground font-mono tabular-nums whitespace-nowrap">{new Date(l.timestamp).toLocaleString()}</div>
+                    <div className="text-right text-xs text-muted-foreground truncate">{l.log_type}</div>
                     <div className="text-right text-xs">
-                      <span className={`px-2 py-0.5 rounded border ${((l.level || '').toUpperCase() === 'ERROR') ? 'text-red-400 border-red-400/30' : (l.level || '').toUpperCase() === 'WARN' ? 'text-yellow-300 border-yellow-300/30' : 'text-white/80 border-white/20'}`}>{l.level}</span>
+                      <span className={`px-2 py-0.5 rounded border ${((l.level || '').toUpperCase() === 'ERROR') ? 'text-red-600 dark:text-red-400 border-red-400/30' : (l.level || '').toUpperCase() === 'WARN' ? 'text-yellow-600 dark:text-yellow-300 border-yellow-300/30' : 'text-foreground/80 border-border'}`}>{l.level}</span>
                     </div>
-                    <div className="text-sm text-white/90 truncate" title={l.message}>{l.message}</div>
+                    <div className="text-sm text-foreground truncate" title={l.message}>{l.message}</div>
                   </div>
                 ))}
               </div>
             ) : (
               <div className="px-4 py-6 text-sm text-muted-foreground">No logs found for this period.</div>
             )}
-            <div className="flex items-center justify-between px-4 py-3 border-t border-[#292929]">
-              <div className="text-xs text-white/60">Page {Math.floor(offset / limit) + 1}</div>
+            <div className="flex items-center justify-between px-4 py-3 border-t border-border">
+              <div className="text-xs text-muted-foreground">Page {Math.floor(offset / limit) + 1}</div>
               <div className="flex gap-2">
-                <Button variant="outline" size="sm" className="bg-transparent border-[#292929] text-white hover:bg-[#232323]" onClick={() => setOffset(o => Math.max(0, o - limit))} disabled={offset === 0}>Prev</Button>
-                <Button variant="outline" size="sm" className="bg-transparent border-[#292929] text-white hover:bg-[#232323]" onClick={() => setOffset(o => o + limit)} disabled={!resp?.pagination?.has_next}>Next</Button>
+                <Button variant="outline" size="sm" className="bg-transparent border border-border text-foreground hover:bg-accent" onClick={() => setOffset(o => Math.max(0, o - limit))} disabled={offset === 0}>Prev</Button>
+                <Button variant="outline" size="sm" className="bg-transparent border border-border text-foreground hover:bg-accent" onClick={() => setOffset(o => o + limit)} disabled={!resp?.pagination?.has_next}>Next</Button>
               </div>
             </div>
           </div>

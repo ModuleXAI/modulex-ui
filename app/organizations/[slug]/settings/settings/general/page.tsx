@@ -78,7 +78,7 @@ export default function Page() {
       </div>
 
       {loading ? (
-        <div className="rounded-lg bg-[#1D1D1D] border border-[#292929] p-4 sm:p-6">
+        <div className="rounded-lg bg-card border p-4 sm:p-6">
           <div className="space-y-3 max-w-xl">
             <Skeleton className="h-4 w-28" />
             <Skeleton className="h-9 w-full" />
@@ -88,10 +88,10 @@ export default function Page() {
           </div>
         </div>
       ) : (
-        <div className="rounded-lg bg-[#1D1D1D] border border-[#292929] p-4 sm:p-6 max-w-xl">
+        <div className="rounded-lg bg-card border p-4 sm:p-6 max-w-xl">
           <div className="space-y-4">
             <div>
-              <label className="block text-xs text-white/70 mb-1">Organization Name</label>
+              <label className="block text-xs text-muted-foreground mb-1">Organization Name</label>
               <Input
                 value={name}
                 onChange={(e) => setName(e.target.value)}
@@ -102,7 +102,7 @@ export default function Page() {
             <div className="flex items-center justify-end gap-2">
               <Button
                 variant="outline"
-                className="bg-transparent border-[#292929] text-white hover:bg-[#232323]"
+                className="bg-transparent border border-border text-foreground hover:bg-accent"
                 onClick={() => {
                   setName(organization?.name || '')
                   setError(null)

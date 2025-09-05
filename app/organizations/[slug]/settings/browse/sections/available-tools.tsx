@@ -91,36 +91,36 @@ export default function AvailableTools() {
   const getAuthTypeColor = (authType: string) => {
     switch (authType) {
       case 'oauth2':
-        return 'text-blue-400 bg-transparent border border-white/15'
+        return 'text-blue-600 dark:text-blue-400 bg-transparent border border-border'
       case 'bearer_token':
-        return 'text-purple-400 bg-transparent border border-white/15'
+        return 'text-purple-600 dark:text-purple-400 bg-transparent border border-border'
       case 'api_key':
-        return 'text-pink-400 bg-transparent border border-white/15'
+        return 'text-pink-600 dark:text-pink-400 bg-transparent border border-border'
       default:
-        return 'text-white/70 bg-transparent border border-white/15'
+        return 'text-foreground/70 bg-transparent border border-border'
     }
   }
 
   const renderToolDetail = () => {
     if (!selectedTool) return null
     return (
-      <div className="rounded-lg bg-[#1D1D1D] border border-[#292929] p-6">
+      <div className="rounded-lg bg-card text-card-foreground border p-6">
         <div className="flex items-start justify-between mb-6">
           <div className="flex items-start gap-2.5">
             {/* Back icon restored earlier change was reverted per request */}
             <button
               onClick={() => setSelectedTool(null)}
-              className="p-3 rounded-lg hover:bg-[#232323] transition-colors"
+              className="p-3 rounded-lg hover:bg-accent transition-colors"
               aria-label="Back"
             >
               {/* simple chevron */}
-              <span className="inline-block rotate-180 select-none text-white/80">›</span>
+              <span className="inline-block rotate-180 select-none text-muted-foreground">›</span>
             </button>
             <div className="flex items-center gap-2.5">
               <Image src={selectedTool.logo || `/icons/tools/${selectedTool.name}.svg`} alt={selectedTool.display_name} width={48} height={48} className="rounded" />
               <div>
-                <div className="text-2xl font-bold text-white">{selectedTool.display_name}</div>
-                <div className="text-xs text-white/60 uppercase tracking-wide">{selectedTool.name}</div>
+                <div className="text-2xl font-bold text-foreground">{selectedTool.display_name}</div>
+                <div className="text-xs text-muted-foreground uppercase tracking-wide">{selectedTool.name}</div>
               </div>
             </div>
           </div>
@@ -130,7 +130,7 @@ export default function AvailableTools() {
               <Button
                 variant="outline"
                 onClick={() => window.open(selectedTool.app_url!, '_blank')}
-                className="bg-transparent border-[#292929] text-white hover:bg-[#232323]"
+                className="bg-transparent border border-border text-foreground hover:bg-accent"
               >
                 <ExternalLink className="w-4 h-4 mr-2" />
                 View Documentation
@@ -149,7 +149,7 @@ export default function AvailableTools() {
 
         <div className="space-y-3 mb-8">
           {selectedTool.description ? (
-            <div className="text-sm text-[#7E7E7E]">{selectedTool.description}</div>
+            <div className="text-sm text-muted-foreground">{selectedTool.description}</div>
           ) : null}
           <div className="flex flex-wrap items-center gap-2 text-xs">
             {/* Auth type (styled like grid) */}
@@ -159,26 +159,26 @@ export default function AvailableTools() {
                 <span className={`px-2 py-1 rounded ${getAuthTypeColor(authType)}`}>{authType.toUpperCase()}</span>
               )
             })()}
-            <span className="px-2 py-1 rounded border border-white/15 text-white/70">{selectedTool.actions?.length || 0} Actions</span>
+            <span className="px-2 py-1 rounded border border-border text-foreground/70">{selectedTool.actions?.length || 0} Actions</span>
             {selectedTool.version ? (
-              <span className="px-2 py-1 rounded border border-white/15 text-white/70">v{selectedTool.version}</span>
+              <span className="px-2 py-1 rounded border border-border text-foreground/70">v{selectedTool.version}</span>
             ) : null}
           </div>
-          <div className="text-xs text-white/70">
+          <div className="text-xs text-muted-foreground">
             {`Categories: ${(selectedTool.categories || []).map(c => c.name).join(', ') || '—'}`}
           </div>
         </div>
 
         <div>
-          <div className="text-sm font-medium text-white mb-3">Actions</div>
-          <div className="rounded-lg border border-[#292929] divide-y divide-[#292929] bg-[#1D1D1D]">
+          <div className="text-sm font-medium text-foreground mb-3">Actions</div>
+          <div className="rounded-lg border divide-y bg-card text-card-foreground">
             {(selectedTool.actions || []).length === 0 ? (
-              <div className="p-4 text-sm text-white/60">No actions available.</div>
+              <div className="p-4 text-sm text-muted-foreground">No actions available.</div>
             ) : (
               (selectedTool.actions || []).map(action => (
                 <div key={action.name} className="grid grid-cols-[220px_1fr] items-start gap-4 p-4">
-                  <div className="text-sm text-white font-medium truncate">{action.name}</div>
-                  <div className="text-sm text-[#7E7E7E] leading-relaxed">{action.description}</div>
+                  <div className="text-sm text-foreground font-medium truncate">{action.name}</div>
+                  <div className="text-sm text-muted-foreground leading-relaxed">{action.description}</div>
                 </div>
               ))
             )}
@@ -206,7 +206,7 @@ export default function AvailableTools() {
                 onChange={(e) => setQuery(e.target.value)}
               />
             </div>
-            <div className="text-xs text-white/60">{(query ? filtered.length : tools.length)} tools</div>
+            <div className="text-xs text-muted-foreground">{(query ? filtered.length : tools.length)} tools</div>
           </div>
         </div>
       ) : null}
@@ -242,18 +242,18 @@ export default function AvailableTools() {
             return (
               <div
                 key={tool.id}
-                className="bg-[#1D1D1D] text-white rounded-lg border-[1px] border-[#292929] p-6 hover:bg-[#232323] hover:shadow-lg hover:ring-1 hover:ring-white/10 transition-colors transition-shadow duration-200 cursor-pointer"
+                className="bg-card text-card-foreground rounded-lg border p-6 hover:bg-accent hover:shadow-lg transition-colors transition-shadow duration-200 cursor-pointer"
                 onClick={() => setSelectedTool(tool)}
               >
                 <div className="flex items-start space-x-4 mb-4">
                   <Image src={tool.logo || `/icons/tools/${tool.name}.svg`} alt={tool.display_name} width={48} height={48} className="w-12 h-12 rounded-lg" />
                   <div className="flex-1">
-                    <h3 className="font-semibold text-white mb-1">{tool.display_name}</h3>
-                    <p className="text-xs text-white/60 uppercase tracking-wide">{tool.name}</p>
+                    <h3 className="font-semibold text-foreground mb-1">{tool.display_name}</h3>
+                    <p className="text-xs text-muted-foreground uppercase tracking-wide">{tool.name}</p>
                   </div>
                 </div>
 
-                <p className="text-sm text-[#7E7E7E] mb-4 leading-relaxed">{shortDesc}</p>
+                <p className="text-sm text-muted-foreground mb-4 leading-relaxed">{shortDesc}</p>
 
                 <div className="flex items-center justify-between">
                   <div className="flex flex-wrap gap-2">
@@ -263,7 +263,7 @@ export default function AvailableTools() {
                       </span>
                     ))}
                   </div>
-                  <div className="flex items-center space-x-4 text-sm text-white/60">
+                  <div className="flex items-center space-x-4 text-sm text-muted-foreground">
                     <span>{tool.actions?.length || 0} actions</span>
                   </div>
                 </div>
