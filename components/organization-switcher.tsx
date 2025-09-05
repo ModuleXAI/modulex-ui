@@ -12,7 +12,7 @@ import {
 import { createClient } from '@/lib/supabase/client'
 import { cn } from '@/lib/utils'
 import { setCookie } from '@/lib/utils/cookies'
-import { ChevronDown, Settings2 } from 'lucide-react'
+import { ChevronDown, Wrench } from 'lucide-react'
 import { usePathname, useRouter } from 'next/navigation'
 import React from 'react'
 
@@ -186,64 +186,68 @@ export default function OrganizationSwitcher({
         <Button
           variant="ghost"
           size="sm"
-          className={cn('gap-2 h-9 w-full border-0 rounded-none bg-transparent hover:bg-transparent focus-visible:ring-0 focus-visible:ring-offset-0 shrink-0', className)}
+          className={cn('gap-2 h-9 w-full border-0 rounded-none bg-transparent hover:bg-accent/50 transition-colors focus-visible:ring-0 focus-visible:ring-offset-0 shrink-0', className)}
           aria-label="Select organization"
         >
           <span className="flex-1 truncate text-left">{buttonLabel}</span>
           <ChevronDown className="h-4 w-4 opacity-70" />
         </Button>
       </DropdownMenuTrigger>
-      <DropdownMenuContent align="start" className="w-64">
-        <DropdownMenuLabel>Organizations</DropdownMenuLabel>
+      <DropdownMenuContent
+        align="start"
+        className="w-72 rounded-lg border border-white/10 bg-neutral-800/70 backdrop-blur-xl supports-[backdrop-filter]:bg-neutral-800/70 text-popover-foreground p-1 shadow-xl"
+      >
+        <DropdownMenuLabel className="px-2 py-1.5 text-xs text-muted-foreground">Organizations</DropdownMenuLabel>
         <DropdownMenuSeparator />
         {error ? (
-          <DropdownMenuItem disabled>{error}</DropdownMenuItem>
+          <DropdownMenuItem disabled className="text-destructive/80">{error}</DropdownMenuItem>
         ) : organizations.length === 0 ? (
-          <DropdownMenuItem disabled>
+          <DropdownMenuItem disabled className="text-muted-foreground">
             {loading ? 'Loading...' : 'No organizations'}
           </DropdownMenuItem>
         ) : (
-          organizations.map(org => (
-            <DropdownMenuItem
-              key={org.id}
-              disabled={isSettingsPath && !isAdminOrOwner(org.role)}
-              onSelect={event => {
-                if (isSettingsPath && !isAdminOrOwner(org.role)) {
-                  event.preventDefault()
-                  return
-                }
-                handleSelect(org)
-              }}
-              className={cn(
-                'flex items-center gap-2',
-                selected?.id === org.id && 'bg-accent/60'
-              )}
-            >
-              <div className="flex min-w-0 flex-1 flex-col items-start gap-0.5">
-                <span className="w-full truncate font-medium">{truncateText(org.name, 38)}</span>
-                <span className="w-full truncate text-xs text-muted-foreground">
-                  {truncateText(org.domain || org.slug, 38)}
-                </span>
-              </div>
-              {!isSettingsPath && ['admin', 'owner'].includes((org.role || '').toLowerCase()) ? (
-                <button
-                  type="button"
-                  className="ml-2 inline-flex items-center justify-center rounded hover:bg-accent p-1 text-muted-foreground"
-                  aria-label="Open organization settings"
-                  onClick={(e) => {
-                    e.preventDefault()
-                    e.stopPropagation()
-                    try {
-                      router.push(`/organizations/${org.slug}/settings`)
-                      setMenuOpen(false)
-                    } catch {}
-                  }}
-                >
-                  <Settings2 className="h-4 w-4" />
-                </button>
-              ) : null}
-            </DropdownMenuItem>
-          ))
+          <div className="max-h-72 overflow-y-auto">
+            {organizations.map(org => (
+              <DropdownMenuItem
+                key={org.id}
+                disabled={isSettingsPath && !isAdminOrOwner(org.role)}
+                onSelect={event => {
+                  if (isSettingsPath && !isAdminOrOwner(org.role)) {
+                    event.preventDefault()
+                    return
+                  }
+                  handleSelect(org)
+                }}
+                className={cn(
+                  'flex items-center gap-2 rounded-md px-2 py-2 transition-colors hover:bg-white/5 focus:bg-white/10 outline-none',
+                  selected?.id === org.id && 'bg-white/5'
+                )}
+              >
+                <div className="flex min-w-0 flex-1 flex-col items-start gap-0.5">
+                  <span className="w-full truncate font-medium">{truncateText(org.name, 38)}</span>
+                </div>
+                <div className="ml-2 flex items-center gap-1">
+                  {!isSettingsPath && ['admin', 'owner'].includes((org.role || '').toLowerCase()) ? (
+                    <button
+                      type="button"
+                      className="inline-flex items-center justify-center rounded hover:bg-accent/40 p-1 text-muted-foreground"
+                      aria-label="Manage organization"
+                      onClick={(e) => {
+                        e.preventDefault()
+                        e.stopPropagation()
+                        try {
+                          router.push(`/organizations/${org.slug}/settings`)
+                          setMenuOpen(false)
+                        } catch {}
+                      }}
+                    >
+                      <Wrench className="h-4 w-4" />
+                    </button>
+                  ) : null}
+                </div>
+              </DropdownMenuItem>
+            ))}
+          </div>
         )}
       </DropdownMenuContent>
     </DropdownMenu>

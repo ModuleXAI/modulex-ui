@@ -122,7 +122,7 @@ export default function Page() {
   const count = query ? filtered.length : tools.length
 
   return (
-    <div className="p-6 pt-14 space-y-4">
+    <div className="p-6 pt-20 space-y-4">
       {!selectedTool ? (
         <div>
           <div className="flex items-end justify-between">

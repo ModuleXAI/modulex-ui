@@ -195,7 +195,7 @@ export default function AvailableTools() {
           <div className="flex items-end justify-between">
             <div>
               <h2 className="text-xl font-semibold">All Tools</h2>
-              <p className="text-base text-muted-foreground mt-1">All the tools that we support.</p>
+              <p className="text-base text-muted-foreground mt-2">All the tools that we support.</p>
             </div>
           </div>
           <div className="mt-6 flex items-center justify-between">

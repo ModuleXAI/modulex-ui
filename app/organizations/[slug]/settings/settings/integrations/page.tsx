@@ -200,7 +200,7 @@ export default function Page() {
   }
 
   return (
-    <div className="p-6 pt-14 space-y-6">
+    <div className="p-6 pt-20 space-y-6">
       <div>
         <h2 className="text-xl font-semibold">API Keys</h2>
         <p className="text-base text-muted-foreground mt-1">Connect your own provider keys to use services at cost.</p>

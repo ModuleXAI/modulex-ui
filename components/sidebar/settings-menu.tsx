@@ -1,20 +1,20 @@
 'use client'
 
 import {
-    SidebarMenu,
-    SidebarMenuButton,
-    SidebarMenuItem,
-    SidebarMenuSub,
-    SidebarMenuSubButton,
-    SidebarMenuSubItem
+  SidebarMenu,
+  SidebarMenuButton,
+  SidebarMenuItem,
+  SidebarMenuSub,
+  SidebarMenuSubButton,
+  SidebarMenuSubItem
 } from '@/components/ui/sidebar'
-import { BarChart3, BookOpen, Cog, FileText, LayoutGrid, Users } from 'lucide-react'
+import { BarChart3, Cog, FileText, LayoutGrid, Users, Wrench } from 'lucide-react'
 import Link from 'next/link'
 import { useParams, usePathname } from 'next/navigation'
 
 const TOP = [
   { key: 'browse', label: 'Browse Tools', icon: LayoutGrid },
-  { key: 'my-tools', label: 'My Tools', icon: BookOpen },
+  { key: 'my-tools', label: 'My Tools', icon: Wrench },
   { key: 'analytics', label: 'Analytics', icon: BarChart3 },
   { key: 'users', label: 'Users', icon: Users },
   { key: 'logs', label: 'Logs', icon: FileText },

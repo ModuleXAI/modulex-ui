@@ -89,7 +89,7 @@ export default function Page() {
   const successPct = Math.max(0, Math.min(100, Math.round(data?.success_rate ?? 0)))
 
   return (
-    <div className="p-6 pt-14 space-y-6">
+    <div className="p-6 pt-20 space-y-6">
       <div className="flex items-center justify-between">
         <div>
           <h2 className="text-xl font-semibold">Tools</h2>

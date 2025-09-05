@@ -87,7 +87,7 @@ export default function Page() {
   const creditPct = creditMax > 0 ? Math.min(100, Math.round((creditUsed / creditMax) * 100)) : 0
 
   return (
-    <div className="p-6 pt-14 space-y-6">
+    <div className="p-6 pt-20 space-y-6">
       <div className="flex items-center justify-between">
         <div>
           <h2 className="text-xl font-semibold">Overview</h2>
