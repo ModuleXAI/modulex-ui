@@ -29,7 +29,7 @@ const SUB: Record<string, { key: string; label: string }[]> = {
   ],
   settings: [
     { key: 'general', label: 'General' },
-    { key: 'integrations', label: 'Integrations' },
+    { key: 'integrations', label: 'API Keys' },
     { key: 'billing', label: 'Billing' },
     { key: 'advanced', label: 'Advanced' }
   ]
