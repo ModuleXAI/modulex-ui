@@ -25,8 +25,7 @@ const SUB: Record<string, { key: string; label: string }[]> = {
   analytics: [
     { key: 'overview', label: 'Overview' },
     { key: 'tools', label: 'Tools' },
-    { key: 'llm-usage', label: 'LLM Usages' },
-    { key: 'security', label: 'Security' }
+    { key: 'llm-usage', label: 'LLM Usages' }
   ],
   settings: [
     { key: 'general', label: 'General' },
