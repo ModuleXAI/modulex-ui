@@ -1,6 +1,6 @@
 'use client'
 
-import { useSidebar } from '@/components/ui/sidebar'
+import { SidebarTrigger, useSidebar } from '@/components/ui/sidebar'
 import { cn } from '@/lib/utils'
 import { User } from '@supabase/supabase-js'
 // import Link from 'next/link' // No longer needed directly here for Sign In button
@@ -18,16 +18,21 @@ export const Header: React.FC<HeaderProps> = ({ user }) => {
   return (
     <header
       className={cn(
-        'absolute top-0 right-0 p-2 flex justify-between items-center z-10 backdrop-blur lg:backdrop-blur-none bg-background/80 lg:bg-transparent transition-[width] duration-200 ease-linear',
+        'absolute top-1 right-0 p-2 flex justify-between items-center z-10 backdrop-blur lg:backdrop-blur-none bg-background/80 lg:bg-transparent transition-[width] duration-200 ease-linear border-b',
         open ? 'md:w-[calc(100%-var(--sidebar-width))]' : 'md:w-full',
         'w-full'
       )}
     >
-      {/* Left section left empty; org switcher is in sidebar header */}
-      <div></div>
+      <div className="flex items-center">
+        <div className="flex flex-col items-center">
+          <SidebarTrigger />
+        </div>
+      </div>
 
       <div className="flex items-center gap-2">
-        {user ? <UserMenu user={user} /> : <GuestMenu />}
+        <div className="flex flex-col items-center">
+          {user ? <UserMenu user={user} /> : <GuestMenu />}
+        </div>
       </div>
     </header>
   )

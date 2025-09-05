@@ -1,9 +1,8 @@
 import {
-    Sidebar,
-    SidebarContent,
-    SidebarHeader,
-    SidebarRail,
-    SidebarTrigger
+  Sidebar,
+  SidebarContent,
+  SidebarHeader,
+  SidebarRail
 } from '@/components/ui/sidebar'
 import { isDefaultProvider } from '@/lib/auth/provider'
 import { createClient } from '@/lib/supabase/server'
@@ -38,18 +37,16 @@ export default async function AppSidebar() {
 
   return (
     <Sidebar side="left" variant="sidebar" collapsible="offcanvas">
-      <SidebarHeader className="flex flex-col gap-2 py-2 px-4">
-        <div className="flex flex-row justify-between items-center">
-          <Link href="/" prefetch={false} className="flex items-center justify-center h-full">
-            <ModulexTextIcon className={cn('size-20')} />
+      <SidebarHeader className="flex flex-col gap-2 py-2 px-2">
+        <div className="flex flex-row items-center gap-2">
+          <Link href="/" prefetch={false} className="flex items-center justify-center w-12 h-12 flex-none shrink-0">
+            <ModulexTextIcon className={cn('size-8 shrink-0')} />
           </Link>
-          <SidebarTrigger />
-        </div>
-        <div className="flex items-center">
-          <OrganizationSwitcher />
+          <OrganizationSwitcher className={cn('h-8 w-48 mt-0 -ml-0 translate-x-[-10px] shrink-0')} />
+          <div className="ml-auto" />
         </div>
       </SidebarHeader>
-      <SidebarContent className="flex flex-col px-2 py-0 h-full">
+      <SidebarContent className="flex flex-col px-2 py-1 h-full">
         <SidebarNewButton />
         <SidebarSections
           defaultContent={

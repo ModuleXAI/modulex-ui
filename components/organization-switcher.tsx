@@ -12,7 +12,7 @@ import {
 import { createClient } from '@/lib/supabase/client'
 import { cn } from '@/lib/utils'
 import { setCookie } from '@/lib/utils/cookies'
-import { Building2, ChevronDown, Settings2 } from 'lucide-react'
+import { ChevronDown, Settings2 } from 'lucide-react'
 import { usePathname, useRouter } from 'next/navigation'
 import React from 'react'
 
@@ -35,7 +35,7 @@ type OrganizationsResponse = {
 
 const STORAGE_KEY = 'modulex_selected_organization'
 
-function truncateText(value: string | null | undefined, max: number = 25): string {
+function truncateText(value: string | null | undefined, max: number = 34): string {
   const text = value ?? ''
   if (text.length <= max) return text
   return text.slice(0, max) + '...'
@@ -97,9 +97,12 @@ export default function OrganizationSwitcher({
           }
           return
         }
-
+        const modulexServerUrl = process.env.NEXT_PUBLIC_MODULEX_HOST
+        if (!modulexServerUrl) {
+          throw new Error('Backend URL not configured')
+        }
         const response = await fetch(
-          'https://ixunqceqxxezymhvbdpe.supabase.co/functions/v1/api/auth/me/organizations',
+          `${modulexServerUrl}/auth/me/organizations`,
           {
             method: 'GET',
             headers: {
@@ -181,12 +184,11 @@ export default function OrganizationSwitcher({
     <DropdownMenu open={menuOpen} onOpenChange={setMenuOpen}>
       <DropdownMenuTrigger asChild>
         <Button
-          variant="outline"
+          variant="ghost"
           size="sm"
-          className={cn('gap-2 h-9 w-56', className)}
+          className={cn('gap-2 h-9 w-full border-0 rounded-none bg-transparent hover:bg-transparent focus-visible:ring-0 focus-visible:ring-offset-0 shrink-0', className)}
           aria-label="Select organization"
         >
-          <Building2 className="h-4 w-4" />
           <span className="flex-1 truncate text-left">{buttonLabel}</span>
           <ChevronDown className="h-4 w-4 opacity-70" />
         </Button>
@@ -218,9 +220,9 @@ export default function OrganizationSwitcher({
               )}
             >
               <div className="flex min-w-0 flex-1 flex-col items-start gap-0.5">
-                <span className="w-full truncate font-medium">{truncateText(org.name, 30)}</span>
+                <span className="w-full truncate font-medium">{truncateText(org.name, 38)}</span>
                 <span className="w-full truncate text-xs text-muted-foreground">
-                  {truncateText(org.domain || org.slug, 30)}
+                  {truncateText(org.domain || org.slug, 38)}
                 </span>
               </div>
               {!isSettingsPath && ['admin', 'owner'].includes((org.role || '').toLowerCase()) ? (

@@ -5,7 +5,7 @@ import { cn } from '@/lib/utils'
 function IconLogo({ className, ...props }: React.ComponentProps<'img'>) {
   return (
     <img
-      src="/modulex-logo.svg"
+      src="/modulex.svg"
       alt="Modulex Logo"
       className={cn('h-64 w-64', className)}
       {...props}
@@ -16,7 +16,7 @@ function IconLogo({ className, ...props }: React.ComponentProps<'img'>) {
 function ModulexIcon({ className, ...props }: React.ComponentProps<'img'>) {
   return (
     <img
-      src="/modulex-iconlogo.svg"
+      src="/modulex.svg"
       alt="Modulex Logo"
       className={cn('h-64 w-64', className)}
       {...props}
@@ -27,9 +27,11 @@ function ModulexIcon({ className, ...props }: React.ComponentProps<'img'>) {
 function ModulexTextIcon({ className, ...props }: React.ComponentProps<'img'>) {
   return (
     <img
-      src="/modulex-textlogo.svg"
+      src="/modulex.svg"
       alt="Modulex Logo"
-      className={cn('h-12 w-12', className)}
+      width={32}
+      height={32}
+      className={cn('object-contain', className)}
       {...props}
     />
   )

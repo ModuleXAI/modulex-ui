@@ -15,7 +15,7 @@ export function SidebarSections({ defaultContent, settingsContent }: SidebarSect
   return (
     <div className="flex-1 overflow-y-auto">
       <div className={cn(isSettings ? 'hidden' : 'block')}>{defaultContent}</div>
-      <div className={cn(isSettings ? 'block' : 'hidden')}>{settingsContent}</div>
+      <div className={cn(isSettings ? 'block mt-2' : 'hidden')}>{settingsContent}</div>
     </div>
   )
 }
