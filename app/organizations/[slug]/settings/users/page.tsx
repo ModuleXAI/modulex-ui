@@ -60,6 +60,7 @@ export default function Page() {
   const [query, setQuery] = React.useState('')
   const [resp, setResp] = React.useState<UsersResponse | null>(null)
   const [menuOpenFor, setMenuOpenFor] = React.useState<string | null>(null)
+  const [menuAnchor, setMenuAnchor] = React.useState<{ left: number; top: number } | null>(null)
   const [inviteOpen, setInviteOpen] = React.useState(false)
   const [inviteEmail, setInviteEmail] = React.useState('')
   const [inviteRole, setInviteRole] = React.useState<'member' | 'admin'>('member')
@@ -84,6 +85,7 @@ export default function Page() {
       const inTrigger = target.closest('[data-user-actions-trigger]')
       if (!inMenu && !inTrigger) {
         setMenuOpenFor(null)
+        setMenuAnchor(null)
       }
     }
     document.addEventListener('mousedown', onDocClick)
@@ -122,6 +124,30 @@ export default function Page() {
         return
       }
       await fetchUsers()
+    } catch {}
+  }
+
+  async function handleUserRole(userId: string, makeAdmin: boolean) {
+    try {
+      setMenuOpenFor(null)
+      const orgId = getSelectedOrganizationId()
+      if (!orgId) return
+      const res = await fetch(`/api/users/${encodeURIComponent(userId)}/role?organization_id=${encodeURIComponent(orgId)}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ role: makeAdmin ? 'admin' : 'member' })
+      })
+      if (res.ok) await fetchUsers()
+    } catch {}
+  }
+
+  async function handleUserRemove(userId: string) {
+    try {
+      setMenuOpenFor(null)
+      const orgId = getSelectedOrganizationId()
+      if (!orgId) return
+      const res = await fetch(`/api/users/${encodeURIComponent(userId)}?organization_id=${encodeURIComponent(orgId)}`, { method: 'DELETE' })
+      if (res.ok) await fetchUsers()
     } catch {}
   }
 
@@ -186,6 +212,7 @@ export default function Page() {
             {users.map(u => {
               const statusText = u.is_invitation ? (u.invitation_status || 'pending') : (u.is_active ? 'active' : 'inactive')
               const roleColor = (u.role || '').toLowerCase() === 'owner' ? 'text-amber-300' : (u.role || '').toLowerCase() === 'admin' ? 'text-blue-300' : 'text-white/80'
+              const isOwner = (u.role || '').toLowerCase() === 'owner'
               return (
                 <div key={u.id} className="grid grid-cols-[1.5fr_1fr_1fr_1fr_1fr_1fr_40px] items-center gap-4 px-4 py-3 relative">
                   <div className="min-w-0 text-left">
@@ -206,23 +233,24 @@ export default function Page() {
                   <div className="text-center text-xs text-white/80 whitespace-nowrap font-mono tabular-nums">{u.last_active_at ? new Date(u.last_active_at).toLocaleString() : '-'}</div>
                   <div className="text-left pl-12 text-sm text-white font-mono tabular-nums">{typeof u.period_credit_used === 'number' ? u.period_credit_used : 0}</div>
                   <div className="flex justify-end relative">
-                    <button data-user-actions-trigger aria-label="More actions" className="p-1 rounded hover:bg-[#232323]" onClick={(e) => { e.stopPropagation(); setMenuOpenFor(curr => curr === u.id ? null : u.id) }}>
-                      <MoreHorizontal className="h-4 w-4 text-white/80" />
-                    </button>
-                    {menuOpenFor === u.id ? (
-                      <div data-user-actions-menu className="absolute right-8 top-1 z-10 w-44 rounded-md border border-[#292929] bg-[#1D1D1D] shadow-lg">
-                        {!u.is_invitation || (u.invitation_status || '') !== 'pending' ? (
-                          <div className="py-1 text-sm">
-                            <button className="w-full text-left px-3 py-2 hover:bg-[#232323]" onClick={() => setMenuOpenFor(null)}>Make Admin</button>
-                            <button className="w-full text-left px-3 py-2 hover:bg-[#232323] text-red-400" onClick={() => setMenuOpenFor(null)}>Remove from Organization</button>
-                          </div>
-                        ) : (
-                          <div className="py-1 text-sm">
-                            <button className="w-full text-left px-3 py-2 hover:bg-[#232323] text-red-400" onClick={() => handleInvitationAction((u.invitation_id || u.id), 'cancel')}>Cancel Invitation</button>
-                            <button className="w-full text-left px-3 py-2 hover:bg-[#232323]" onClick={() => handleInvitationAction((u.invitation_id || u.id), 'reinvite')}>Reinvite</button>
-                          </div>
-                        )}
-                      </div>
+                    {!isOwner ? (
+                      <button data-user-actions-trigger aria-label="More actions" className="p-1 rounded hover:bg-[#232323]" onClick={(e) => {
+                        e.stopPropagation()
+                        const el = e.currentTarget as HTMLElement
+                        const rect = el.getBoundingClientRect()
+                        const menuWidth = 176
+                        const estimatedMenuHeight = 140
+                        const offsetY = 10
+                        const spaceBelow = window.innerHeight - rect.bottom
+                        const top = spaceBelow < estimatedMenuHeight
+                          ? Math.max(8, rect.top - offsetY - estimatedMenuHeight)
+                          : Math.min(window.innerHeight - 8 - estimatedMenuHeight, rect.bottom - Math.max(0, offsetY - 2))
+                        const left = Math.max(8, Math.min(rect.right - menuWidth, window.innerWidth - 8 - menuWidth))
+                        setMenuAnchor({ left, top })
+                        setMenuOpenFor(curr => curr === u.id ? null : u.id)
+                      }}>
+                        <MoreHorizontal className="h-4 w-4 text-white/80" />
+                      </button>
                     ) : null}
                   </div>
                 </div>
@@ -238,6 +266,34 @@ export default function Page() {
           </div>
         </div>
       )}
+
+      {menuOpenFor ? (
+        (() => {
+          const current = (users || []).find(x => x.id === menuOpenFor)
+          if (!current || !menuAnchor) return null
+          const isPending = !!current.is_invitation && (current.invitation_status || '') === 'pending'
+          const isAdmin = (current.role || '').toLowerCase() === 'admin'
+          return (
+            <div data-user-actions-menu className="fixed z-50 w-44 rounded-md border border-[#292929] bg-[#1D1D1D] shadow-lg" style={{ left: `${menuAnchor.left}px`, top: `${menuAnchor.top}px` }}>
+              {isPending ? (
+                <div className="py-1 text-sm">
+                  <button className="w-full text-left px-3 py-2 hover:bg-[#232323] text-red-400" onClick={() => handleInvitationAction((current.invitation_id || current.id), 'cancel')}>Cancel Invitation</button>
+                  <button className="w-full text-left px-3 py-2 hover:bg-[#232323]" onClick={() => handleInvitationAction((current.invitation_id || current.id), 'reinvite')}>Reinvite</button>
+                </div>
+              ) : (
+                <div className="py-1 text-sm">
+                  {isAdmin ? (
+                    <button className="w-full text-left px-3 py-2 hover:bg-[#232323]" onClick={() => handleUserRole(current.id, false)}>Remove Admin</button>
+                  ) : (
+                    <button className="w-full text-left px-3 py-2 hover:bg-[#232323]" onClick={() => handleUserRole(current.id, true)}>Make Admin</button>
+                  )}
+                  <button className="w-full text-left px-3 py-2 hover:bg-[#232323] text-red-400" onClick={() => handleUserRemove(current.id)}>Remove from Organization</button>
+                </div>
+              )}
+            </div>
+          )
+        })()
+      ) : null}
 
       {inviteOpen ? (
         <div className="fixed inset-0 z-50 flex items-center justify-center" role="dialog" aria-modal="true">
