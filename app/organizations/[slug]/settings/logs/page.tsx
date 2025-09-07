@@ -88,7 +88,7 @@ export default function Page() {
   const successRate = logs.length > 0 ? Math.round((successCount / logs.length) * 100) : 0
 
   return (
-    <div className="p-6 pt-20 space-y-6">
+    <div className="pl-3 pr-3 pt-20 pb-3 space-y-6 flex flex-col h-full min-h-0">
       <div className="flex items-center justify-between">
         <div>
           <h2 className="text-xl font-semibold">Logs</h2>
@@ -129,9 +129,9 @@ export default function Page() {
               <Skeleton className="h-5 w-60" />
             </div>
           </div>
-          <div className="rounded-lg border bg-card overflow-hidden">
+          <div className="rounded-lg border bg-card overflow-hidden flex-1 flex flex-col">
             <div className="h-10 border-b"><Skeleton className="h-10 w-full" /></div>
-            <div className="h-80"><Skeleton className="h-full w-full" /></div>
+            <div className="flex-1"><Skeleton className="h-full w-full" /></div>
           </div>
         </>
       ) : error ? (
@@ -200,7 +200,7 @@ export default function Page() {
               <div className="text-left">Message</div>
             </div>
             {logs.length ? (
-              <div className="h-80 overflow-y-auto divide-y divide-border">
+              <div className="max-h-[520px] overflow-y-auto divide-y divide-border">
                 {logs.map(l => (
                   <div key={l.id} className="grid grid-cols-[220px_100px_100px_1fr] items-center gap-4 px-4 py-3">
                     <div className="text-xs text-muted-foreground font-mono tabular-nums whitespace-nowrap">{new Date(l.timestamp).toLocaleString()}</div>
@@ -213,7 +213,7 @@ export default function Page() {
                 ))}
               </div>
             ) : (
-              <div className="px-4 py-6 text-sm text-muted-foreground">No logs found for this period.</div>
+              <div className="flex-1 px-4 py-6 text-sm text-muted-foreground">No logs found for this period.</div>
             )}
             <div className="flex items-center justify-between px-4 py-3 border-t border-border">
               <div className="text-xs text-muted-foreground">Page {Math.floor(offset / limit) + 1}</div>

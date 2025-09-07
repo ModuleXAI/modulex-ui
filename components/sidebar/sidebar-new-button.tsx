@@ -18,8 +18,8 @@ export function SidebarNewButton() {
   return (
     <SidebarMenu>
       <SidebarMenuItem>
-        <SidebarMenuButton asChild>
-          <Link href="/" prefetch={false} className="flex items-center gap-2">
+        <SidebarMenuButton asChild className="flex items-center gap-2">
+          <Link href="/" prefetch={false}>
             <Plus className="size-4" />
             <span>New</span>
           </Link>

@@ -1,8 +1,8 @@
 import {
-  Sidebar,
-  SidebarContent,
-  SidebarHeader,
-  SidebarRail
+    Sidebar,
+    SidebarContent,
+    SidebarHeader,
+    SidebarRail
 } from '@/components/ui/sidebar'
 import { isDefaultProvider } from '@/lib/auth/provider'
 import { createClient } from '@/lib/supabase/server'
@@ -57,7 +57,7 @@ export default async function AppSidebar() {
           settingsContent={<SettingsMenu />}
         />
       </SidebarContent>
-      <SidebarRail />
+      <SidebarRail className="after:bg-transparent hover:after:bg-transparent" />
     </Sidebar>
   )
 }

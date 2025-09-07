@@ -4,6 +4,7 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Skeleton } from '@/components/ui/skeleton'
 import { MoreHorizontal } from 'lucide-react'
+import { useParams, useRouter } from 'next/navigation'
 import * as React from 'react'
 
 type UsersResponse = {
@@ -53,6 +54,9 @@ function getSelectedOrganizationId(): string | null {
 }
 
 export default function Page() {
+  const router = useRouter()
+  const params = useParams<{ slug?: string }>()
+  const slug = params?.slug ?? ''
   const [loading, setLoading] = React.useState(true)
   const [error, setError] = React.useState<string | null>(null)
   const [page, setPage] = React.useState(1)
@@ -169,7 +173,7 @@ export default function Page() {
   const totalPages = resp?.total_pages ?? 1
 
   return (
-    <div className="p-6 pt-20 space-y-6">
+    <div className="pl-3 pr-3 pt-20 pb-3 space-y-6 flex flex-col h-full min-h-0">
       <div className="flex items-center justify-between">
         <div>
           <h2 className="text-xl font-semibold">Users</h2>
@@ -177,7 +181,13 @@ export default function Page() {
         </div>
         <div className="flex items-center gap-2">
           <Button variant="outline" className="bg-transparent border border-border text-foreground hover:bg-accent" onClick={() => fetchUsers()}>Refresh</Button>
-          <Button variant="outline" className={`bg-transparent border border-border ${upgradeRequired ? 'text-foreground' : 'text-[#67E9AB]'} hover:bg-accent`} onClick={() => !upgradeRequired && setInviteOpen(true)}>{inviteLabel.replace(/^\+\s?/, '')}</Button>
+          <Button variant="outline" className={`bg-transparent border border-border ${upgradeRequired ? 'text-foreground' : 'text-[#67E9AB]'} hover:bg-accent`} onClick={() => {
+            if (upgradeRequired) {
+              router.push(`/organizations/${slug}/settings/settings/billing`)
+              return
+            }
+            setInviteOpen(true)
+          }}>{inviteLabel.replace(/^\+\s?/, '')}</Button>
         </div>
       </div>
 
@@ -189,9 +199,9 @@ export default function Page() {
       </div>
 
       {loading ? (
-        <div className="rounded-lg border bg-card text-card-foreground overflow-hidden">
+        <div className="rounded-lg border bg-card text-card-foreground overflow-hidden flex-1 flex flex-col">
           <div className="h-10 border-b"><Skeleton className="h-10 w-full" /></div>
-          <div className="h-80"><Skeleton className="h-full w-full" /></div>
+          <div className="flex-1"><Skeleton className="h-full w-full" /></div>
         </div>
       ) : error ? (
         <div className="text-sm text-red-500">{error}</div>
@@ -208,7 +218,7 @@ export default function Page() {
             <div className="text-left pl-8">Credit Used</div>
             <div></div>
           </div>
-          <div className="max-h-[560px] overflow-y-auto divide-y divide-border">
+          <div className="max-h-[520px] overflow-y-auto divide-y divide-border">
             {users.map(u => {
               const statusText = u.is_invitation ? (u.invitation_status || 'pending') : (u.is_active ? 'active' : 'inactive')
               const roleColor = (u.role || '').toLowerCase() === 'owner' ? 'text-amber-600 dark:text-amber-300' : (u.role || '').toLowerCase() === 'admin' ? 'text-blue-600 dark:text-blue-300' : 'text-foreground/80'

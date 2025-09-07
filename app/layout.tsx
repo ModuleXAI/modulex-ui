@@ -64,23 +64,26 @@ export default async function RootLayout({
     <html lang="en" suppressHydrationWarning>
       <body
         className={cn(
-          'min-h-screen flex flex-col font-sans antialiased',
+          'min-h-screen flex flex-col overflow-hidden font-sans antialiased',
           fontSans.variable
         )}
       >
         <ThemeProvider
           attribute="class"
           defaultTheme="system"
+          themes={["light", "dark", "metal", "system"]}
           enableSystem
           disableTransitionOnChange
         >
           <SidebarProvider defaultOpen={Boolean(user)}>
             {user ? <AppSidebar /> : null}
-            <div className="flex flex-col flex-1">
+            <div className="flex flex-col flex-1 min-h-0 overflow-hidden bg-sidebar h-[100dvh] pt-0 pr-2.5 pb-0">
               <Header user={user} />
-              <main className="flex flex-1 min-h-0">
-                <ArtifactRoot>{children}</ArtifactRoot>
-              </main>
+              <div className="flex flex-col flex-1 min-h-0 rounded-lg border border-border overflow-hidden bg-background mt-2.5 mb-2.5">
+                <main className="flex flex-1 min-h-0 overflow-auto h-full">
+                  <ArtifactRoot>{children}</ArtifactRoot>
+                </main>
+              </div>
             </div>
           </SidebarProvider>
           <Toaster />

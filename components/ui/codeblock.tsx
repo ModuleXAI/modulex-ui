@@ -7,8 +7,8 @@ import { FC, memo } from 'react'
 import { Prism as SyntaxHighlighter } from 'react-syntax-highlighter'
 import { coldarkDark } from 'react-syntax-highlighter/dist/cjs/styles/prism'
 
-import { useCopyToClipboard } from '@/lib/hooks/use-copy-to-clipboard'
 import { Button } from '@/components/ui/button'
+import { useCopyToClipboard } from '@/lib/hooks/use-copy-to-clipboard'
 import { generateId } from 'ai'
 import { Check, Copy, Download } from 'lucide-react'
 
@@ -82,8 +82,8 @@ const CodeBlock: FC<Props> = memo(({ language, value }) => {
   }
 
   return (
-    <div className="relative w-full font-sans codeblock bg-neutral-800">
-      <div className="flex items-center justify-between w-full px-6 py-1 pr-4 bg-neutral-700 text-zinc-100">
+    <div className="relative w-full font-sans codeblock bg-secondary">
+      <div className="flex items-center justify-between w-full px-6 py-1 pr-4 bg-muted text-foreground">
         <span className="text-xs lowercase">{language}</span>
         <div className="flex items-center space-x-1">
           <Button

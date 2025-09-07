@@ -2,20 +2,20 @@
 'use client'
 
 import {
-  Carousel,
-  type CarouselApi,
-  CarouselContent,
-  CarouselItem,
-  CarouselNext,
-  CarouselPrevious
+    Carousel,
+    type CarouselApi,
+    CarouselContent,
+    CarouselItem,
+    CarouselNext,
+    CarouselPrevious
 } from '@/components/ui/carousel'
 import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger
+    Dialog,
+    DialogContent,
+    DialogDescription,
+    DialogHeader,
+    DialogTitle,
+    DialogTrigger
 } from '@/components/ui/dialog'
 import { SearchResultImage } from '@/lib/types'
 import { PlusCircle } from 'lucide-react'
@@ -144,7 +144,7 @@ export const SearchResultsImageSection: React.FC<
                 {displayMode === 'preview' &&
                   actualIndex === 3 &&
                   convertedImages.length > 4 && (
-                    <div className="absolute inset-0 bg-black/30 rounded-md flex items-center justify-center text-white/80 text-sm">
+                    <div className="absolute inset-0 bg-foreground/30 rounded-md flex items-center justify-center text-foreground/80 text-sm">
                       <PlusCircle size={24} />
                     </div>
                   )}

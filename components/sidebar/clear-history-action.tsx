@@ -55,7 +55,7 @@ export function ClearHistoryAction({ empty }: ClearHistoryActionProps) {
 
       <DropdownMenuContent
         align="end"
-        className="rounded-lg border border-white/10 bg-neutral-800/70 backdrop-blur-xl supports-[backdrop-filter]:bg-neutral-800/70 p-1 shadow-xl"
+        className="rounded-lg border border-border bg-background/70 backdrop-blur-xl supports-[backdrop-filter]:bg-background/70 p-1 shadow-xl"
       >
         <AlertDialog open={open} onOpenChange={setOpen}>
           <AlertDialogTrigger asChild>

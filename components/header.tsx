@@ -21,21 +21,21 @@ export const Header: React.FC<HeaderProps> = ({ user }) => {
   return (
     <header
       className={cn(
-        'absolute top-1 right-0 p-2 flex justify-between items-center z-10 backdrop-blur lg:backdrop-blur-none bg-background/80 lg:bg-transparent transition-[width] duration-200 ease-linear',
-        isSettings && 'border-b',
+        'absolute top-2 right-0 px-0 py-0 z-10 backdrop-blur lg:backdrop-blur-none bg-background/80 lg:bg-transparent transition-[width] duration-200 ease-linear',
         open ? 'md:w-[calc(100%-var(--sidebar-width))]' : 'md:w-full',
         'w-full'
       )}
     >
-      <div className="flex items-center">
-        <div className="flex flex-col items-center">
-          <SidebarTrigger />
+      <div className={cn('flex items-center w-full h-14 -translate-x-0', isSettings && 'mx-0 relative after:absolute after:left-0 after:right-2.5 after:bottom-0 after:h-px after:bg-border')}> 
+        <div className="flex-1 flex items-center">
+          <div className="flex flex-col items-center translate-x-2">
+            <SidebarTrigger />
+          </div>
         </div>
-      </div>
-
-      <div className="flex items-center gap-2">
-        <div className="flex flex-col items-center">
-          {user ? <UserMenu user={user} /> : <GuestMenu />}
+        <div className="flex items-center gap-2 -translate-x-6">
+          <div className="flex flex-col items-center">
+            {user ? <UserMenu user={user} /> : <GuestMenu />}
+          </div>
         </div>
       </div>
     </header>

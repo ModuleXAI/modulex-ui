@@ -3,9 +3,9 @@
 import { InspectorDrawer } from '@/components/inspector/inspector-drawer'
 import { InspectorPanel } from '@/components/inspector/inspector-panel'
 import {
-    ResizableHandle,
-    ResizablePanel,
-    ResizablePanelGroup
+  ResizableHandle,
+  ResizablePanel,
+  ResizablePanelGroup
 } from '@/components/ui/resizable'
 import { useSidebar } from '@/components/ui/sidebar'
 import { useMediaQuery } from '@/lib/hooks/use-media-query'
@@ -32,7 +32,7 @@ export function ChatArtifactContainer({
   }, [state.isOpen])
 
   return (
-    <div className="flex-1 min-h-0 h-screen flex">
+    <div className="flex-1 min-h-0 h-full flex">
       {/* Sidebar trigger is now handled in the Header */}
       {/* Desktop: Resizable panels (Do not render on mobile) */}
       {!isMobile && (

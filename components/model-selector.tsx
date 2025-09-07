@@ -9,12 +9,12 @@ import { useEffect, useState } from 'react'
 import { createModelId } from '../lib/utils'
 import { Button } from './ui/button'
 import {
-  Command,
-  CommandEmpty,
-  CommandGroup,
-  CommandInput,
-  CommandItem,
-  CommandList
+    Command,
+    CommandEmpty,
+    CommandGroup,
+    CommandInput,
+    CommandItem,
+    CommandList
 } from './ui/command'
 import { Popover, PopoverContent, PopoverTrigger } from './ui/popover'
 
@@ -84,7 +84,7 @@ export function ModelSelector({ models }: ModelSelectorProps) {
                 alt={selectedModel.provider}
                 width={18}
                 height={18}
-                className="bg-white rounded-full border"
+                className="bg-background rounded-full border"
               />
               <span className="text-xs font-medium">{selectedModel.name}</span>
               {isReasoningModel(selectedModel.id) && (
@@ -119,7 +119,7 @@ export function ModelSelector({ models }: ModelSelectorProps) {
                           alt={model.provider}
                           width={18}
                           height={18}
-                          className="bg-white rounded-full border"
+                          className="bg-background rounded-full border"
                         />
                         <span className="text-xs font-medium">
                           {model.name}

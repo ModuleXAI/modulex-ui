@@ -104,6 +104,59 @@
     --sidebar-border: 240 3.7% 15.9%;
     --sidebar-ring: 217.2 91.2% 59.8%;
   }
+
+  /* Metal theme */
+  .metal {
+    /* Make the dominant UI color match the current textfield (muted) */
+    --background: 224 19% 9%; /* approx #14171F */
+    --foreground: 0 0% 98%;
+
+    --card: 224 19% 9%;
+    --card-foreground: 0 0% 85%;
+
+    --popover: 224 19% 9%;
+    --popover-foreground: 0 0% 98%;
+
+    --primary: 0 0% 98%;
+    --primary-foreground: 224 19% 9%;
+
+    /* Secondary surfaces */
+    --secondary: 224 22% 13%; /* #1A1E29 */
+    --secondary-foreground: 0 0% 98%;
+
+    --muted: 224 19% 12%;
+    --muted-foreground: 0 0% 70%;
+
+    --accent: 224 19% 14%;
+    --accent-foreground: 0 0% 98%;
+
+    --destructive: 0 62.8% 30.6%;
+    --destructive-foreground: 0 0% 98%;
+
+    /* Border or Lines */
+    --border: 0 0% 20%; /* #666666 */
+    --input: 0 0% 20%;
+    --ring: 0 0% 40%;
+
+    --chart-1: 220 10% 40%;
+    --chart-2: 220 10% 55%;
+    --chart-3: 220 10% 30%;
+    --chart-4: 220 10% 65%;
+    --chart-5: 220 10% 50%;
+
+    --accent-blue: 210 10% 30%;
+    --accent-blue-foreground: 210 15% 80%;
+    --accent-blue-border: 210 10% 40%;
+
+    --sidebar-background: 224 19% 9%;
+    --sidebar-foreground: 0 0% 90%;
+    --sidebar-primary: 0 0% 98%;
+    --sidebar-primary-foreground: 224 19% 9%;
+    --sidebar-accent: 224 19% 14%;
+    --sidebar-accent-foreground: 0 0% 98%;
+    --sidebar-border: 0 0% 40%;
+    --sidebar-ring: 0 0% 40%;
+  }
 }
 
 @layer base {

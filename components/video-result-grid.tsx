@@ -94,7 +94,7 @@ export function VideoResultGrid({
                 </CardContent>
               </Card>
               {showOverlay && (
-                <div className="absolute inset-0 bg-black/30 rounded-md flex items-center justify-center text-white/80 text-sm">
+                <div className="absolute inset-0 bg-foreground/30 rounded-md flex items-center justify-center text-foreground/80 text-sm">
                   <PlusCircle size={24} />
                 </div>
               )}

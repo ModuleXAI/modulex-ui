@@ -79,7 +79,7 @@ export default function Page() {
   const successPct = Math.max(0, Math.min(100, Math.round(data?.request_success_rate ?? 0)))
 
   return (
-    <div className="p-6 pt-20 space-y-6">
+    <div className="pl-3 pr-3 pt-20 pb-3 space-y-6 flex flex-col h-full min-h-0">
       <div className="flex items-center justify-between">
         <div>
           <h2 className="text-xl font-semibold">LLM Usages</h2>
@@ -122,7 +122,7 @@ export default function Page() {
           </div>
           <div className="rounded-lg border bg-card overflow-hidden">
             <div className="h-10 border-b"><Skeleton className="h-10 w-full" /></div>
-            <div className="h-80"><Skeleton className="h-full w-full" /></div>
+            <div className="flex-1"><Skeleton className="h-full w-full" /></div>
           </div>
         </>
       ) : error ? (
@@ -198,7 +198,7 @@ export default function Page() {
           </div>
 
           {/* List */}
-          <div className="rounded-lg border bg-card overflow-hidden">
+          <div className="rounded-lg border bg-card overflow-hidden flex-1 flex flex-col">
             <div className="grid grid-cols-[1fr_210px_1fr_140px_140px_120px_160px] gap-4 px-4 py-3 text-xs text-muted-foreground border-b">
               <div>User</div>
               <div className="text-right">Provider</div>
@@ -209,7 +209,7 @@ export default function Page() {
               <div className="text-right">Key Resource</div>
             </div>
             {data?.llm_usages?.length ? (
-              <div className="h-80 overflow-y-auto divide-y divide-border">
+              <div className="max-h-[520px] overflow-y-auto divide-y divide-border">
                 {data.llm_usages.map((u, idx) => (
                   <div key={`${u.user_email}:${u.request_time}:${idx}`} className="grid grid-cols-[1fr_210px_1fr_140px_140px_120px_160px] items-center gap-4 px-4 py-3">
                     <div className="text-sm text-foreground truncate">{u.user_email}</div>
@@ -225,7 +225,7 @@ export default function Page() {
                 ))}
               </div>
             ) : (
-              <div className="px-4 py-6 text-sm text-muted-foreground">No usage found for this period.</div>
+              <div className="flex-1 px-4 py-6 text-sm text-muted-foreground">No usage found for this period.</div>
             )}
             <div className="flex items-center justify-between px-4 py-3 border-t border-border">
               <div className="text-xs text-muted-foreground">Page {Math.floor(offset / limit) + 1}</div>

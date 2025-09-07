@@ -219,7 +219,7 @@ export default function OrganizationSwitcher({
                   handleSelect(org)
                 }}
                 className={cn(
-                  'flex items-center gap-2 rounded-md px-2 py-2 transition-colors hover:bg-accent focus:bg-accent outline-none',
+                  'flex items-center gap-2 rounded-md px-2 py-2 transition-colors hover:bg-accent/60 focus:bg-accent/45 outline-none',
                   selected?.id === org.id && 'bg-accent'
                 )}
               >
@@ -236,6 +236,12 @@ export default function OrganizationSwitcher({
                         e.preventDefault()
                         e.stopPropagation()
                         try {
+                          // Sync selection so settings pages (which read localStorage/cookie) match the clicked org
+                          setSelected(org)
+                          storeOrganization(org)
+                          try { setCookie('selected_organization_id', org.id) } catch {}
+                          try { window.dispatchEvent(new CustomEvent('organization-changed', { detail: org.id })) } catch {}
+
                           router.push(`/organizations/${org.slug}/settings`)
                           setMenuOpen(false)
                         } catch {}
