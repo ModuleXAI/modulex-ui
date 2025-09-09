@@ -77,10 +77,10 @@ export default async function RootLayout({
         >
           <SidebarProvider defaultOpen={Boolean(user)}>
             {user ? <AppSidebar /> : null}
-            <div className="flex flex-col flex-1 min-h-0 overflow-hidden bg-sidebar h-[100dvh] pt-0 pr-2.5 pb-0">
+            <div className={cn("flex flex-col flex-1 min-h-0 overflow-hidden bg-sidebar h-[100dvh] pt-0 pr-2.5 pb-0", !user && "pl-2.5") }>
               <Header user={user} />
               <div className="flex flex-col flex-1 min-h-0 rounded-lg border border-border overflow-hidden bg-background mt-2.5 mb-2.5">
-                <main className="flex flex-1 min-h-0 overflow-auto h-full">
+                <main className="flex flex-1 min-h-0 overflow-hidden h-full">
                   <ArtifactRoot>{children}</ArtifactRoot>
                 </main>
               </div>

@@ -3,7 +3,7 @@ import Image from 'next/image'
 
 export default function Page() {
   return (
-    <div className="grid min-h-svh w-full grid-cols-1 md:grid-cols-5">
+    <div className="grid min-h-svh w-full grid-cols-1 md:grid-cols-5 ml-2.5">
       <div className="flex items-center justify-center p-6 md:p-10 md:col-span-3">
         <div className="w-full max-w-sm">
           <LoginForm />

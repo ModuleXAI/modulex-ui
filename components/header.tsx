@@ -18,6 +18,7 @@ export const Header: React.FC<HeaderProps> = ({ user }) => {
   const { open } = useSidebar()
   const pathname = usePathname()
   const isSettings = React.useMemo(() => /^\/organizations\/.+\/settings(\/?|$)/.test(pathname || ''), [pathname])
+  const isLoginPage = React.useMemo(() => (pathname || '').startsWith('/auth/login'), [pathname])
   return (
     <header
       className={cn(
@@ -29,7 +30,7 @@ export const Header: React.FC<HeaderProps> = ({ user }) => {
       <div className={cn('flex items-center w-full h-14 -translate-x-0', isSettings && 'mx-0 relative after:absolute after:left-0 after:right-2.5 after:bottom-0 after:h-px after:bg-border')}> 
         <div className="flex-1 flex items-center">
           <div className="flex flex-col items-center translate-x-2">
-            <SidebarTrigger />
+            {!isLoginPage && <SidebarTrigger />}
           </div>
         </div>
         <div className="flex items-center gap-2 -translate-x-6">

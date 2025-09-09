@@ -99,6 +99,7 @@ export function LoginForm({
               onClick={handleSocialLogin}
               disabled={isLoading}
             >
+              <img src="/providers/logos/google.svg" alt="Google" className="mr-2 h-5 w-5" />
               Sign In with Google
             </Button>
 
@@ -156,11 +157,7 @@ export function LoginForm({
           </div>
         </CardContent>
       </Card>
-      <div className="text-center text-xs text-muted-foreground">
-        <Link href="/" className="hover:underline">
-          &larr; Back to Home
-        </Link>
-      </div>
+      
     </div>
   )
 }
