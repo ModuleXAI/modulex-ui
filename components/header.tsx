@@ -27,9 +27,9 @@ export const Header: React.FC<HeaderProps> = ({ user }) => {
         'w-full'
       )}
     >
-      <div className={cn('flex items-center w-full h-14 -translate-x-0', isSettings && 'mx-0 relative after:absolute after:left-0 after:right-2.5 after:bottom-0 after:h-px after:bg-border')}> 
+      <div className={cn('flex items-center w-full h-14 -translate-x-0', isSettings && 'mx-0 relative after:absolute after:left-2.5 after:right-2.5 after:bottom-0 after:h-px after:bg-border')}> 
         <div className="flex-1 flex items-center">
-          <div className="flex flex-col items-center translate-x-2">
+          <div className="flex flex-col items-center translate-x-4">
             {!isLoginPage && <SidebarTrigger />}
           </div>
         </div>
