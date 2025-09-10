@@ -330,7 +330,8 @@ export async function researcher({
       ask_question: askQuestionTool
     }
 
-    const baseActiveTools = ['search', 'retrieve', 'videoSearch', 'ask_question']
+    const systemTools = ['ask_question']
+    const baseActiveTools = ['search', 'retrieve', 'videoSearch']
 
     // Fetch MCP tools (no longer gated by userId)
     let mcpTools: Record<string, any> = {}
@@ -360,7 +361,7 @@ export async function researcher({
 
     // Combine base tools with MCP tools
     const allTools = { ...baseTools, ...mcpTools }
-    const allActiveTools = searchMode ? [...baseActiveTools, ...mcpActiveTools] : [...mcpActiveTools]
+    const allActiveTools = searchMode ? [...baseActiveTools, ...mcpActiveTools, ...systemTools] : [...mcpActiveTools, ...systemTools]
     console.log('[researcher] searchMode:', searchMode, 'active tools:', allActiveTools)
 
     // Resolve model, routing OpenAI via ModuleX AI proxy with per-request headers
@@ -402,7 +403,7 @@ export async function researcher({
       messages,
       tools: allTools,
       experimental_activeTools: allActiveTools,
-      maxSteps: searchMode ? 5 : (mcpActiveTools.length > 0 ? 3 : 1),
+      maxSteps: searchMode ? 5 : (mcpActiveTools.length > 0 ? 3 : 2),
       experimental_transform: smoothStream()
     }
   } catch (error) {

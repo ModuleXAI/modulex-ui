@@ -1,11 +1,16 @@
 'use client'
 
+import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
-import { Checkbox } from '@/components/ui/checkbox'
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible'
 import { Input } from '@/components/ui/input'
+import { Label } from '@/components/ui/label'
+import { Separator } from '@/components/ui/separator'
+import { Toggle } from '@/components/ui/toggle'
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip'
 import { ToolInvocation } from 'ai'
-import { ArrowRight, Check, SkipForward } from 'lucide-react'
+import { ArrowRight, Check, ChevronDown, SkipForward } from 'lucide-react'
 import { useState } from 'react'
 
 interface QuestionConfirmationProps {
@@ -38,16 +43,17 @@ export function QuestionConfirmation({
   const [completed, setCompleted] = useState(isCompleted)
   const [skipped, setSkipped] = useState(false)
 
+  const selectedCount = selectedOptions.length
+
   const isButtonDisabled =
     selectedOptions.length === 0 && (!allowsInput || inputText.trim() === '')
 
-  const handleOptionChange = (label: string) => {
-    setSelectedOptions(prev => {
-      if (prev.includes(label)) {
-        return prev.filter(item => item !== label)
-      } else {
-        return [...prev, label]
+  const handleOptionToggle = (label: string) => {
+    setSelectedOptions(previouslySelectedOptions => {
+      if (previouslySelectedOptions.includes(label)) {
+        return previouslySelectedOptions.filter(optionLabel => optionLabel !== label)
       }
+      return [...previouslySelectedOptions, label]
     })
   }
 
@@ -121,63 +127,125 @@ export function QuestionConfirmation({
     const isSkipped = wasSkipped()
 
     return (
-      <Card className="p-3 md:p-4 w-full flex flex-col justify-between items-center gap-2">
-        <CardTitle className="text-base font-medium text-muted-foreground w-full">
-          {question}
-        </CardTitle>
-        <div className="flex items-center justify-start gap-1 w-full">
-          {isSkipped ? (
-            <SkipForward size={16} className="text-yellow-500 w-4 h-4" />
-          ) : (
-            <Check size={16} className="text-green-500 w-4 h-4" />
+      <Card className="p-2 md:p-3 w-full mb-3">
+        <Collapsible>
+          <div className="flex items-center justify-between gap-2 min-h-10">
+            <div className="min-w-0 flex-1">
+              <div className="mt-1 flex items-center gap-1.5 flex-wrap">
+                {isSkipped ? (
+                  <>
+                    <Badge variant="secondary" className="flex items-center gap-1 px-2 py-0.5">
+                      <SkipForward size={12} className="text-yellow-600" />
+                      Skipped
+                    </Badge>
+                    <span className="text-xs text-muted-foreground truncate">{question}</span>
+                  </>
+                ) : (
+                  <Check size={14} className="text-green-600" />
+                )}
+                {!isSkipped && getDisplayedOptions().slice(0, 3).map(optionLabel => (
+                  <Badge
+                    key={optionLabel}
+                    variant="outline"
+                    className="px-3 py-1 rounded-md font-normal border-transparent ring-1 ring-border dark:ring-white/20 bg-background/60 dark:bg-background/40"
+                  >
+                    {optionLabel}
+                  </Badge>
+                ))}
+                {!isSkipped && getDisplayedOptions().length > 3 && (
+                  <Badge
+                    variant="outline"
+                    className="px-3 py-1 rounded-md font-normal border-transparent ring-1 ring-border dark:ring-white/20 bg-background/60 dark:bg-background/40"
+                  >
+                    +{getDisplayedOptions().length - 3}
+                  </Badge>
+                )}
+                {!isSkipped && getDisplayedInputText().trim() !== '' && (
+                  <Badge
+                    variant="outline"
+                    className="px-3 py-1 rounded-md font-normal border-transparent ring-1 ring-border dark:ring-white/20 bg-background/60 dark:bg-background/40 truncate max-w-[12rem]"
+                  >
+                    {getDisplayedInputText()}
+                  </Badge>
+                )}
+              </div>
+            </div>
+            {!isSkipped && (
+              <CollapsibleTrigger asChild>
+                <Button variant="ghost" size="icon" className="shrink-0 h-8 w-8">
+                  <ChevronDown className="h-4 w-4" />
+                </Button>
+              </CollapsibleTrigger>
+            )}
+          </div>
+          {!isSkipped && (
+            <CollapsibleContent>
+              <Separator className="my-2" />
+              <div className="text-xs text-muted-foreground break-words">
+                <div className="font-medium mb-1">{question}</div>
+                {updatedQuery() || 'No additional details'}
+              </div>
+            </CollapsibleContent>
           )}
-          <h5 className="text-muted-foreground text-xs truncate">
-            {updatedQuery()}
-          </h5>
-        </div>
+        </Collapsible>
       </Card>
     )
   }
 
   return (
-    <Card>
-      <CardHeader>
-        <CardTitle className="text-lg">{question}</CardTitle>
-      </CardHeader>
-      <CardContent>
-        <form onSubmit={handleSubmit}>
-          <div className="flex flex-wrap justify-start mb-4">
-            {options &&
-              options.map((option: QuestionOption, index: number) => (
-                <div
-                  key={`option-${index}`}
-                  className="flex items-center space-x-1.5 mb-2"
-                >
-                  <Checkbox
-                    id={option.value}
-                    checked={selectedOptions.includes(option.label)}
-                    onCheckedChange={() => handleOptionChange(option.label)}
-                  />
-                  <label
-                    className="text-sm whitespace-nowrap pr-4"
-                    htmlFor={option.value}
-                  >
-                    {option.label}
-                  </label>
-                </div>
-              ))}
+    <Card className="mb-3">
+      <CardHeader className="p-3 pb-2">
+        <div className="flex items-center justify-between gap-2">
+          <div className="min-w-0">
+            <CardTitle className="text-sm md:text-base truncate">{question}</CardTitle>
+            <div className="mt-1 text-xs text-muted-foreground">
+              {selectedCount > 0 ? `${selectedCount} selected` : 'Provide details'}
+            </div>
           </div>
+        </div>
+      </CardHeader>
+
+      <CardContent className="p-3 pt-0">
+        <form onSubmit={handleSubmit} className="space-y-4">
+          {options && options.length > 0 && (
+            <div className="space-y-2">
+              <div className="flex items-center justify-between">
+                <span className="text-xs text-muted-foreground">Select options</span>
+                {selectedCount > 0 && (
+                  <Badge variant="secondary" className="px-2 py-0.5 text-[10px]">{selectedCount} selected</Badge>
+                )}
+              </div>
+              <div className="grid grid-cols-2 sm:grid-cols-3 gap-1.5">
+                {options.map((option: QuestionOption, index: number) => {
+                  const isPressed = selectedOptions.includes(option.label)
+                  return (
+                    <Toggle
+                      key={`option-${index}`}
+                      size="sm"
+                      variant="outline"
+                      pressed={isPressed}
+                      onPressedChange={() => handleOptionToggle(option.label)}
+                      aria-label={option.label}
+                    >
+                      {isPressed && <Check size={14} />}
+                      <span className="truncate text-xs">{option.label}</span>
+                    </Toggle>
+                  )
+                })}
+              </div>
+            </div>
+          )}
 
           {allowsInput && (
-            <div className="mb-6 flex flex-col space-y-2 text-sm">
-              <label className="text-muted-foreground" htmlFor="query">
+            <div className="space-y-1.5">
+              <Label className="text-muted-foreground text-xs" htmlFor="question-free-input">
                 {inputLabel}
-              </label>
+              </Label>
               <Input
+                id="question-free-input"
                 type="text"
                 name="additional_query"
-                className="w-full"
-                id="query"
+                className="w-full h-8 text-xs"
                 placeholder={inputPlaceholder}
                 value={inputText}
                 onChange={handleInputChange}
@@ -185,13 +253,23 @@ export function QuestionConfirmation({
             </div>
           )}
 
-          <div className="flex justify-end space-x-2">
-            <Button type="button" variant="outline" onClick={handleSkip}>
-              <SkipForward size={16} className="mr-1" />
-              Skip
-            </Button>
-            <Button type="submit" disabled={isButtonDisabled}>
-              <ArrowRight size={16} className="mr-1" />
+          <Separator />
+
+          <div className="flex items-center justify-between min-h-10">
+            <TooltipProvider>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Button type="button" variant="outline" size="sm" onClick={handleSkip}>
+                    <SkipForward size={14} className="mr-1" />
+                    Skip
+                  </Button>
+                </TooltipTrigger>
+                <TooltipContent>Answer later and continue</TooltipContent>
+              </Tooltip>
+            </TooltipProvider>
+
+            <Button type="submit" size="sm" disabled={isButtonDisabled}>
+              <ArrowRight size={14} className="mr-1" />
               Send
             </Button>
           </div>
