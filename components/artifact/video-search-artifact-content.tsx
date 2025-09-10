@@ -1,12 +1,17 @@
 'use client'
 
 import { ToolArgsSection } from '@/components/section'
-import { VideoResultGrid } from '@/components/video-result-grid'
 import {
-  type SerperSearchResultItem,
-  type SerperSearchResults
+    type SerperSearchResultItem,
+    type SerperSearchResults
 } from '@/lib/types'
 import type { ToolInvocation } from 'ai'
+import dynamic from 'next/dynamic'
+
+const VideoResultGrid = dynamic(
+  () => import('@/components/video-result-grid').then(m => m.VideoResultGrid),
+  { ssr: false, loading: () => <div className="h-24" /> }
+)
 
 export function VideoSearchArtifactContent({ tool }: { tool: ToolInvocation }) {
   const videoResults: SerperSearchResults | undefined =

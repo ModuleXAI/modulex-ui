@@ -140,7 +140,7 @@ export async function POST(req: Request) {
       // Start with existing
       const merged = [...existingMsgs]
 
-      // Insert incoming data messages before the last assistant message to preserve UI semantics
+      // Merge incoming data messages into the last assistant's embedded annotations instead of inserting separate entries
       if (incomingData.length > 0) {
         let lastAssistantIndex = -1
         for (let i = merged.length - 1; i >= 0; i--) {
@@ -150,8 +150,23 @@ export async function POST(req: Request) {
           }
         }
         if (lastAssistantIndex >= 0) {
-          merged.splice(lastAssistantIndex, 0, ...incomingData)
+          const lastAssistant = merged[lastAssistantIndex] as any
+          const prev = Array.isArray(lastAssistant.annotations)
+            ? ([...lastAssistant.annotations] as any[])
+            : []
+          const incomingJson = incomingData
+            .filter(d => d?.role === 'data' && d?.content)
+            .map(d => d.content)
+          const combined = [...prev, ...incomingJson]
+          const deduped = Array.from(
+            new Map(combined.map((a: any) => [JSON.stringify(a), a])).values()
+          )
+          merged[lastAssistantIndex] = {
+            ...lastAssistant,
+            annotations: deduped
+          }
         } else {
+          // Fallback: no assistant found, append as-is
           merged.push(...incomingData)
         }
       }

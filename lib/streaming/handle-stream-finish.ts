@@ -43,28 +43,59 @@ export async function handleStreamFinish({
         model
       )
 
-      // Create and add related questions annotation
-      const updatedRelatedQuestionsAnnotation: ExtendedCoreMessage = {
-        role: 'data',
-        content: {
-          type: 'related-questions',
-          data: relatedQuestions.object
-        } as JSONValue
+      // Prepare related questions annotation JSON
+      const relatedAnnotationJson: JSONValue = {
+        type: 'related-questions',
+        data: relatedQuestions.object
       }
 
-      dataStream.writeMessageAnnotation(
-        updatedRelatedQuestionsAnnotation.content as JSONValue
-      )
-      allAnnotations.push(updatedRelatedQuestionsAnnotation)
+      // Emit to stream for immediate UI feedback
+      dataStream.writeMessageAnnotation(relatedAnnotationJson)
+
+      // Instead of pushing a separate data message, we'll embed it on the last assistant message later
+      allAnnotations.push({
+        role: 'data',
+        content: relatedAnnotationJson
+      } as ExtendedCoreMessage)
     }
 
-    // Create the message to save
-    const generatedMessages = [
+    // Create the messages to save, embedding annotations into the last assistant message
+    const baseMessages = [
       ...extendedCoreMessages,
-      ...responseMessages.slice(0, -1),
-      ...allAnnotations, // Add annotations before the last message
-      ...responseMessages.slice(-1)
+      ...responseMessages
     ] as ExtendedCoreMessage[]
+
+    // Attach accumulated annotations to the last assistant message
+    let lastAssistantIndex = -1
+    for (let i = baseMessages.length - 1; i >= 0; i--) {
+      if ((baseMessages[i] as any)?.role === 'assistant') {
+        lastAssistantIndex = i
+        break
+      }
+    }
+
+    if (lastAssistantIndex >= 0) {
+      const lastAssistant = baseMessages[lastAssistantIndex] as any
+      const prev = Array.isArray(lastAssistant.annotations)
+        ? ([...lastAssistant.annotations] as JSONValue[])
+        : []
+
+      // Extract JSON annotations from data messages we produced locally
+      const jsonAnnotations: JSONValue[] = allAnnotations
+        .filter(a => a.role === 'data' && a.content)
+        .map(a => a.content as JSONValue)
+
+      const combined = [...prev, ...jsonAnnotations]
+      const deduped = Array.from(
+        new Map(combined.map(a => [JSON.stringify(a), a])).values()
+      )
+      baseMessages[lastAssistantIndex] = {
+        ...lastAssistant,
+        annotations: deduped
+      }
+    }
+
+    const generatedMessages = baseMessages
 
     if (process.env.ENABLE_SAVE_CHAT_HISTORY !== 'true') {
       return

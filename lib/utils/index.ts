@@ -1,12 +1,12 @@
 import { type Model } from '@/lib/types/models'
 import {
-  convertToCoreMessages,
-  CoreMessage,
-  CoreToolMessage,
-  generateId,
-  JSONValue,
-  Message,
-  ToolInvocation
+    convertToCoreMessages,
+    CoreMessage,
+    CoreToolMessage,
+    generateId,
+    JSONValue,
+    Message,
+    ToolInvocation
 } from 'ai'
 import { type ClassValue, clsx } from 'clsx'
 import { twMerge } from 'tailwind-merge'
@@ -167,24 +167,37 @@ export function convertToUIMessages(
       }
     }
 
-    // For assistant messages, assemble annotations from any stashed data.
+    // For assistant messages, assemble annotations from any stashed data and embedded annotations.
     let annotations: JSONValue[] | undefined = undefined
     if (message.role === 'assistant') {
-      if (pendingAnnotations.length > 0 || pendingReasoning !== undefined) {
-        annotations = [
-          ...pendingAnnotations,
-          ...(pendingReasoning !== undefined
-            ? [
-                {
-                  type: 'reasoning',
-                  data: {
-                    reasoning: pendingReasoning,
-                    time: pendingReasoningTime ?? 0
-                  }
-                }
-              ]
-            : [])
-        ]
+      const embedded = Array.isArray((message as any).annotations)
+        ? ([...(message as any).annotations] as JSONValue[])
+        : []
+      const stashed =
+        pendingAnnotations.length > 0 || pendingReasoning !== undefined
+          ? [
+              ...pendingAnnotations,
+              ...(pendingReasoning !== undefined
+                ? [
+                    {
+                      type: 'reasoning',
+                      data: {
+                        reasoning: pendingReasoning,
+                        time: pendingReasoningTime ?? 0
+                      }
+                    }
+                  ]
+                : [])
+            ]
+          : []
+
+      const combined = [...embedded, ...stashed]
+      if (combined.length > 0) {
+        // Deduplicate by JSON string key to avoid duplicates
+        const uniq = Array.from(
+          new Map(combined.map(a => [JSON.stringify(a), a])).values()
+        )
+        annotations = uniq
       }
     }
 
@@ -216,16 +229,8 @@ export function convertToExtendedCoreMessages(
   const result: ExtendedCoreMessage[] = []
 
   for (const message of messages) {
-    // Convert annotations to data messages
-    if (message.annotations && message.annotations.length > 0) {
-      message.annotations.forEach(annotation => {
-        result.push({
-          role: 'data',
-          content: annotation
-        })
-      })
-    }
-
+    // Do NOT convert annotations to separate data messages anymore.
+    // We embed them directly on the assistant message for clearer association.
     // Convert reasoning to data message with unified structure (including time)
     if (message.reasoning) {
       const reasoningTime = (message as any).reasoningTime ?? 0
@@ -249,7 +254,25 @@ export function convertToExtendedCoreMessages(
     }
 
     // Convert current message
-    const converted = convertToCoreMessages([message])
+    const converted = convertToCoreMessages([message]) as ExtendedCoreMessage[]
+
+    // If annotations exist on the UI message, attach them to the converted assistant message
+    if (Array.isArray(message.annotations) && message.annotations.length > 0) {
+      for (let i = converted.length - 1; i >= 0; i--) {
+        const m = converted[i]
+        if (m.role === 'assistant') {
+          const existing = Array.isArray((m as any).annotations)
+            ? ([...(m as any).annotations] as JSONValue[])
+            : []
+          const combined = [...existing, ...message.annotations]
+          ;(m as any).annotations = Array.from(
+            new Map(combined.map(a => [JSON.stringify(a), a])).values()
+          )
+          break
+        }
+      }
+    }
+
     result.push(...converted)
   }
 

@@ -1,4 +1,4 @@
-import { CoreMessage, JSONValue, Message } from 'ai'
+import { CoreMessage, JSONValue } from 'ai'
 
 export type SearchResults = {
   images: SearchResultImage[]
@@ -71,6 +71,8 @@ export interface Chat extends Record<string, any> {
 export type ExtendedCoreMessage = Omit<CoreMessage, 'role' | 'content'> & {
   role: CoreMessage['role'] | 'data'
   content: CoreMessage['content'] | JSONValue
+  // Embed annotations directly on assistant messages for persistence
+  annotations?: JSONValue[]
 }
 
 export type AIMessage = {

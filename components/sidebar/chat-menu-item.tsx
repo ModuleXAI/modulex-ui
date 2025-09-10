@@ -117,7 +117,7 @@ export function ChatMenuItem({ chat }: ChatMenuItemProps) {
       >
         <Link
           href={chat.path}
-          prefetch
+          prefetch={false}
           onMouseEnter={() => {
             try { router.prefetch(chat.path) } catch {}
           }}

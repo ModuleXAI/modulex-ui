@@ -13,7 +13,7 @@ export function SidebarSections({ defaultContent, settingsContent }: SidebarSect
   const isSettings = /^\/organizations\/.+\/settings(\/?|$)/.test(pathname || '')
 
   return (
-    <div className="flex-1 overflow-y-auto">
+    <div className="flex-1 overflow-y-auto no-scrollbar">
       <div className={cn(isSettings ? 'hidden' : 'block')}>{defaultContent}</div>
       <div className={cn(isSettings ? 'block mt-2' : 'hidden')}>{settingsContent}</div>
     </div>

@@ -1,7 +1,7 @@
 'use client'
 
 import { cn } from '@/lib/utils'
-import 'katex/dist/katex.min.css'
+import { useEffect } from 'react'
 import rehypeExternalLinks from 'rehype-external-links'
 import rehypeKatex from 'rehype-katex'
 import remarkGfm from 'remark-gfm'
@@ -21,6 +21,12 @@ export function BotMessage({
   const containsLaTeX = /\\\[([\s\S]*?)\\\]|\\\(([\s\S]*?)\\\)/.test(
     message || ''
   )
+
+  useEffect(() => {
+    if (containsLaTeX) {
+      import('katex/dist/katex.min.css')
+    }
+  }, [containsLaTeX])
 
   // Modify the content to render LaTeX equations if LaTeX patterns are found
   const processedData = preprocessLaTeX(message || '')
@@ -75,7 +81,6 @@ export function BotMessage({
 
           return (
             <CodeBlock
-              key={Math.random()}
               language={(match && match[1]) || ''}
               value={String(children).replace(/\n$/, '')}
               {...props}

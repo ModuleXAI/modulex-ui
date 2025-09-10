@@ -129,6 +129,10 @@ export const SearchResultsImageSection: React.FC<
                       <img
                         src={image.url}
                         alt={`Image ${actualIndex + 1}`}
+                        loading="lazy"
+                        decoding="async"
+                        fetchPriority="low"
+                        sizes="(max-width: 768px) 50vw, 25vw"
                         // Apply specific or default rounding
                         className={`h-full w-full object-cover shadow ${cornerClasses}`}
                         onError={e =>
@@ -173,6 +177,10 @@ export const SearchResultsImageSection: React.FC<
                           <img
                             src={img.url}
                             alt={`Image ${idx + 1}`}
+                            loading={idx === selectedIndex ? 'eager' : 'lazy'}
+                            fetchPriority={idx === selectedIndex ? 'high' : 'low'}
+                            decoding="async"
+                            sizes="100vw"
                             className="h-auto w-full object-contain max-h-[60vh] max-w-full"
                             onError={e =>
                               (e.currentTarget.src =

@@ -1,10 +1,15 @@
 'use client'
 
 import { SearchResults } from '@/components/search-results'
-import { SearchResultsImageSection } from '@/components/search-results-image'
 import { Section, ToolArgsSection } from '@/components/section'
 import type { SearchResults as TypeSearchResults } from '@/lib/types'
 import type { ToolInvocation } from 'ai'
+import dynamic from 'next/dynamic'
+
+const SearchResultsImageSection = dynamic(
+  () => import('@/components/search-results-image').then(m => m.SearchResultsImageSection),
+  { ssr: false, loading: () => <div className="h-24" /> }
+)
 
 export function SearchArtifactContent({ tool }: { tool: ToolInvocation }) {
   const searchResults: TypeSearchResults =

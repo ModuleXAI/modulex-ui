@@ -176,22 +176,26 @@ export function ChatMessages({
             </div>
 
             {/* Assistant messages */}
-            {section.assistantMessages.map(assistantMessage => (
-              <div key={assistantMessage.id} className="flex flex-col gap-4">
-                <RenderMessage
-                  message={assistantMessage}
-                  messageId={assistantMessage.id}
-                  getIsOpen={getIsOpen}
-                  onOpenChange={handleOpenChange}
-                  onQuerySelect={onQuerySelect}
-                  chatId={chatId}
-                  addToolResult={addToolResult}
-                  onUpdateMessage={onUpdateMessage}
-                  reload={reload}
-                  showRelatedQuestions={assistantMessage.id === lastAssistantMessageId}
-                />
-              </div>
-            ))}
+            {section.assistantMessages.map(assistantMessage => {
+              const shouldShowRelated = assistantMessage.id === lastAssistantMessageId
+
+              return (
+                <div key={assistantMessage.id} className="flex flex-col gap-4">
+                  <RenderMessage
+                    message={assistantMessage}
+                    messageId={assistantMessage.id}
+                    getIsOpen={getIsOpen}
+                    onOpenChange={handleOpenChange}
+                    onQuerySelect={onQuerySelect}
+                    chatId={chatId}
+                    addToolResult={addToolResult}
+                    onUpdateMessage={onUpdateMessage}
+                    reload={reload}
+                    showRelatedQuestions={shouldShowRelated}
+                  />
+                </div>
+              )
+            })}
           </div>
         ))}
 

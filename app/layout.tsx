@@ -4,6 +4,7 @@ import Header from '@/components/header'
 import { ThemeProvider } from '@/components/theme-provider'
 import { SidebarProvider } from '@/components/ui/sidebar'
 import { Toaster } from '@/components/ui/sonner'
+import { isSupabaseProvider } from '@/lib/auth/provider'
 import { createClient } from '@/lib/supabase/server'
 import { cn } from '@/lib/utils'
 import { Analytics } from '@vercel/analytics/next'
@@ -52,7 +53,7 @@ export default async function RootLayout({
   const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
   const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
 
-  if (supabaseUrl && supabaseAnonKey) {
+  if (isSupabaseProvider() && supabaseUrl && supabaseAnonKey) {
     const supabase = await createClient()
     const {
       data: { user: supabaseUser }

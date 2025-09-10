@@ -2,11 +2,11 @@
 
 import { Button } from '@/components/ui/button'
 import {
-    Card,
-    CardContent,
-    CardDescription,
-    CardHeader,
-    CardTitle
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle
 } from '@/components/ui/card'
 import { IconLogo } from '@/components/ui/icons'
 import { Input } from '@/components/ui/input'
@@ -99,7 +99,7 @@ export function LoginForm({
               onClick={handleSocialLogin}
               disabled={isLoading}
             >
-              <img src="/providers/logos/google.svg" alt="Google" className="mr-2 h-5 w-5" />
+              <img src="/providers/logos/google.svg" alt="Google" className="mr-2 h-5 w-5" loading="lazy" decoding="async" fetchPriority="low" />
               Sign In with Google
             </Button>
 

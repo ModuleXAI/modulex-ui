@@ -46,11 +46,7 @@ export async function middleware(request: NextRequest) {
     }
   }
 
-  // Add request information to response headers
-  response.headers.set('x-url', request.url)
-  response.headers.set('x-host', host)
-  response.headers.set('x-protocol', protocol)
-  response.headers.set('x-base-url', baseUrl)
+  // Removed extra diagnostic headers for performance
 
   return response
 }

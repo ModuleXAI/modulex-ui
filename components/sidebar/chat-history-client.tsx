@@ -158,7 +158,7 @@ export function ChatHistoryClient() {
           <ClearHistoryAction empty={isHistoryEmpty} />
         </div>
       </SidebarGroup>
-      <div className="flex-1 overflow-y-auto mb-2 relative">
+      <div className="flex-1 overflow-y-auto mb-2 relative no-scrollbar">
         {isHistoryEmpty && !isPending ? (
           <div className="px-2 text-foreground/30 text-sm text-center py-4">
             No search history
