@@ -39,6 +39,7 @@ interface ManualResearcherConfig {
   messages: CoreMessage[]
   model: string
   isSearchEnabled?: boolean
+  ultraMode?: boolean
 }
 
 type ManualResearcherReturn = Parameters<typeof streamText>[0]
@@ -46,19 +47,22 @@ type ManualResearcherReturn = Parameters<typeof streamText>[0]
 export function manualResearcher({
   messages,
   model,
-  isSearchEnabled = true
+  isSearchEnabled = true,
+  ultraMode = false
 }: ManualResearcherConfig): ManualResearcherReturn {
   try {
     const currentDate = new Date().toLocaleString()
-    const systemPrompt = isSearchEnabled
-      ? SEARCH_ENABLED_PROMPT
-      : SEARCH_DISABLED_PROMPT
+    const base = isSearchEnabled ? SEARCH_ENABLED_PROMPT : SEARCH_DISABLED_PROMPT
+    const ultraAddendum = ultraMode
+      ? `\nUltraModulex mode is enabled. On the first user input, you must initiate a structured clarifying question (ask_question) before answering. After confirmation, use deeper, multi-step reasoning to craft the best answer.`
+      : ''
+    const systemPrompt = `${base}${ultraAddendum}`
 
     return {
       model: getModel(model),
       system: `${systemPrompt}\nCurrent date and time: ${currentDate}`,
       messages,
-      temperature: 0.6,
+      temperature: ultraMode ? 0.3 : 0.6,
       topP: 1,
       topK: 40,
       experimental_transform: smoothStream()

@@ -1,9 +1,11 @@
 import { researcher } from '@/lib/agents/researcher'
+import { buildUltraFinalConfig } from '@/lib/agents/ultra-orchestrator'
 import {
   convertToCoreMessages,
   CoreMessage,
   createDataStreamResponse,
   DataStreamWriter,
+  JSONValue,
   streamText
 } from 'ai'
 import { getMaxAllowedTokens, truncateMessages } from '../utils/context-window'
@@ -28,7 +30,7 @@ function containsAskQuestionTool(message: CoreMessage) {
 export function createToolCallingStreamResponse(config: BaseStreamConfig) {
   return createDataStreamResponse({
     execute: async (dataStream: DataStreamWriter) => {
-      const { messages, model, chatId, searchMode, userId } = config
+      const { messages, model, chatId, searchMode, userId, ultraMode } = config
       const modelId = `${model.providerId}:${model.id}`
 
       try {
@@ -38,20 +40,45 @@ export function createToolCallingStreamResponse(config: BaseStreamConfig) {
           getMaxAllowedTokens(model)
         )
 
-        // Pre-execute tool call (search) if search mode is enabled, to ensure search is attempted
+        // Determine if this is the very first turn (no assistant messages yet)
+        const isFirstTurn = !truncatedMessages.some(m => m.role === 'assistant')
+
+        // Pre-execute tool call (search) unless Ultra first-turn requires ask_question first
         const { toolCallDataAnnotation, toolCallMessages } = await executeToolCall(
           truncatedMessages,
           dataStream,
           modelId,
-          searchMode
+          searchMode && !(ultraMode && isFirstTurn)
         )
 
+        const messagesForLLM = [...truncatedMessages, ...toolCallMessages]
+        let extraAnnotations: any[] = []
+
         let researcherConfig = await researcher({
-          messages: [...truncatedMessages, ...toolCallMessages],
+          messages: messagesForLLM,
           model: modelId,
           searchMode,
-          userId
+          userId,
+          ultraMode
         })
+
+        // If Ultra mode and NOT the first turn, run 4-stage orchestrator for higher quality final answer
+        if (ultraMode && !isFirstTurn) {
+          try {
+            const finalConfig = await buildUltraFinalConfig({
+              messages: messagesForLLM,
+              modelId,
+              dataStream
+            })
+            researcherConfig = finalConfig as any
+            // Capture Ultra annotations for persistence
+            if ((finalConfig as any).ultraAnnotations) {
+              extraAnnotations = (finalConfig as any).ultraAnnotations
+            }
+          } catch (e) {
+            console.error('Ultra orchestrator failed, falling back to researcher:', e)
+          }
+        }
 
         const result = streamText({
           ...researcherConfig,
@@ -66,6 +93,12 @@ export function createToolCallingStreamResponse(config: BaseStreamConfig) {
                   ] as CoreMessage
                 ))
 
+            // Convert ultra annotations to ExtendedCoreMessage[] for saving
+            const ultraExtended = (extraAnnotations || []).map(a => ({
+              role: 'data' as const,
+              content: a as unknown as JSONValue
+            }))
+
             await handleStreamFinish({
               responseMessages: result.response.messages,
               originalMessages: messages,
@@ -73,7 +106,8 @@ export function createToolCallingStreamResponse(config: BaseStreamConfig) {
               chatId,
               dataStream,
               userId,
-              skipRelatedQuestions: shouldSkipRelatedQuestions
+              skipRelatedQuestions: shouldSkipRelatedQuestions,
+              annotations: ultraExtended
             })
 
           }

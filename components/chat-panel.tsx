@@ -14,6 +14,7 @@ import { SignInDialog } from './sign-in-dialog'
 import { ToolsToggle } from './tools-toggle'
 import { Button } from './ui/button'
 import { IconLogo } from './ui/icons'
+import { UltraModeToggle } from './ultra-mode-toggle'
 
 interface ChatPanelProps {
   input: string
@@ -196,6 +197,7 @@ export function ChatPanel({
             <div className="flex items-center gap-2">
               <ModelSelector models={models || []} />
               <SearchModeToggle />
+              <UltraModeToggle />
               <ToolsToggle />
             </div>
             <div className="flex items-center gap-2">

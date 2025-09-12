@@ -2,8 +2,8 @@
 
 import { cn } from '@/lib/utils'
 import { getCookie } from '@/lib/utils/cookies'
-import { ChatRequestOptions, JSONValue, Message } from 'ai'
-import { useEffect, useMemo, useState } from 'react'
+import { ChatRequestOptions, JSONValue, Message, ToolInvocation } from 'ai'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import { RenderMessage } from './render-message'
 import { ToolSection } from './tool-section'
 import { Spinner } from './ui/spinner'
@@ -51,6 +51,8 @@ export function ChatMessages({
   const [openStates, setOpenStates] = useState<Record<string, boolean>>({})
   const manualToolCallId = 'manual-tool-call'
   const [isSearchMode, setIsSearchMode] = useState<boolean>(true)
+  const [autoScrollEnabled, setAutoScrollEnabled] = useState<boolean>(true)
+  const prevLastUserIndexRef = useRef<number | null>(null)
 
   useEffect(() => {
     // Open manual tool call when the last section is a user message
@@ -105,8 +107,6 @@ export function ChatMessages({
       : undefined
   }, [sections])
 
-  if (!sections.length) return null
-
   // Get all messages as a flattened array
   const allMessages = sections.flatMap(section => [
     section.userMessage,
@@ -114,9 +114,9 @@ export function ChatMessages({
   ])
 
   const lastUserIndex =
-    allMessages.length -
-    1 -
-    [...allMessages].reverse().findIndex(msg => msg.role === 'user')
+    sections.length === 0
+      ? -1
+      : allMessages.length - 1 - [...allMessages].reverse().findIndex(msg => msg.role === 'user')
 
   // Check if loading indicator should be shown
   const showLoading =
@@ -130,7 +130,7 @@ export function ChatMessages({
     }
     const baseId = id.endsWith('-related') ? id.slice(0, -8) : id
     const index = allMessages.findIndex(msg => msg.id === baseId)
-    return openStates[id] ?? index >= lastUserIndex
+    return openStates[id] ?? (lastUserIndex === -1 ? false : index >= lastUserIndex)
   }
 
   const handleOpenChange = (id: string, open: boolean) => {
@@ -140,6 +140,92 @@ export function ChatMessages({
     }))
   }
 
+  // Enable auto-scroll when a new user message starts a fresh assistant response
+  useEffect(() => {
+    if (prevLastUserIndexRef.current === null) {
+      prevLastUserIndexRef.current = lastUserIndex
+      return
+    }
+    if (lastUserIndex > (prevLastUserIndexRef.current ?? -1)) {
+      setAutoScrollEnabled(true)
+    }
+    prevLastUserIndexRef.current = lastUserIndex
+  }, [lastUserIndex])
+
+  // Cancel auto-scroll when user scrolls up beyond a threshold
+  useEffect(() => {
+    const container = scrollContainerRef.current
+    if (!container) return
+    const onScroll = () => {
+      const distanceFromBottom = container.scrollHeight - (container.scrollTop + container.clientHeight)
+      if (distanceFromBottom > 120) {
+        setAutoScrollEnabled(false)
+      }
+    }
+    container.addEventListener('scroll', onScroll, { passive: true })
+    return () => container.removeEventListener('scroll', onScroll)
+  }, [scrollContainerRef])
+
+  // Scroll to bottom while streaming if auto-scroll is enabled
+  useEffect(() => {
+    const container = scrollContainerRef.current
+    const content = scrollContentRef?.current || container
+    if (!container || !content) return
+
+    const ro = new ResizeObserver(() => {
+      if (!autoScrollEnabled) return
+      container.scrollTo({ top: container.scrollHeight, behavior: 'auto' })
+    })
+    ro.observe(content)
+    return () => ro.disconnect()
+  }, [autoScrollEnabled, scrollContainerRef, scrollContentRef])
+
+  // Fallback: also scroll on sections changes (in case ResizeObserver misses)
+  useEffect(() => {
+    if (!autoScrollEnabled) return
+    const container = scrollContainerRef.current
+    if (!container) return
+    container.scrollTo({ top: container.scrollHeight, behavior: 'auto' })
+  }, [autoScrollEnabled, sections, scrollContainerRef])
+
+  // Pre-compute ask_question result per section for merging into the last assistant's timeline
+  const sectionIdToAskTool = useMemo(() => {
+    const map = new Map<string, ToolInvocation | null>()
+    for (const section of sections) {
+      let found: ToolInvocation | null = null
+      for (const m of section.assistantMessages) {
+        const annotations = (m.annotations as any[] | undefined) || []
+        const toolAnns = annotations.filter(a => (a as any)?.type === 'tool_call') as any[]
+        for (const ann of toolAnns) {
+          const data = (ann as any)?.data
+          if (data?.toolName === 'ask_question' && data?.state === 'result') {
+            try {
+              found = {
+                toolCallId: data.toolCallId,
+                toolName: data.toolName,
+                state: 'result',
+                args: data.args ? JSON.parse(data.args) : {},
+                result: data.result && data.result !== 'undefined' ? JSON.parse(data.result) : undefined
+              } as ToolInvocation
+              break
+            } catch {}
+          }
+        }
+        if (found) break
+        const parts = (m.parts as any[] | undefined) || []
+        for (const p of parts) {
+          if (p?.type === 'tool-invocation' && p?.toolInvocation?.toolName === 'ask_question' && p?.toolInvocation?.state === 'result') {
+            found = p.toolInvocation as ToolInvocation
+            break
+          }
+        }
+        if (found) break
+      }
+      map.set(section.id, found)
+    }
+    return map
+  }, [sections])
+
   return (
     <div
       id="scroll-container"
@@ -147,11 +233,12 @@ export function ChatMessages({
       role="list"
       aria-roledescription="chat messages"
       className={cn(
-        'relative size-full pt-14',
-        sections.length > 0 ? 'flex-1 overflow-y-auto' : ''
+        'relative w-full',
+        sections.length > 0 ? 'pt-14 flex-1 overflow-y-auto' : 'hidden'
       )}
-      style={{ paddingBottom: bottomPadding ?? 0 }}
+      style={{ paddingBottom: sections.length > 0 ? bottomPadding ?? 0 : 0 }}
     >
+      {sections.length > 0 && (
       <div className={cn('relative mx-auto w-full max-w-3xl px-4')} ref={scrollContentRef}>
         {sections.map((section, sectionIndex) => (
           <div
@@ -177,7 +264,8 @@ export function ChatMessages({
 
             {/* Assistant messages */}
             {section.assistantMessages.map(assistantMessage => {
-              const shouldShowRelated = assistantMessage.id === lastAssistantMessageId
+              const isLastAssistant = assistantMessage.id === lastAssistantMessageId
+              const shouldShowRelated = isLastAssistant
 
               return (
                 <div key={assistantMessage.id} className="flex flex-col gap-4">
@@ -192,6 +280,9 @@ export function ChatMessages({
                     onUpdateMessage={onUpdateMessage}
                     reload={reload}
                     showRelatedQuestions={shouldShowRelated}
+                    renderPlaceholders={isLastAssistant}
+                    mergeAskTool={isLastAssistant ? sectionIdToAskTool.get(section.id) || undefined : undefined}
+                    includeAskInTimeline={isLastAssistant}
                   />
                 </div>
               )
@@ -209,6 +300,7 @@ export function ChatMessages({
           />
         )}
       </div>
+      )}
     </div>
   )
 }

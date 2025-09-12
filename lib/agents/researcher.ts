@@ -307,12 +307,14 @@ export async function researcher({
   messages,
   model,
   searchMode,
-  userId
+  userId,
+  ultraMode
 }: {
   messages: CoreMessage[]
   model: string
   searchMode: boolean
   userId?: string
+  ultraMode?: boolean
 }): Promise<ResearcherReturn> {
   try {
     const currentDate = new Date().toLocaleString()
@@ -359,10 +361,18 @@ export async function researcher({
       console.error('Failed to load MCP tools:', error)
     }
 
+    // Determine if this is the very first assistant turn (only user messages so far)
+    const hasAnyAssistantMessage = messages.some(m => m.role === 'assistant')
+    const isFirstTurn = !hasAnyAssistantMessage
+
     // Combine base tools with MCP tools
     const allTools = { ...baseTools, ...mcpTools }
-    const allActiveTools = searchMode ? [...baseActiveTools, ...mcpActiveTools, ...systemTools] : [...mcpActiveTools, ...systemTools]
-    console.log('[researcher] searchMode:', searchMode, 'active tools:', allActiveTools)
+    const allActiveTools = ultraMode && isFirstTurn
+      ? ['ask_question'] // Strictly force ask_question on very first turn
+      : (searchMode
+          ? [...baseActiveTools, ...mcpActiveTools, ...systemTools]
+          : [...mcpActiveTools, ...systemTools])
+    console.log('[researcher] searchMode:', searchMode, 'ultraMode:', ultraMode, 'isFirstTurn:', isFirstTurn, 'active tools:', allActiveTools)
 
     // Resolve model, routing OpenAI via ModuleX AI proxy with per-request headers
     const [provider, ...modelNameParts] = model.split(':') ?? []
@@ -397,14 +407,21 @@ export async function researcher({
       }
     }
 
+    const ultraAddendum = ultraMode
+      ? `\nUltraModulex mode is enabled. Follow this orchestration strictly:\n\n0) First turn ONLY: invoke ask_question with a clear, multi-part, localized question, include concise predefined options (values in English) and an optional free input.\n1) After user answers, PLAN: list the concrete steps you will take (search, retrieve, use tools, synthesize). Do not reveal chain-of-thought; keep plans terse and operational.\n2) GATHER: perform searches and retrievals as needed; cite sources using [number](url) strictly. Use only retrieve with user-provided URLs.\n3) REASON: integrate evidence, resolve conflicts, and prefer primary, recent sources.\n4) DRAFT: produce a structured, comprehensive answer with headings, bullet points, and clear sections.\n5) VERIFY: ensure facts align with citations; remove unverifiable claims.\n6) FINAL ANSWER: end with a short “Final answer” section summarizing the key result concisely. Prioritize quality over speed.`
+      : ''
+
+    const maxSteps = ultraMode ? 10 : (searchMode ? 5 : (mcpActiveTools.length > 0 ? 3 : 2))
+
     return {
       model: resolvedModel,
-      system: `${SYSTEM_PROMPT}\nCurrent date and time: ${currentDate}`,
+      system: `${SYSTEM_PROMPT}${ultraAddendum}\nCurrent date and time: ${currentDate}`,
       messages,
       tools: allTools,
       experimental_activeTools: allActiveTools,
-      maxSteps: searchMode ? 5 : (mcpActiveTools.length > 0 ? 3 : 2),
-      experimental_transform: smoothStream()
+      temperature: ultraMode ? 0.3 : 0.6,
+      maxSteps,
+      experimental_transform: smoothStream() 
     }
   } catch (error) {
     console.error('Error in chatResearcher:', error)

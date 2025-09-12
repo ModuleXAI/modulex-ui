@@ -12,10 +12,26 @@ export async function generateRelatedQuestions(
   messages: CoreMessage[],
   model: string
 ) {
-  const lastMessages = messages.slice(-1).map(message => ({
-    ...message,
-    role: 'user'
-  })) as CoreMessage[]
+  // Build a safe, textual seed from conversation to avoid empty/invalid prompts
+  const toText = (content: any): string => {
+    if (typeof content === 'string') return content
+    if (Array.isArray(content)) {
+      return content
+        .filter((p: any) => p && p.type === 'text' && typeof p.text === 'string')
+        .map((p: any) => p.text)
+        .join('\n')
+    }
+    return ''
+  }
+
+  const lastUser = [...messages].reverse().find(m => m.role === 'user') as any
+  const lastAssistant = [...messages].reverse().find(m => m.role === 'assistant') as any
+  let seedText = ''
+  if (lastUser) seedText = toText(lastUser.content)
+  if (!seedText && lastAssistant) seedText = toText(lastAssistant.content)
+  if (!seedText) seedText = 'Generate three concise, related follow-up queries.'
+
+  const lastMessages = [{ role: 'user', content: seedText }] as CoreMessage[]
 
   const supportedModel = isToolCallSupported(model)
   const selected = supportedModel ? model : ((): string => {

@@ -17,6 +17,8 @@ interface QuestionConfirmationProps {
   toolInvocation: ToolInvocation
   onConfirm: (toolCallId: string, approved: boolean, response?: any) => void
   isCompleted?: boolean
+  /** When set to 'timeline', render a compact style suitable for timeline cells */
+  variant?: 'default' | 'timeline'
 }
 
 interface QuestionOption {
@@ -27,7 +29,8 @@ interface QuestionOption {
 export function QuestionConfirmation({
   toolInvocation,
   onConfirm,
-  isCompleted = false
+  isCompleted = false,
+  variant = 'default'
 }: QuestionConfirmationProps) {
   const { question, options, allowsInput, inputLabel, inputPlaceholder } =
     toolInvocation.args
@@ -126,6 +129,58 @@ export function QuestionConfirmation({
   if (completed || toolInvocation.state === 'result') {
     const isSkipped = wasSkipped()
 
+    // Compact timeline variant
+    if (variant === 'timeline') {
+      return (
+        <div className="text-xs text-muted-foreground">
+          <div className="flex items-center gap-1.5 flex-wrap">
+            {isSkipped ? (
+              <>
+                <Badge variant="secondary" className="flex items-center gap-1 px-1.5 py-0.5 text-[10px]">
+                  <SkipForward size={12} className="text-yellow-600" />
+                  Skipped
+                </Badge>
+                <span className="truncate max-w-full">{question}</span>
+              </>
+            ) : (
+              <>
+                <Check size={14} className="text-green-600" />
+                {getDisplayedOptions().slice(0, 3).map(optionLabel => (
+                  <Badge
+                    key={optionLabel}
+                    variant="outline"
+                    className="px-2 py-0.5 rounded-md font-normal border-transparent ring-1 ring-border dark:ring-white/20 bg-background/60 dark:bg-background/40"
+                  >
+                    {optionLabel}
+                  </Badge>
+                ))}
+                {getDisplayedOptions().length > 3 && (
+                  <Badge
+                    variant="outline"
+                    className="px-2 py-0.5 rounded-md font-normal border-transparent ring-1 ring-border dark:ring-white/20 bg-background/60 dark:bg-background/40"
+                  >
+                    +{getDisplayedOptions().length - 3}
+                  </Badge>
+                )}
+                {getDisplayedInputText().trim() !== '' && (
+                  <Badge
+                    variant="outline"
+                    className="px-2 py-0.5 rounded-md font-normal border-transparent ring-1 ring-border dark:ring-white/20 bg-background/60 dark:bg-background/40 truncate max-w-[12rem]"
+                  >
+                    {getDisplayedInputText()}
+                  </Badge>
+                )}
+              </>
+            )}
+          </div>
+          {!isSkipped && (
+            <div className="mt-1 whitespace-pre-wrap break-words">{updatedQuery() || 'No additional details'}</div>
+          )}
+        </div>
+      )
+    }
+
+    // Default card variant
     return (
       <Card className="p-2 md:p-3 w-full mb-3">
         <Collapsible>
