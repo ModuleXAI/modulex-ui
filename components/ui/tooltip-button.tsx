@@ -1,12 +1,12 @@
 'use client'
 
-import * as React from 'react'
 import { Button, ButtonProps } from '@/components/ui/button'
 import {
-  Tooltip,
-  TooltipContent,
-  TooltipTrigger
+    Tooltip,
+    TooltipContent,
+    TooltipTrigger
 } from '@/components/ui/tooltip'
+import * as React from 'react'
 
 interface TooltipButtonProps extends ButtonProps {
   /**
@@ -37,9 +37,11 @@ export const TooltipButton = React.forwardRef<
   return (
     <Tooltip>
       <TooltipTrigger asChild>
-        <Button ref={ref} {...buttonProps}>
-          {children}
-        </Button>
+        <span className="inline-flex pointer-events-auto z-10" role="button">
+          <Button ref={ref} {...buttonProps} className={(buttonProps.className || '') + ' pointer-events-auto'}>
+            {children}
+          </Button>
+        </span>
       </TooltipTrigger>
       <TooltipContent {...tooltipProps} />
     </Tooltip>

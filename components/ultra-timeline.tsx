@@ -3,7 +3,7 @@
 import { cn } from '@/lib/utils'
 import { useEffect, useMemo, useRef, useState } from 'react'
 
-type Stage = 'ask' | 'planner' | 'writer' | 'critic'
+type Stage = 'ask' | 'planner' | 'research' | 'writer' | 'critic'
 type Status = 'pending' | 'in_progress' | 'done'
 
 export interface UltraTimelineItem {
@@ -33,14 +33,22 @@ export function UltraTimeline({ items }: { items: UltraTimelineItem[] }) {
   const afterShimmerTimeoutRef = useRef<number | null>(null)
 
   const currentInProgress: Stage | null = useMemo(() => {
-    const found = ordered.find(i => i.status === 'in_progress')
-    return found ? found.stage : null
+    // Prefer the latest in_progress by stage order: ask -> planner -> research -> writer -> critic
+    const order: Stage[] = ['ask', 'planner', 'research', 'writer', 'critic']
+    for (const s of order) {
+      const it = ordered.find(i => i.stage === s && i.status === 'in_progress')
+      if (it) return s
+    }
+    return null
   }, [ordered])
 
   const lastDoneStage: Stage | null = useMemo(() => {
-    const dones = ordered.filter(i => i.status === 'done')
-    if (dones.length === 0) return null
-    return dones[dones.length - 1].stage
+    const order: Stage[] = ['ask', 'planner', 'research', 'writer', 'critic']
+    for (let i = order.length - 1; i >= 0; i--) {
+      const it = ordered.find(x => x.stage === order[i] && x.status === 'done')
+      if (it) return it.stage
+    }
+    return null
   }, [ordered])
 
   useEffect(() => {
@@ -207,7 +215,7 @@ function renderBody(it: UltraTimelineItem) {
 }
 
 function order(items: UltraTimelineItem[]): UltraTimelineItem[] {
-  const rank: Record<Stage, number> = { ask: -1, planner: 0, writer: 1, critic: 2 }
+  const rank: Record<Stage, number> = { ask: -1, planner: 0, research: 1, writer: 2, critic: 3 }
   return [...items].sort((a, b) => rank[a.stage] - rank[b.stage])
 }
 

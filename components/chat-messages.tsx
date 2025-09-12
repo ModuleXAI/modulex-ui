@@ -264,6 +264,11 @@ export function ChatMessages({
 
             {/* Assistant messages */}
             {section.assistantMessages.map(assistantMessage => {
+              const sectionHasUltra = section.assistantMessages.some(m =>
+                ((m.annotations as any[] | undefined) || []).some(
+                  a => (a as any)?.type === 'ultra-stage' || (a as any)?.type === 'ultra-stage-header'
+                )
+              )
               const isLastAssistant = assistantMessage.id === lastAssistantMessageId
               const shouldShowRelated = isLastAssistant
 
@@ -283,6 +288,7 @@ export function ChatMessages({
                     renderPlaceholders={isLastAssistant}
                     mergeAskTool={isLastAssistant ? sectionIdToAskTool.get(section.id) || undefined : undefined}
                     includeAskInTimeline={isLastAssistant}
+                    suppressAskPanels={sectionHasUltra}
                   />
                 </div>
               )

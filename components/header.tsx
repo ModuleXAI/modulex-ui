@@ -7,6 +7,7 @@ import { User } from '@supabase/supabase-js'
 import * as React from 'react'
 // import { Button } from './ui/button' // No longer needed directly here for Sign In button
 import { usePathname } from 'next/navigation'
+import { useEffect, useState } from 'react'
 import GuestMenu from './guest-menu'; // Import the new GuestMenu component
 import UserMenu from './user-menu'
 
@@ -16,6 +17,17 @@ interface HeaderProps {
 
 export const Header: React.FC<HeaderProps> = ({ user }) => {
   const { open } = useSidebar()
+  const [artifactOpen, setArtifactOpen] = useState(false)
+  useEffect(() => {
+    const onOpen = () => setArtifactOpen(true)
+    const onClose = () => setArtifactOpen(false)
+    window.addEventListener('artifact-opened', onOpen)
+    window.addEventListener('artifact-closed', onClose)
+    return () => {
+      window.removeEventListener('artifact-opened', onOpen)
+      window.removeEventListener('artifact-closed', onClose)
+    }
+  }, [])
   const pathname = usePathname()
   const isSettings = React.useMemo(() => /^\/organizations\/.+\/settings(\/?|$)/.test(pathname || ''), [pathname])
   const isLoginPage = React.useMemo(() => (pathname || '').startsWith('/auth/login'), [pathname])
@@ -35,7 +47,7 @@ export const Header: React.FC<HeaderProps> = ({ user }) => {
         </div>
         <div className="flex items-center gap-2 -translate-x-6">
           <div className="flex flex-col items-center">
-            {user ? <UserMenu user={user} /> : <GuestMenu />}
+            {artifactOpen ? null : (user ? <UserMenu user={user} /> : <GuestMenu />)}
           </div>
         </div>
       </div>

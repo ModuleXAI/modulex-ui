@@ -2,15 +2,11 @@
 
 import { ArtifactContent } from '@/components/artifact/artifact-content'
 import { useArtifact } from '@/components/artifact/artifact-context'
-import { Button } from '@/components/ui/button'
 import { Separator } from '@/components/ui/separator'
-import { TooltipButton } from '@/components/ui/tooltip-button'
 import {
-  Tooltip,
-  TooltipContent,
-  TooltipProvider,
-  TooltipTrigger
+    TooltipProvider
 } from '@/components/ui/tooltip'
+import { TooltipButton } from '@/components/ui/tooltip-button'
 import { LightbulbIcon, MessageSquare, Minimize2, Wrench } from 'lucide-react'
 
 export function InspectorPanel() {
@@ -48,7 +44,7 @@ export function InspectorPanel() {
 
   return (
     <TooltipProvider>
-      <div className="h-full flex flex-col overflow-hidden bg-muted md:px-4 md:pt-14 md:pb-4">
+      <div className="h-full flex flex-col overflow-hidden bg-muted md:px-4 md:pt-4 md:pb-4">
         <div className="flex flex-col h-full bg-background rounded-xl md:border overflow-hidden">
           <div className="flex items-center justify-between px-4 py-2">
             <h3 className="flex items-center gap-2">

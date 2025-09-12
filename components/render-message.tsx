@@ -1,3 +1,4 @@
+import { useArtifact } from '@/components/artifact/artifact-context'
 import { cn } from '@/lib/utils'
 import { ChatRequestOptions, JSONValue, Message, ToolInvocation } from 'ai'
 import { ChevronDown, GitMerge } from 'lucide-react'
@@ -6,6 +7,8 @@ import { AnswerSection } from './answer-section'
 import { QuestionConfirmation } from './question-confirmation'
 import { ReasoningSection } from './reasoning-section'
 import RelatedQuestions from './related-questions'
+import { SearchResults } from './search-results'
+import { SearchResultsImageSection } from './search-results-image'
 import { ToolSection } from './tool-section'
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from './ui/collapsible'
 import { UltraTimeline, UltraTimelineItem } from './ultra-timeline'
@@ -32,6 +35,8 @@ interface RenderMessageProps {
   mergeAskTool?: ToolInvocation
   /** Whether this message should include the ask_question stage in its timeline */
   includeAskInTimeline?: boolean
+  /** If true, suppress standalone ask_question even if this message has no ultra annotations (section-level ultra present) */
+  suppressAskPanels?: boolean
 }
 
 export function RenderMessage({
@@ -47,7 +52,8 @@ export function RenderMessage({
   showRelatedQuestions = false,
   renderPlaceholders = true,
   mergeAskTool,
-  includeAskInTimeline = true
+  includeAskInTimeline = true,
+  suppressAskPanels = false
 }: RenderMessageProps) {
   const relatedQuestions = useMemo(
     () =>
@@ -100,7 +106,7 @@ export function RenderMessage({
       null
     )
   }, [message.annotations])
-  // Extract Ultra stage annotations (planner, writer, critic)
+  // Extract Ultra stage annotations (planner, research, writer, critic)
   const ultraStages = useMemo(() => {
     const annotations = (message.annotations as any[] | undefined) || []
     return annotations
@@ -108,7 +114,7 @@ export function RenderMessage({
       .map(
         a =>
           a.data as {
-            stage: 'planner' | 'writer' | 'critic'
+            stage: 'planner' | 'research' | 'writer' | 'critic'
             text: string
             title?: string
             resultTitle?: string
@@ -123,11 +129,18 @@ export function RenderMessage({
       .map(
         a =>
           a.data as {
-            stage: 'planner' | 'writer' | 'critic'
+            stage: 'planner' | 'research' | 'writer' | 'critic'
             title?: string
             text?: string
           }
       )
+  }, [message.annotations])
+
+  const isUltraMessage = useMemo(() => {
+    return (
+      ((message.annotations as any[] | undefined) || []).some(a => a?.type === 'ultra-stage') ||
+      ((message.annotations as any[] | undefined) || []).some(a => a?.type === 'ultra-stage-header')
+    )
   }, [message.annotations])
 
   const hasFinalTextPart = useMemo(
@@ -179,14 +192,53 @@ export function RenderMessage({
       if (getIsOpen(id) !== isCurrent) onOpenChange(id, isCurrent)
     })
   }, [ultraStages, latestStage, hasFinalTextPart])
+
+  // Compact Research renderer for timeline; opens full Search UI in the artifact sidebar on click
+  function CompactResearch({
+    tool,
+    results,
+    images,
+    query,
+    moreCount
+  }: {
+    tool: ToolInvocation
+    results: any[]
+    images?: any[]
+    query?: string
+    moreCount: number
+  }) {
+    const { open } = useArtifact()
+    const openFull = () => open({ type: 'tool-invocation', toolInvocation: tool })
+    return (
+      <div className="space-y-2">
+        <button type="button" onClick={openFull} className="text-xs font-medium text-foreground/80 hover:underline">
+          Sources
+        </button>
+        {Array.isArray(images) && images.length > 0 && (
+          <div className="scale-[0.95] origin-top-left">
+            <SearchResultsImageSection images={images as any} query={query} />
+          </div>
+        )}
+        <div className="scale-[0.95] origin-top-left">
+          <SearchResults results={results as any} displayMode="list" />
+        </div>
+        {moreCount > 0 && (
+          <button type="button" onClick={openFull} className="text-[11px] text-muted-foreground hover:underline">
+            +{moreCount} more
+          </button>
+        )}
+      </div>
+    )
+  }
   // Build timeline items from headers + results
   const timelineItems: UltraTimelineItem[] = useMemo(() => {
-    const stageTitleMap: Record<'planner' | 'writer' | 'critic', string> = {
+    const stageTitleMap: Record<'planner' | 'research' | 'writer' | 'critic', string> = {
       planner: 'Planning',
+      research: 'Research',
       writer: 'Drafting',
       critic: 'Critiquing'
     }
-    const map: Record<'ask' | 'planner' | 'writer' | 'critic', UltraTimelineItem> = {
+    const map: Record<'ask' | 'planner' | 'research' | 'writer' | 'critic', UltraTimelineItem> = {
       ask: {
         stage: 'ask',
         headerTitle: '',
@@ -195,6 +247,12 @@ export function RenderMessage({
       },
       planner: {
         stage: 'planner',
+        headerTitle: '',
+        headerText: '',
+        status: 'pending'
+      },
+      research: {
+        stage: 'research',
         headerTitle: '',
         headerText: '',
         status: 'pending'
@@ -230,6 +288,67 @@ export function RenderMessage({
       map[k].resultText = s.text
       map[k].status = 'done'
     })
+
+    // Avoid duplicate "Sources" heading for Research: timeline will render our compact header/button
+    if (map.research) {
+      map.research.resultTitle = undefined
+    }
+
+    // Compact Research stage only when Search tools are used (search/retrieve/videoSearch)
+    const researchTools = toolData.filter(t => ['search', 'retrieve', 'videoSearch'].includes(t.toolName))
+    const collected: Array<{ title: string; url: string }> = []
+    researchTools.forEach(t => {
+      const res: any = (t.state === 'result' ? t.result : undefined)
+      const items: any[] | undefined = res?.results
+      if (Array.isArray(items)) {
+        items.forEach(item => {
+          const url = String(item?.url || '')
+          const title = String(item?.title || item?.content || url)
+          if (url) collected.push({ title, url })
+        })
+      }
+    })
+    // If any research tool is in call, show Research header as in_progress
+    const anyResearchInProgress = researchTools.some(t => t.state === 'call')
+    if (anyResearchInProgress && !map.research.headerTitle) {
+      map.research.headerTitle = stageTitleMap.research
+      map.research.headerText = 'Execute planned searches and collect sources'
+      map.research.status = 'in_progress'
+    }
+    if (researchTools.length > 0) {
+      // Prefer the last search tool result for full fidelity UI (images + sources)
+      const last = researchTools[researchTools.length - 1]
+      const res: any = last.state === 'result' ? last.result : undefined
+      const results: any[] | undefined = res?.results
+      const images: any[] | undefined = res?.images
+      if (Array.isArray(results) && results.length > 0) {
+        const maxItems = 3
+        const subset = results.slice(0, maxItems)
+        const moreCount = Math.max(0, results.length - subset.length)
+        map.research.render = (
+          <CompactResearch
+            tool={last}
+            results={subset as any}
+            images={images as any}
+            query={(last.args as any)?.query}
+            moreCount={moreCount}
+          />
+        )
+        map.research.status = 'done'
+      }
+    }
+
+    // If Research is active but not yet done, suppress Writer header/status until Research completes
+    const researchActive = anyResearchInProgress || Boolean(map.research.headerTitle)
+    if (researchActive && map.research.status !== 'done') {
+      // Ensure research dot is active (in_progress) while waiting
+      map.research.status = 'in_progress'
+      map.writer.headerTitle = ''
+      map.writer.headerText = ''
+      if (map.writer.status !== 'done') {
+        map.writer.status = 'pending'
+      }
+    }
 
     // Map ask_question tool into the timeline (from annotations, parts, or merged)
     if (includeAskInTimeline) {
@@ -274,7 +393,7 @@ export function RenderMessage({
 
     // Mark current stage as in_progress while the final text hasn't arrived yet
     if (renderPlaceholders && !hasFinalTextPart) {
-      ;(['planner', 'writer', 'critic'] as const).forEach(k => {
+      ;(['planner', 'research', 'writer', 'critic'] as const).forEach(k => {
         const hasResult = Boolean(map[k].resultText || map[k].render)
         if (map[k].headerTitle && !hasResult) {
           map[k].status = 'in_progress'
@@ -285,8 +404,8 @@ export function RenderMessage({
     // Ensure progressive visibility: when a stage completes, immediately show the next stage title
     // and mark it as in_progress (active dot) while waiting for its result.
     const showNextIfMissing = (
-      completed: 'ask' | 'planner' | 'writer',
-      next: 'planner' | 'writer' | 'critic'
+      completed: 'ask' | 'planner' | 'research' | 'writer',
+      next: 'planner' | 'research' | 'writer' | 'critic'
     ) => {
       const isCompleted = map[completed].status === 'done'
       const nextHasResult = Boolean(map[next].resultText)
@@ -299,14 +418,28 @@ export function RenderMessage({
 
     if (renderPlaceholders && !hasFinalTextPart) {
       showNextIfMissing('ask', 'planner')
-      showNextIfMissing('planner', 'writer')
+      const hasResearchActivity = anyResearchInProgress || collected.length > 0
+      if (hasResearchActivity) {
+        showNextIfMissing('planner', 'research')
+        showNextIfMissing('research', 'writer')
+      } else {
+        // If no research activity, go directly from planner to writer
+        showNextIfMissing('planner', 'writer')
+      }
       showNextIfMissing('writer', 'critic')
     }
 
-    const ordered = (['ask', 'planner', 'writer', 'critic'] as const).map(k => map[k])
-    return hasFinalTextPart || !renderPlaceholders
+    const ordered = (['ask', 'planner', 'research', 'writer', 'critic'] as const).map(k => map[k])
+    let items = hasFinalTextPart || !renderPlaceholders
       ? ordered.filter(it => Boolean(it.resultText || it.render))
       : ordered.filter(it => Boolean(it.headerTitle || it.resultText || it.render))
+
+    // While Research is active but not done, completely hide Writer from the list
+    if (researchActive && map.research.status !== 'done') {
+      items = items.filter(it => it.stage !== 'writer')
+    }
+
+    return items
   }, [ultraStageHeaders, ultraStages, toolData, askQuestionFromParts, addToolResult, hasFinalTextPart, renderPlaceholders])
 
   
@@ -335,12 +468,37 @@ export function RenderMessage({
     )
   }
 
+  // Ultra mode detection
+  const isUltra = useMemo(() => {
+    const annotations = (message.annotations as any[] | undefined) || []
+    return annotations.some(a => a?.type === 'ultra-stage' || a?.type === 'ultra-stage-header')
+  }, [message.annotations])
+
+  // Detect if parts already include tool invocations (to avoid duplicate rendering with annotations)
+  const hasPartsTools = useMemo(() => {
+    const parts = (message.parts as any[] | undefined) || []
+    return parts.some(p => p?.type === 'tool-invocation' && p?.toolInvocation?.toolName && p?.toolInvocation?.toolName !== 'ask_question')
+  }, [message.parts])
+
   // New way: Use parts instead of toolInvocations
   return (
     <>
+      {/* Tool panels from annotations (fallback) - only when NOT Ultra and parts don't already include tools */}
+      {!isUltra && !hasPartsTools && toolData.length > 0 && (
+        toolData.map(tool => (
+          <ToolSection
+            key={`ann-${tool.toolCallId}`}
+            tool={tool}
+            isOpen={getIsOpen(tool.toolCallId)}
+            onOpenChange={open => onOpenChange(tool.toolCallId, open)}
+            addToolResult={addToolResult}
+          />
+        ))
+      )}
+
       {/* Tool panels are rendered via message.parts below. */}
-      {/* Timeline view for Ultra stages with fold when final text starts */}
-      {timelineItems.length > 0 && (
+      {/* Timeline view only for Ultra mode */}
+      {isUltra && timelineItems.length > 0 && (
         hasFinalTextPart ? (
           <Collapsible defaultOpen={false}>
             <CollapsibleTrigger asChild>
@@ -367,7 +525,7 @@ export function RenderMessage({
       )}
 
       {/* After Critiquing: show final preparation indicator until the final text arrives */}
-      {ultraStages.some(s => s.stage === 'critic') && !hasFinalTextPart && (
+      {isUltra && ultraStages.some(s => s.stage === 'critic') && !hasFinalTextPart && (
         <div className="mt-2 px-3 py-2 rounded-md border bg-card">
           <div className="text-xs text-muted-foreground animate-pulse">Preparing final answer…</div>
         </div>
@@ -380,8 +538,15 @@ export function RenderMessage({
 
         switch (part.type) {
           case 'tool-invocation':
-            if (part.toolInvocation.toolName === 'ask_question') {
-              // ask_question is shown inside the Ultra timeline's first stage
+            // In Ultra mode, always suppress standalone ask_question UI since it's shown in the timeline
+            if ((isUltra || suppressAskPanels) && part.toolInvocation.toolName === 'ask_question') {
+              return null
+            }
+            // In Ultra mode, hide heavy tool panels since we show compact Research in timeline
+            if (
+              isUltra &&
+              (part.toolInvocation.toolName === 'search' || part.toolInvocation.toolName === 'retrieve' || part.toolInvocation.toolName === 'videoSearch')
+            ) {
               return null
             }
             return (

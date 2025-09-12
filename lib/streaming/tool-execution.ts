@@ -18,13 +18,15 @@ import { parseToolCallXml } from './parse-tool-call'
 interface ToolExecutionResult {
   toolCallDataAnnotation: ExtendedCoreMessage | null
   toolCallMessages: CoreMessage[]
+  extraAnnotations?: any[]
 }
 
 export async function executeToolCall(
   coreMessages: CoreMessage[],
   dataStream: DataStreamWriter,
   model: string,
-  searchMode: boolean
+  searchMode: boolean,
+  emitResearchAnnotations: boolean = false
 ): Promise<ToolExecutionResult> {
   // If search mode is disabled, return empty tool call
   if (!searchMode) {
@@ -99,7 +101,7 @@ export async function executeToolCall(
   const toolCall = parseToolCallXml(toolSelectionResponse.text, searchSchema)
 
   if (!toolCall || toolCall.tool === '') {
-    return { toolCallDataAnnotation: null, toolCallMessages: [] }
+    return { toolCallDataAnnotation: null, toolCallMessages: [], extraAnnotations: [] }
   }
 
   const toolCallAnnotation = {
@@ -112,6 +114,19 @@ export async function executeToolCall(
     }
   }
   dataStream.writeData(toolCallAnnotation)
+
+  // Emit Research stage header annotation so the client and DB know this stage exists
+  const researchHeaderAnn = {
+    type: 'ultra-stage-header',
+    data: {
+      stage: 'research',
+      title: 'Research',
+      text: 'Execute planned searches and collect sources'
+    }
+  }
+  if (emitResearchAnnotations) {
+    dataStream.writeMessageAnnotation(researchHeaderAnn)
+  }
 
   // Support for search tool only for now
 
@@ -138,6 +153,60 @@ export async function executeToolCall(
   }
   dataStream.writeMessageAnnotation(updatedToolCallAnnotation)
 
+  // Build compact Research stage result annotation (persisted)
+  try {
+    const items: any[] = Array.isArray((searchResults as any)?.results)
+      ? ((searchResults as any).results as any[])
+      : []
+    const max = 8
+    const lines: string[] = []
+    for (const it of items.slice(0, max)) {
+      const url = String(it?.url || '')
+      const title = String(it?.title || it?.content || url)
+      let host = ''
+      try { host = url ? new URL(url).hostname : '' } catch {}
+      lines.push(`${host ? host + ' — ' : ''}${title}`)
+    }
+    const more = Math.max(0, items.length - max)
+    const body = lines.join('\n') + (more > 0 ? `\n+${more} more sources` : '')
+    const researchStageAnn = {
+      type: 'ultra-stage',
+      data: {
+        stage: 'research',
+        text: body,
+        title: 'Research results',
+        resultTitle: 'Sources'
+      }
+    }
+    if (emitResearchAnnotations) {
+      dataStream.writeMessageAnnotation(researchStageAnn)
+    }
+    const toolCallDataAnnotation: ExtendedCoreMessage = {
+      role: 'data',
+      content: {
+        type: 'tool_call',
+        data: updatedToolCallAnnotation.data
+      } as JSONValue
+    }
+    const toolCallMessages: CoreMessage[] = [
+      {
+        role: 'assistant',
+        content: `Tool call result: ${JSON.stringify(searchResults)}`
+      },
+      {
+        role: 'user',
+        content: 'Now answer the user question.'
+      }
+    ]
+    return {
+      toolCallDataAnnotation,
+      toolCallMessages,
+      extraAnnotations: emitResearchAnnotations ? [researchHeaderAnn, researchStageAnn] : []
+    }
+  } catch {
+    // Fall back to original return path below
+  }
+
   const toolCallDataAnnotation: ExtendedCoreMessage = {
     role: 'data',
     content: {
@@ -157,5 +226,5 @@ export async function executeToolCall(
     }
   ]
 
-  return { toolCallDataAnnotation, toolCallMessages }
+  return { toolCallDataAnnotation, toolCallMessages, extraAnnotations: emitResearchAnnotations ? [researchHeaderAnn] : [] }
 }

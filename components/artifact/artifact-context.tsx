@@ -2,12 +2,12 @@
 
 import type { ToolInvocation } from 'ai'
 import {
-  createContext,
-  ReactNode,
-  useCallback,
-  useContext,
-  useEffect,
-  useReducer
+    createContext,
+    ReactNode,
+    useCallback,
+    useContext,
+    useEffect,
+    useReducer
 } from 'react'
 import { useSidebar } from '../ui/sidebar'
 
@@ -71,6 +71,9 @@ export function ArtifactProvider({ children }: { children: ReactNode }) {
 
   const close = useCallback(() => {
     dispatch({ type: 'CLOSE' })
+    try {
+      window.dispatchEvent(new CustomEvent('artifact-closed'))
+    } catch {}
   }, [])
 
   // Close artifact when sidebar opens
@@ -83,6 +86,9 @@ export function ArtifactProvider({ children }: { children: ReactNode }) {
   const open = (part: Part) => {
     dispatch({ type: 'OPEN', payload: part })
     setOpen(false)
+    try {
+      window.dispatchEvent(new CustomEvent('artifact-opened'))
+    } catch {}
   }
 
   return (

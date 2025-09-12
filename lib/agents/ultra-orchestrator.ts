@@ -1,6 +1,7 @@
 import { createOpenAI } from '@ai-sdk/openai'
 import { CoreMessage, DataStreamWriter, generateText, smoothStream } from 'ai'
 import { getCurrentUserToken } from '../auth/get-current-user'
+import { executeToolCall } from '../streaming/tool-execution'
 import { getServerOrganizationId } from '../usage/manager'
 import { getModel } from '../utils/registry'
 
@@ -54,8 +55,9 @@ export async function buildUltraFinalConfig(params: {
   messages: CoreMessage[]
   modelId: string
   dataStream?: DataStreamWriter
+  searchMode?: boolean
 }): Promise<UltraFinalConfig> {
-  const { messages, modelId, dataStream } = params
+  const { messages, modelId, dataStream, searchMode = false } = params
   const model = await resolveModel(modelId)
   const currentDate = nowString()
   const ultraAnnotations: any[] = []
@@ -173,14 +175,64 @@ No preamble, no extra text, return ONLY the plan.`
     }
     dataStream?.writeMessageAnnotation(stageAnn as any)
     ultraAnnotations.push(stageAnn)
+
+    // Immediately announce Research header when search mode is enabled so the client doesn't briefly show Drafting
+    if (searchMode) {
+      const researchHeader = {
+        type: 'ultra-stage-header',
+        data: {
+          stage: 'research',
+          title: 'Research',
+          text: 'Execute planned searches and collect sources'
+        }
+      }
+      dataStream?.writeMessageAnnotation(researchHeader as any)
+      ultraAnnotations.push(researchHeader)
+    }
   } catch {}
 
-  // Stage 2: Writer (Draft)
-  const writerSystem = `You are the Writer. Using the provided plan, produce a thorough first draft of the answer. Focus on content completeness. Do not worry about perfect style or citations in this stage.`
-  const writerMessages: CoreMessage[] = [
-    ...messages,
-    { role: 'user', content: `Plan:\n${planText}\n\nWrite a comprehensive first draft that follows this plan. Avoid unnecessary repetition.` }
-  ]
+  // Stage 2: Research (optional, only if search mode enabled)
+  let writerMessages: CoreMessage[] = []
+  if (searchMode) {
+    try {
+      const { toolCallMessages, extraAnnotations, toolCallDataAnnotation } = await executeToolCall(
+        messages,
+        dataStream as DataStreamWriter,
+        modelId,
+        true,
+        true
+      )
+      // Persist any research annotations under ultraAnnotations too (for robustness)
+      if (Array.isArray(extraAnnotations)) {
+        for (const ann of extraAnnotations) {
+          ultraAnnotations.push(ann)
+        }
+      }
+      // Persist the tool_call annotation so the client can reconstruct full Search UI after reload
+      if (toolCallDataAnnotation) {
+        ultraAnnotations.push(toolCallDataAnnotation as any)
+      }
+      // Use search results as context for writing
+      writerMessages = [
+        ...messages,
+        { role: 'user', content: `Plan:\n${planText}` },
+        ...toolCallMessages,
+        { role: 'user', content: 'Now write the draft based on the plan and sources.' }
+      ]
+    } catch {
+      writerMessages = [
+        ...messages,
+        { role: 'user', content: `Plan:\n${planText}\n\nWrite a comprehensive first draft that follows this plan. Avoid unnecessary repetition.` }
+      ]
+    }
+  } else {
+    writerMessages = [
+      ...messages,
+      { role: 'user', content: `Plan:\n${planText}\n\nWrite a comprehensive first draft that follows this plan. Avoid unnecessary repetition.` }
+    ]
+  }
+
+  const writerSystem = `You are the Writer. Using the provided plan${searchMode ? ' and the research results (sources)' : ''}, produce a thorough first draft of the answer. Focus on content completeness. Do not worry about perfect style or citations in this stage.`
   const draft = await generateText({
     model,
     system: `${writerSystem}\nCurrent date and time: ${currentDate}`,

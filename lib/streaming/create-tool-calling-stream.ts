@@ -44,15 +44,18 @@ export function createToolCallingStreamResponse(config: BaseStreamConfig) {
         const isFirstTurn = !truncatedMessages.some(m => m.role === 'assistant')
 
         // Pre-execute tool call (search) unless Ultra first-turn requires ask_question first
-        const { toolCallDataAnnotation, toolCallMessages } = await executeToolCall(
+        const { toolCallDataAnnotation, toolCallMessages, extraAnnotations: preAnnotations } = await executeToolCall(
           truncatedMessages,
           dataStream,
           modelId,
-          searchMode && !(ultraMode && isFirstTurn)
+          searchMode && !ultraMode
         )
 
         const messagesForLLM = [...truncatedMessages, ...toolCallMessages]
-        let extraAnnotations: any[] = []
+        let extraAnnotations: any[] = preAnnotations || []
+        if (toolCallDataAnnotation) {
+          extraAnnotations = [...extraAnnotations, toolCallDataAnnotation]
+        }
 
         let researcherConfig = await researcher({
           messages: messagesForLLM,
@@ -68,12 +71,14 @@ export function createToolCallingStreamResponse(config: BaseStreamConfig) {
             const finalConfig = await buildUltraFinalConfig({
               messages: messagesForLLM,
               modelId,
-              dataStream
+              dataStream,
+              searchMode
             })
             researcherConfig = finalConfig as any
             // Capture Ultra annotations for persistence
             if ((finalConfig as any).ultraAnnotations) {
-              extraAnnotations = (finalConfig as any).ultraAnnotations
+              const more = (finalConfig as any).ultraAnnotations as any[]
+              extraAnnotations = [...extraAnnotations, ...more]
             }
           } catch (e) {
             console.error('Ultra orchestrator failed, falling back to researcher:', e)
@@ -93,11 +98,17 @@ export function createToolCallingStreamResponse(config: BaseStreamConfig) {
                   ] as CoreMessage
                 ))
 
-            // Convert ultra annotations to ExtendedCoreMessage[] for saving
-            const ultraExtended = (extraAnnotations || []).map(a => ({
-              role: 'data' as const,
-              content: a as unknown as JSONValue
-            }))
+            // Convert ultra annotations to ExtendedCoreMessage[] for saving (support both raw JSON and ExtendedCoreMessage)
+            const ultraExtended = (extraAnnotations || []).map(a => {
+              const anyA = a as any
+              if (anyA && anyA.role && anyA.content) {
+                return anyA as any
+              }
+              return {
+                role: 'data' as const,
+                content: a as unknown as JSONValue
+              }
+            })
 
             await handleStreamFinish({
               responseMessages: result.response.messages,
