@@ -3,10 +3,10 @@
 import { cn } from '@/lib/utils'
 import { getCookie, setCookie } from '@/lib/utils/cookies'
 import {
-  ChevronRight,
-  ExternalLink,
-  Settings,
-  Unplug
+    ChevronRight,
+    ExternalLink,
+    Settings,
+    Unplug
 } from 'lucide-react'
 import Image from 'next/image'
 import { useEffect, useMemo, useRef, useState } from 'react'
@@ -624,7 +624,7 @@ export function ToolsToggle() {
         variant="outline"
         role="combobox"
         aria-expanded={open}
-        className="text-sm rounded-full shadow-none focus:ring-0"
+        className="h-8 text-sm rounded-3xl shadow-none focus:ring-0"
         onClick={() => setOpen(!open)}
         ref={buttonRef}
       >

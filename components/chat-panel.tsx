@@ -8,13 +8,12 @@ import { ArrowUp, ChevronDown, Square } from 'lucide-react'
 import { useEffect, useRef, useState } from 'react'
 import Textarea from 'react-textarea-autosize'
 import { EmptyScreen } from './empty-screen'
-import { ModelSelector } from './model-selector'
-import { SearchModeToggle } from './search-mode-toggle'
+import { ModeSwitch } from './mode-switch'
+import { ModelDropdown } from './model-dropdown'
 import { SignInDialog } from './sign-in-dialog'
 import { ToolsToggle } from './tools-toggle'
 import { Button } from './ui/button'
 import { IconLogo } from './ui/icons'
-import { UltraModeToggle } from './ultra-mode-toggle'
 
 interface ChatPanelProps {
   input: string
@@ -195,9 +194,9 @@ export function ChatPanel({
           {/* Bottom menu area */}
           <div className="flex items-center justify-between p-2.5">
             <div className="flex items-center gap-2">
-              <ModelSelector models={models || []} />
-              <SearchModeToggle />
-              <UltraModeToggle />
+              {/* Model selector must be leftmost */}
+              <ModelDropdown models={models || []} />
+              <ModeSwitch />
               <ToolsToggle />
             </div>
             <div className="flex items-center gap-2">

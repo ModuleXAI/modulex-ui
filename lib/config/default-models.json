@@ -73,14 +73,6 @@
       "toolCallType": "native"
     },
     {
-      "id": "<AZURE_DEPLOYMENT_NAME>",
-      "name": "<AZURE_DEPLOYMENT_NAME>",
-      "provider": "Azure",
-      "providerId": "azure",
-      "enabled": true,
-      "toolCallType": "native"
-    },
-    {
       "id": "gemini-2.0-flash",
       "name": "Gemini 2.0 Flash",
       "provider": "Google Generative AI",
@@ -105,15 +97,6 @@
       "enabled": true,
       "toolCallType": "manual",
       "toolCallModel": "gemini-2.0-flash"
-    },
-    {
-      "id": "accounts/fireworks/models/deepseek-r1",
-      "name": "DeepSeek R1",
-      "provider": "Fireworks",
-      "providerId": "fireworks",
-      "enabled": true,
-      "toolCallType": "manual",
-      "toolCallModel": "accounts/fireworks/models/llama-v3p1-8b-instruct"
     },
     {
       "id": "accounts/fireworks/models/llama4-maverick-instruct-basic",
@@ -166,15 +149,6 @@
       "enabled": true,
       "toolCallType": "manual",
       "toolCallModel": "phi4"
-    },
-    {
-      "id": "<OLLAMA_MODEL_ID>",
-      "name": "<OLLAMA_MODEL_NAME>",
-      "provider": "Ollama",
-      "providerId": "ollama",
-      "enabled": true,
-      "toolCallType": "manual",
-      "toolCallModel": "<OLLAMA_MODEL_ID>"
     },
     {
       "id": "grok-2-1212",
