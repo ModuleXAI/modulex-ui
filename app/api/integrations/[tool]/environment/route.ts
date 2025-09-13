@@ -1,7 +1,7 @@
 import { getCurrentUserId, getCurrentUserToken } from '@/lib/auth/get-current-user'
-import { NextRequest, NextResponse } from 'next/server'
+import { NextResponse } from 'next/server'
 
-export async function PUT(request: NextRequest, { params }: { params: { tool: string } }) {
+export async function PUT(request: Request, context: any) {
   try {
     const userId = await getCurrentUserId()
     if (!userId || userId === 'anonymous') {
@@ -18,10 +18,11 @@ export async function PUT(request: NextRequest, { params }: { params: { tool: st
       return NextResponse.json({ error: 'Unable to retrieve user token' }, { status: 401 })
     }
 
+    const { params } = (context || {}) as { params: { tool: string } }
     const { searchParams } = new URL(request.url)
     const organizationId = searchParams.get('organization_id') || undefined
     const body = await request.json()
-    const toolName = params.tool
+    const toolName = params?.tool
 
     const backendUrl = new URL(`${modulexServerUrl}/integrations/${toolName}/environment`)
     if (organizationId) backendUrl.searchParams.set('organization_id', organizationId)

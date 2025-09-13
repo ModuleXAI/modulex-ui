@@ -1,7 +1,7 @@
 import { getCurrentUserToken } from '@/lib/auth/get-current-user'
-import { NextRequest, NextResponse } from 'next/server'
+import { NextResponse } from 'next/server'
 
-export async function POST(request: NextRequest, { params }: { params: { id: string } }) {
+export async function POST(request: Request, context: any) {
   try {
     const modulexServerUrl = process.env.NEXT_PUBLIC_MODULEX_HOST
     if (!modulexServerUrl) {
@@ -12,10 +12,11 @@ export async function POST(request: NextRequest, { params }: { params: { id: str
       return NextResponse.json({ error: 'Unable to retrieve user token' }, { status: 401 })
     }
 
+    const { params } = (context || {}) as { params: { id: string } }
     const { searchParams } = new URL(request.url)
     const organizationId = searchParams.get('organization_id') || undefined
 
-    const url = new URL(`${modulexServerUrl}/organizations/invitations/${encodeURIComponent(params.id)}/cancel`)
+    const url = new URL(`${modulexServerUrl}/organizations/invitations/${encodeURIComponent(params?.id || '')}/cancel`)
     if (organizationId) url.searchParams.set('organization_id', organizationId)
 
     const res = await fetch(url.toString(), {

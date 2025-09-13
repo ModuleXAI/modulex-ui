@@ -1,7 +1,7 @@
 import { getCurrentUserToken } from '@/lib/auth/get-current-user'
-import { NextRequest, NextResponse } from 'next/server'
+import { NextResponse } from 'next/server'
 
-export async function PUT(request: NextRequest, { params }: { params: { id: string } }) {
+export async function PUT(request: Request, context: any) {
   try {
     const modulexServerUrl = process.env.NEXT_PUBLIC_MODULEX_HOST
     if (!modulexServerUrl) {
@@ -12,6 +12,7 @@ export async function PUT(request: NextRequest, { params }: { params: { id: stri
       return NextResponse.json({ error: 'Unable to retrieve user token' }, { status: 401 })
     }
 
+    const { params } = (context || {}) as { params: { id: string } }
     const { searchParams } = new URL(request.url)
     const organizationId = searchParams.get('organization_id')
     if (!organizationId) {
@@ -24,7 +25,7 @@ export async function PUT(request: NextRequest, { params }: { params: { id: stri
       return NextResponse.json({ error: 'role must be admin or member' }, { status: 400 })
     }
 
-    const url = `${modulexServerUrl}/organizations/${encodeURIComponent(organizationId)}/users/${encodeURIComponent(params.id)}/role`
+    const url = `${modulexServerUrl}/organizations/${encodeURIComponent(organizationId)}/users/${encodeURIComponent(params?.id || '')}/role`
     const res = await fetch(url, {
       method: 'PUT',
       headers: {

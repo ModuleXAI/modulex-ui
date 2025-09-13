@@ -1,9 +1,10 @@
 import { getCurrentUserToken } from '@/lib/auth/get-current-user'
-import { NextRequest, NextResponse } from 'next/server'
+import { NextResponse } from 'next/server'
 
-export async function PUT(request: NextRequest, { params }: { params: { id: string } }) {
+export async function PUT(request: Request, context: any) {
   try {
-    const id = params.id
+    const { params } = (context || {}) as { params: { id: string } }
+    const id = params?.id
     if (!id) {
       return NextResponse.json({ error: 'id param is required' }, { status: 400 })
     }
@@ -55,9 +56,10 @@ export async function PUT(request: NextRequest, { params }: { params: { id: stri
   }
 }
 
-export async function PATCH(request: NextRequest, { params }: { params: { id: string } }) {
+export async function PATCH(request: Request, context: any) {
   try {
-    const id = params.id
+    const { params } = (context || {}) as { params: { id: string } }
+    const id = params?.id
     if (!id) {
       return NextResponse.json({ error: 'id param is required' }, { status: 400 })
     }

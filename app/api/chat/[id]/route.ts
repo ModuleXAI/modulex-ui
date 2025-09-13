@@ -1,10 +1,10 @@
 import { deleteChat } from '@/lib/actions/chat'
 import { getCurrentUserId } from '@/lib/auth/get-current-user'
-import { NextRequest, NextResponse } from 'next/server'
+import { NextResponse } from 'next/server'
 
 export async function DELETE(
-  request: NextRequest,
-  { params }: { params: Promise<{ id: string }> }
+  request: Request,
+  context: any
 ) {
   const enableSaveChatHistory = process.env.ENABLE_SAVE_CHAT_HISTORY === 'true'
   if (!enableSaveChatHistory) {
@@ -14,7 +14,8 @@ export async function DELETE(
     )
   }
 
-  const chatId = (await params).id
+  const { params } = (context || {}) as { params: { id: string } }
+  const chatId = params?.id
   if (!chatId) {
     return NextResponse.json({ error: 'Chat ID is required' }, { status: 400 })
   }

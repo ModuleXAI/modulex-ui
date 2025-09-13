@@ -1,8 +1,8 @@
 import { getCurrentUserId, getCurrentUserToken } from '@/lib/auth/get-current-user'
 import { getApiErrorMessage } from '@/lib/utils/api-error'
-import { NextRequest, NextResponse } from 'next/server'
+import { NextResponse } from 'next/server'
 
-export async function DELETE(request: NextRequest, { params }: { params: { key_id: string } }) {
+export async function DELETE(request: Request, context: any) {
   try {
     const userId = await getCurrentUserId()
     if (!userId || userId === 'anonymous') {
@@ -19,10 +19,11 @@ export async function DELETE(request: NextRequest, { params }: { params: { key_i
       return NextResponse.json({ error: 'Unable to retrieve user token' }, { status: 401 })
     }
 
+    const { params } = (context || {}) as { params: { key_id: string } }
     const { searchParams } = new URL(request.url)
     const organizationId = searchParams.get('organization_id') || undefined
 
-    const backendUrl = new URL(`${modulexServerUrl}/integrations/service-keys/${encodeURIComponent(params.key_id)}`)
+    const backendUrl = new URL(`${modulexServerUrl}/integrations/service-keys/${encodeURIComponent(params?.key_id || '')}`)
     if (organizationId) backendUrl.searchParams.set('organization_id', organizationId)
 
     const response = await fetch(backendUrl.toString(), {
